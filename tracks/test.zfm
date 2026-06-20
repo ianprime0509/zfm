@@ -1,0 +1,24 @@
+#title Test
+ Track
+#composer Ian Johnson
+#tempo 120
+
+@test 0 1.
+  1 1 0 1 0 0 0 1
+  1 1 0 1 0 0 0 1
+
+@creepy-distorted-bell 0 1.
+  20 30 0 1 0 0 0 0.0001
+  1 1 0 1 0.00002 0 0 0.0001
+
+@warm-synth-bass 0 1.
+  1 0.5 0 1 0 0 0 0
+  1 1 0 1 0.00001 0 0 0.00001
+
+ABC @test
+;C MT0,freq MS0,10,0 MW0,sine,5 *0
+;A c2.defgab ; comment
+;B [efgg+]1
+;C [cde]
+;C c4&c4&c4&c4&c4&c4&c4
+C {ec}4 v+.5> {ce}4 v+.5<< {ec}4 v+.5 {ce}4

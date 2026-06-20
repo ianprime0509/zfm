@@ -1,0 +1,25 @@
+{
+  "name": "zfm",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "concurrently 'prettier --check .' 'eslint .'",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "comlink": "catalog:",
+    "lit": "catalog:"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "concurrently": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "vite": "catalog:"
+  }
+}

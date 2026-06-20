@@ -1,0 +1,18 @@
+.{
+    .name = .zfm_cli,
+    .version = "0.0.1",
+    .fingerprint = 0x4ea2987afe0930f0,
+    .minimum_zig_version = "0.17.0-dev.813+2153f8143",
+    .paths = .{""},
+    .dependencies = .{
+        .zfm = .{ .path = ".." },
+        .miniaudio = .{
+            .url = "git+https://github.com/mackron/miniaudio?ref=0.11.25#9634bedb5b5a2ca38c1ee7108a9358a4e233f14d",
+            .hash = "N-V-__8AAHNWwAASlNuYbrP1-3UqXdwbYvZ_6nIJhpAcRMfi",
+        },
+        .translate_c = .{
+            .url = "git+https://codeberg.org/ziglang/translate-c?ref=main#b32c255cae0c4351451241b1bfbb5ac98f52f00e",
+            .hash = "translate_c-0.0.0-Q_BUWrYwBwDY2ReuBk6RPPRm9slyutnCWZnQA9RvdX9g",
+        },
+    },
+}

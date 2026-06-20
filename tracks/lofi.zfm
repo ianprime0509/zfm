@@ -1,0 +1,86 @@
+#title Lofi Test Track
+#composer Ian Johnson
+#tempo 60
+
+@warm-synth-bass 0 1.
+  1 0.5 0 1 0 0 0 0
+  1 1 0 1 0.000007 0 0 0.00001
+
+@electric-piano 0 1, 2 3.
+  0.7 11 3 1 0 0 0 1
+  0.3 12 0 1 0.0001 0 0 1
+  0.7 1 0 1 0.000025 0.2 0 0.00001
+  1 1 0 1 0.00001 0 0 0.00005
+
+@strings 0 1, 2 3.
+  0.9 3 1 0.0002 0 0 0 0.0001
+  0.9 1 0 0.0002 0 0 0 0.0001
+  0.8 5 0 0.0002 0.00001 0 0 0.0001
+  1 1 0 0.0002 0 0 0 0.0001
+
+@synth-bass 0 1.
+  5 0.5 0 1 0.001 0 0 1
+  1 1 2 1 0.0001 0 0 1
+
+@rim .
+  1 50 10 1 0.001 0 0 1
+
+ABCD @warm-synth-bass l8
+EF @electric-piano l16 v1.5
+G @strings l2 v0.7 MT0,freq MS0,5,0 MW0,sine,5 *0
+H @synth-bass l16
+R @rim v2
+
+ABCDEFGHR L
+
+A o3 c1        c1            d1        d1
+B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8
+C o4 r4c1-4    r4c1-4       <r4a1-4    r4a1-4
+D o4 r4.g1-4-8 r4.g1-4-8-4e4 r4.e1-4-8 r4.d4ed16&{dc}16&c8
+EFGH [r1]4
+R [r1]4
+
+A o3 c1        c1            d1        d1
+B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8
+C o4 r4c1-4    r4c1-4       <r4a1-4    r4a1-4
+D o4 r4.g1-4-8 r4.g1-4-8-4e4 r4.e1-4-8 r4.d4ed16&{dc}16&c8
+EFGH [r1]4
+R [r4c4]8
+
+A o3 c1        c1            d1        d1
+B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8
+C o4 r4c1-4    r4c1-4       <r4a1-4    r4a1-4
+D o4 r4.g1-4-8 r4.g1-4-8-4e4 r4.e1-4-8 r4.d4ed16&{dc}16&c8
+E o4 c8.c2+16r4   c8.c2+16r4   d8.d2+16r4   d8.d2+16r4
+F o4 d8.d2+16dedc d8.d2+16deg8 f8.f2+16fgfe f8.f2+16efg8
+GH [r1]4
+R [r4c4]8
+
+A o3 c1        c1            d1        d1
+B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8
+C o4 r4c1-4    r4c1-4       <r4a1-4    r4a1-4
+D o4 r4.g1-4-8 r4.g1-4-8-4e4 r4.e1-4-8 r4.d4ed16&{dc}16&c8
+E o4 c8.c2+16r4   c8.c2+16r4   d8.d2+16r4   d8.d2+16r4
+F o4 d8.d2+16dedc d8.d2+16deg8 f8.f2+16fgfe f8.f2+16efg8
+GH [r1]4
+R [r4c4]8
+
+A o3 c1        c1            d1        d1
+B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8
+C o4 r4c1-4    r4c1-4       <r4a1-4    r4a1-4
+D o4 r4.g1-4-8 r4.g1-4-8-4e4 r4.e1-4-8 r4.d4ed16&{dc}16&c8
+E o4 c8.c2+16r4   c8.c2+16r4   d8.d2+16r4   d8.d2+16r4
+F o4 d8.d2+16dedc d8.d2+16deg8 f8.f2+16fgfe f8.f2+16efg8
+G o5 c&<b> c&<b> c&d c&<b
+H o3 cd8cd8cd8cd8-32d32e8c8 cd8cd8cd8cd8-32c32dedc cd8cd8cd8cd8-32d32e8c8 cd8cd8cd8cd8-32d32efg8
+R [r4c4]8
+
+A o3 c1        c1            d1        d1
+B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8
+C o4 r4c1-4    r4c1-4       <r4a1-4    r4a1-4
+D o4 r4.g1-4-8 r4.g1-4-8-4e4 r4.e1-4-8 r4.d4ed16&{dc}16&c8
+E o4 c8.c2+16r4   c8.c2+16r4   d8.d2+16r4   d8.d2+16r4
+F o4 d8.d2+16dedc d8.d2+16deg8 f8.f2+16fgfe f8.f2+16efg8
+G o5 c&<b> c&<b> c&d c&<b
+H o3 cd8cd8cd8cd8-32d32e8c8 cd8cd8cd8cd8-32c32dedc cd8cd8cd8cd8-32d32e8c8 cd8cd8cd8cd8-32d32efg8
+R [r4c4]8
