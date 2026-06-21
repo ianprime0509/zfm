@@ -27,8 +27,8 @@
 
 ABCD @warm-synth-bass l8
 EF @electric-piano l16 v1.5
-G @strings l2 v0.7 MT0,freq MS0,5,0 MW0,sine,5 *0
-H @synth-bass l16
+G @strings l2 v0.6 MT0,freq MS0,5,0 MW0,sine,5 *0
+H @synth-bass l16 v1.3
 R @rim v2
 
 ABCDEFGHR L

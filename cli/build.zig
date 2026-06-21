@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void {
     const t: Translator = .init(translate_c, .{
         .c_source_file = b.path("src/c.h"),
         .target = target,
-        .optimize = optimize,
+        .optimize = .ReleaseFast,
     });
     const miniaudio = b.dependency("miniaudio", .{});
     t.addIncludePath(miniaudio.path("."));
