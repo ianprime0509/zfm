@@ -421,22 +421,7 @@ fn compileCommand(c: *Compiler, part: *Part) !void {
         },
         '{' => {
             c.skipByte();
-            const from = c.takeNote(part) orelse return c.report(.expected_note);
-            const to = c.takeNote(part) orelse return c.report(.expected_note);
-            try c.expectByte('}');
-            const length = try c.takeNoteLength() orelse part.default_length;
-
-            try c.addSetLfoTargetCommand(part, .porta, .freq);
-            try c.addSetLfoSizeCommand(part, .porta, .{ .scale = from, .offset = -from });
-            try c.addSetLfoWaveCommand(part, .porta, .{ .exp = .{
-                .mul = (@log2(to) - @log2(from)) / @as(f32, @floatFromInt(@intFromEnum(length))),
-            } });
-            try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
-            try part.addCommand(c.gpa, .key_on, .{ .freq = from });
-            try part.addCommand(c.gpa, .rest, .{ .ticks = length });
-            try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
-            try part.addCommand(c.gpa, .key_on, .{ .freq = to });
-            try part.addCommand(c.gpa, .key_off, .{ .none = {} });
+            try c.compilePortamento(part);
         },
         '*' => {
             c.skipByte();
@@ -471,6 +456,58 @@ fn previousRestIndex(tags: []const Command.Tag) ?usize {
     if (tags.len >= 1 and tags[tags.len - 1] == .rest) return tags.len - 1;
     if (tags.len >= 2 and tags[tags.len - 1] == .key_off and tags[tags.len - 2] == .rest) return tags.len - 2;
     return null;
+}
+
+fn compilePortamento(c: *Compiler, part: *Part) !void {
+    var from: f32 = 0.0;
+    var to: f32 = 0.0;
+    var state: enum { start, after_from, after_to } = .start;
+    while (true) switch (c.peekByte()) {
+        '>' => {
+            c.skipByte();
+            part.octave += 1.0;
+        },
+        '<' => {
+            c.skipByte();
+            part.octave -= 1.0;
+        },
+        '}' => {
+            if (state != .after_to) try c.report(.expected_note);
+            c.skipByte();
+            break;
+        },
+        'a'...'g' => switch (state) {
+            .start => {
+                from = c.takeNote(part).?;
+                state = .after_from;
+            },
+            .after_from => {
+                to = c.takeNote(part).?;
+                state = .after_to;
+            },
+            .after_to => {
+                try c.report(.unexpected_character);
+                c.skipByte();
+            },
+        },
+        else => {
+            try c.report(.unexpected_character);
+            c.skipByte();
+        },
+    };
+    const length = try c.takeNoteLength() orelse part.default_length;
+
+    try c.addSetLfoTargetCommand(part, .porta, .freq);
+    try c.addSetLfoSizeCommand(part, .porta, .{ .scale = from, .offset = -from });
+    try c.addSetLfoWaveCommand(part, .porta, .{ .exp = .{
+        .mul = (@log2(to) - @log2(from)) / @as(f32, @floatFromInt(@intFromEnum(length))),
+    } });
+    try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
+    try part.addCommand(c.gpa, .key_on, .{ .freq = from });
+    try part.addCommand(c.gpa, .rest, .{ .ticks = length });
+    try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
+    try part.addCommand(c.gpa, .key_on, .{ .freq = to });
+    try part.addCommand(c.gpa, .key_off, .{ .none = {} });
 }
 
 fn compileLfoCommand(c: *Compiler, part: *Part) !void {

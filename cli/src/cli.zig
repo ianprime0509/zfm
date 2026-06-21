@@ -113,7 +113,7 @@ const Player = struct {
 
     fn ended(player: *const Player) bool {
         return for (player.driver.parts) |part| {
-            if (part.cycle < player.options.loops) break false;
+            if (!part.ended and part.cycle < player.options.loops) break false;
         } else true;
     }
 
@@ -121,8 +121,8 @@ const Player = struct {
         for (frames) |*frame| {
             const FrameVec = @Vector(2, f32);
             frame.* = @as(FrameVec, @splat(player.volume)) * @as(FrameVec, player.driver.sample());
-            if (player.options.fade and player.ended()) {
-                player.volume = @max(0.0, player.volume - fade_speed);
+            if (player.ended()) {
+                player.volume = if (player.options.fade) @max(0.0, player.volume - fade_speed) else 0.0;
             }
         }
         return player.volume > 0.0;
