@@ -1,3 +1,143 @@
+const gpa = std.heap.wasm_allocator;
+
+var mod: Module = .empty;
+var errors: std.ArrayList(Compiler.Error) = .empty;
+var transfer: std.ArrayList(u8) = .empty;
+
+export fn transferPtr() [*]u8 {
+    return transfer.items.ptr;
+}
+
+export fn transferLen() usize {
+    return transfer.items.len;
+}
+
+export fn transferSetLen(len: usize) void {
+    transfer.ensureTotalCapacity(gpa, len) catch @panic("OOM");
+    transfer.items.len = len;
+}
+
+export fn compile() bool {
+    return compileInner() catch @panic("OOM");
+}
+
+fn compileInner() Allocator.Error!bool {
+    mod.deinit(gpa);
+    mod = .empty;
+
+    try transfer.append(gpa, 0);
+    var compiler: Compiler = .init(gpa, transfer.items[0 .. transfer.items.len - 1 :0]);
+    defer compiler.deinit();
+    try compiler.compile();
+
+    errors.clearRetainingCapacity();
+    try errors.appendSlice(gpa, compiler.errors.items);
+    if (errors.items.len > 0) return false;
+
+    mod = try compiler.toModule();
+    return true;
+}
+
+export fn transferErrors() void {
+    transferErrorsInner() catch @panic("OOM");
+}
+
+fn transferErrorsInner() (Allocator.Error || Writer.Error)!void {
+    var writer: Writer.Allocating = .fromArrayList(gpa, &transfer);
+    defer transfer = writer.toArrayList();
+    writer.clearRetainingCapacity();
+    var out: std.json.Stringify = .{ .writer = &writer.writer };
+
+    try out.beginArray();
+    for (errors.items) |err| {
+        try out.beginObject();
+
+        try out.objectField("message");
+        var buf: [1024]u8 = undefined;
+        const message = std.mem.print(&buf, "{f}", .{err}) catch message: {
+            @memcpy(buf[buf.len - "...".len ..], "...");
+            break :message &buf;
+        };
+        try out.write(message);
+
+        // TODO: err.data
+
+        try out.objectField("span");
+        try out.beginObject();
+        try out.objectField("start");
+        try out.write(@intFromEnum(err.span.start));
+        try out.objectField("end");
+        try out.write(@intFromEnum(err.span.end));
+        try out.endObject();
+
+        if (err.part) |part| {
+            try out.objectField("part");
+            try out.write(@as([]const u8, &.{part}));
+        }
+
+        try out.endObject();
+    }
+    try out.endArray();
+}
+
+export fn transferPatches() void {
+    transferPatchesInner() catch @panic("OOM");
+}
+
+fn transferPatchesInner() (Allocator.Error || Writer.Error)!void {
+    var writer: Writer.Allocating = .fromArrayList(gpa, &transfer);
+    defer transfer = writer.toArrayList();
+    writer.clearRetainingCapacity();
+    var out: std.json.Stringify = .{ .writer = &writer.writer };
+
+    try out.beginArray();
+    for (mod.patches.keys(), mod.patches.values()) |name, index| {
+        const patch, _ = mod.extra.decode(Patch, index);
+
+        try out.beginObject();
+
+        try out.objectField("name");
+        try out.write(mod.strings.string(name));
+
+        try out.objectField("connections");
+        try out.beginObject();
+        try out.objectField("edges");
+        try out.beginArray();
+        for (0..Voice.n_slots) |from| {
+            try out.beginArray();
+            for (0..Voice.n_slots) |to| {
+                try out.write(patch.connections.deps[to].isSet(from));
+            }
+            try out.endArray();
+        }
+        try out.endArray();
+        try out.endObject();
+
+        try out.objectField("slotWaves");
+        try out.write(patch.slot_waves);
+
+        try out.objectField("slotParams");
+        try out.write(patch.slot_params);
+
+        try out.objectField("envParams");
+        try out.write(patch.slot_env_params);
+
+        try out.endObject();
+    }
+    try out.endArray();
+}
+
+export fn transferModule() void {
+    transferModuleInner() catch @panic("OOM");
+}
+
+fn transferModuleInner() (Allocator.Error || Writer.Error)!void {
+    var writer: Writer.Allocating = .fromArrayList(gpa, &transfer);
+    defer transfer = writer.toArrayList();
+    writer.clearRetainingCapacity();
+    try mod.write(&writer.writer);
+}
+
 pub const std_options: std.Options = .{
     .logFn = logFn,
 };
@@ -15,87 +155,13 @@ fn logFn(
     consoleLog(@intFromEnum(level), msg.ptr, msg.len);
 }
 
-const gpa = std.heap.wasm_allocator;
-
-var transfer_buf: std.ArrayList(u8) = .empty;
-
-export fn transferBufPtr() [*]u8 {
-    return transfer_buf.items.ptr;
-}
-
-export fn transferBufReserve(n: usize) void {
-    transfer_buf.ensureTotalCapacity(gpa, n) catch @panic("OOM");
-    transfer_buf.items.len = n;
-}
-
-export fn compilePatch() usize {
-    return compilePatchInner() catch |err| switch (err) {
-        error.OutOfMemory => @panic("OOM"),
-        error.CompileFailed => 0,
-    };
-}
-
-fn compilePatchInner() !usize {
-    try transfer_buf.append(gpa, 0);
-    var compiler: Compiler = .init(gpa, transfer_buf.items[0 .. transfer_buf.items.len - 1 :0]);
-    defer compiler.deinit();
-    try compiler.compile();
-    if (compiler.errors.items.len > 0) return error.CompileFailed;
-    var mod = try compiler.toModule();
-    defer mod.deinit(gpa);
-    // TODO: this is not really enough to guarantee it's only a single patch and nothing else
-    if (mod.patches.count() != 1 or mod.parts.len != 0) return error.CompileFailed;
-    transfer_buf.clearRetainingCapacity();
-
-    var w: std.Io.Writer.Allocating = .fromArrayList(gpa, &transfer_buf);
-    var json: std.json.Stringify = .{ .writer = &w.writer };
-    const patch_index = mod.patches.values()[0];
-    const patch, _ = mod.extra.decode(Patch, patch_index);
-    patchToJson(&json, patch) catch |err| switch (err) {
-        error.WriteFailed => return error.OutOfMemory,
-    };
-    transfer_buf = w.toArrayList();
-    return transfer_buf.items.len;
-}
-
-fn patchToJson(json: *std.json.Stringify, patch: Patch) !void {
-    try json.beginObject();
-    try json.objectField("connections");
-    try json.beginArray();
-    for (patch.connections.deps, 0..) |slot_deps, to| {
-        var iter = slot_deps.iterator(.{});
-        while (iter.next()) |from| {
-            try json.write(.{ from, to });
-        }
-    }
-    try json.endArray();
-    try json.objectField("slots");
-    try json.beginArray();
-    for (patch.slot_params, patch.slot_env_params) |slot_params, slot_env_params| {
-        try json.beginObject();
-        // Note: json.print is needed here because json.write will internally
-        // convert f32 to f64, resulting in imprecision (e.g. 0.7 -> 0.699999988079071)
-        inline for (@typeInfo(Slot.Params).@"struct".field_names) |field| {
-            try json.objectField(field);
-            try json.print("{}", .{@field(slot_params, field)});
-        }
-        inline for (@typeInfo(Envelope.Params).@"struct".field_names) |field| {
-            try json.objectField(field);
-            try json.print("{}", .{@field(slot_env_params, field)});
-        }
-        try json.endObject();
-    }
-    try json.endArray();
-    try json.endObject();
-}
-
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const Writer = std.Io.Writer;
+const Io = std.Io;
+const Writer = Io.Writer;
 const zfm = @import("zfm");
 const Compiler = zfm.Compiler;
 const Module = zfm.Module;
 const Patch = Module.Patch;
 const Synth = zfm.Synth;
-const Slot = Synth.Slot;
-const Envelope = Synth.Envelope;
+const Voice = Synth.Voice;

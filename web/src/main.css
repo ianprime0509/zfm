@@ -1,0 +1,83 @@
+:root {
+  color-scheme: light dark;
+
+  --color-text: light-dark(#1c1c1c, #e8e8e8);
+  --color-text-muted: light-dark(#444, #b0b0b0);
+  --color-text-secondary: light-dark(#666, #909090);
+  --color-text-faint: light-dark(#888, #707070);
+  --color-outline: light-dark(#333, #ccc);
+
+  --color-bg: light-dark(#fff, #1c1c1c);
+  --color-bg-hover: light-dark(#f0f0f0, #2a2a2a);
+  --color-bg-subtle: light-dark(#f6f6f6, #242424);
+  --color-bg-inactive: light-dark(#eee, #303030);
+  --color-group-bg: light-dark(rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.25));
+
+  --color-border: light-dark(#ddd, #3a3a3a);
+  --color-border-input: light-dark(#bbb, #555);
+  --color-border-soft: light-dark(#ccc, #444);
+
+  --color-accent: light-dark(#2563a8, #5b9bd5);
+  --color-accent-soft: light-dark(#e6eef8, #143355);
+  --color-on-accent: light-dark(#fff, #fff);
+
+  --color-danger: light-dark(#c0392b, #e57373);
+
+  --color-backdrop: light-dark(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6));
+  --color-overlay-shadow: light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.45));
+  --color-modal-shadow: light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.55));
+  --color-focus-ring: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.14));
+
+  --color-illegal-bg: light-dark(#fbeae7, #3a1d1a);
+  --color-illegal-border: light-dark(#e6c1bd, #6b3a35);
+  --color-diag-stripe: light-dark(#eee, #262626);
+
+  --slot-0-accent: light-dark(#c0392b, #e57373);
+  --slot-0-soft: light-dark(#fbeae7, #3a1d1a);
+  --slot-0-text: light-dark(#7b1f15, #f0a59c);
+
+  --slot-1-accent: light-dark(#c87a1a, #e8a04a);
+  --slot-1-soft: light-dark(#fdf0dc, #3a2a14);
+  --slot-1-text: light-dark(#8a4f08, #f0b878);
+
+  --slot-2-accent: light-dark(#b08510, #d4a83a);
+  --slot-2-soft: light-dark(#faf3cf, #3a3014);
+  --slot-2-text: light-dark(#6f5402, #e8c870);
+
+  --slot-3-accent: light-dark(#2f8f4e, #5cbf7a);
+  --slot-3-soft: light-dark(#e7f4ea, #143a1f);
+  --slot-3-text: light-dark(#1c5c30, #8ed8a8);
+
+  --slot-4-accent: light-dark(#1f8a8a, #4db8b8);
+  --slot-4-soft: light-dark(#e2f3f3, #143030);
+  --slot-4-text: light-dark(#0d5555, #80d0d0);
+
+  --slot-5-accent: light-dark(#2563a8, #5b9bd5);
+  --slot-5-soft: light-dark(#e6eef8, #142a45);
+  --slot-5-text: light-dark(#133d6b, #9cc4e8);
+
+  --slot-6-accent: light-dark(#7a4ab8, #a880d4);
+  --slot-6-soft: light-dark(#f0e9f8, #2a1d3a);
+  --slot-6-text: light-dark(#4d2b7b, #c8a8e8);
+
+  --slot-7-accent: light-dark(#b53780, #e070a8);
+  --slot-7-soft: light-dark(#fbe3ee, #3a1d2a);
+  --slot-7-text: light-dark(#751f54, #e8a0c8);
+}
+
+html {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}

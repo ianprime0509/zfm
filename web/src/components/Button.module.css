@@ -1,0 +1,32 @@
+.btn {
+  font: inherit;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-input);
+  border-radius: 4px;
+  background: var(--color-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Compact icon button: tight padding, no extra line height so the SVG sits
+   snugly, and a muted color that strengthens on hover. */
+.icon {
+  padding: 2px;
+  line-height: 0;
+  color: var(--color-text-secondary);
+}
+
+.icon:hover:not(:disabled) {
+  color: var(--color-text);
+}

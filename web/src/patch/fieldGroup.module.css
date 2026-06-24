@@ -1,0 +1,20 @@
+/* Shared "field group" container: a labeled cluster of ParamFields (or
+   similar controls) on a tinted rounded panel. Used by SlotCard and
+   LfoPanel. */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--color-group-bg);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.groupLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}

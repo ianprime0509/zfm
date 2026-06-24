@@ -1,0 +1,62 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: transform 0.05s;
+}
+
+.root:hover {
+  transform: translateY(-1px);
+}
+
+.active {
+  outline: 2px solid var(--slot-accent, var(--color-outline));
+  outline-offset: 1px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.num {
+  font-size: 14px;
+}
+
+.headRight {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.wave {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+}
+
+.role {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.osc {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}

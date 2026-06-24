@@ -17,11 +17,11 @@ pub fn main(init: std.process.Init) !void {
     const arena = init.arena.allocator();
     const io = init.io;
 
-    var maybe_input: ?[]const u8 = null;
-    var maybe_output: ?[:0]const u8 = null;
+    var maybe_input_path: ?[]const u8 = null;
+    var maybe_output_path: ?[:0]const u8 = null;
     var options: Player.Options = .{};
 
-    var args: ArgIterator = .init(try init.minimal.args.iterateAllocator(arena));
+    var args: ArgIterator = .init(try init.minimal.args.toSlice(arena));
     _ = args.next();
     while (args.next()) |arg| {
         switch (arg) {
@@ -34,14 +34,13 @@ pub fn main(init: std.process.Init) !void {
                 const value = args.optionValue() orelse fatal("missing value for --loops", .{});
                 options.loops = std.fmt.parseInt(u8, value, 10) catch fatal("invalid value for --loops: {s}", .{value});
             } else if (option.is('o', "output")) {
-                const value = args.optionValue() orelse fatal("missing value for --output", .{});
-                maybe_output = try arena.dupeSentinel(u8, value, 0);
+                maybe_output_path = args.optionValue() orelse fatal("missing value for --output", .{});
             } else {
                 fatal("unrecognized option: {f}", .{option});
             },
             .param => |param| {
-                if (maybe_input != null) fatal("too many input files", .{});
-                maybe_input = try arena.dupe(u8, param);
+                if (maybe_input_path != null) fatal("too many input files", .{});
+                maybe_input_path = param;
             },
             .unexpected_value => |unexpected_value| fatal("unexpected value to --{s}: {s}", .{
                 unexpected_value.option,
@@ -50,22 +49,8 @@ pub fn main(init: std.process.Init) !void {
         }
     }
 
-    const input = maybe_input orelse fatal("missing input file", .{});
-    const source = try std.Io.Dir.cwd().readFileAllocOptions(io, input, gpa, .unlimited, .@"1", 0);
-    defer gpa.free(source);
-
-    var compiler: Compiler = .init(gpa, source);
-    defer compiler.deinit();
-    try compiler.compile();
-    if (compiler.errors.items.len > 0) {
-        for (compiler.errors.items) |e| {
-            const loc = compiler.sourceLocation(e.pos);
-            log.err("{}:{}: part {?c}: {t}", .{ loc.line, loc.column, e.part, e.tag });
-        }
-        return error.CompileError;
-    }
-
-    var mod = try compiler.toModule();
+    const input_path = maybe_input_path orelse fatal("missing input file", .{});
+    var mod = try readInput(gpa, io, input_path);
     defer mod.deinit(gpa);
 
     const voices = try gpa.alloc(Synth.Voice, mod.parts.len);
@@ -78,11 +63,47 @@ pub fn main(init: std.process.Init) !void {
     defer gpa.free(parts);
     var player: Player = .init(&synth, &mod, parts, options);
 
-    if (maybe_output) |output| {
-        try mainSave(io, &player, output);
+    if (maybe_output_path) |output_path| {
+        try mainSave(io, &player, output_path);
     } else {
         try mainPlay(io, &player);
     }
+}
+
+fn readInput(gpa: Allocator, io: Io, path: []const u8) !Module {
+    if (std.mem.endsWith(u8, path, ".zfm")) {
+        return try readInputZfm(gpa, io, path);
+    } else if (std.mem.endsWith(u8, path, ".mod")) {
+        return try readInputMod(gpa, io, path);
+    } else {
+        fatal("unknown input file type", .{});
+    }
+}
+
+fn readInputZfm(gpa: Allocator, io: Io, path: []const u8) !Module {
+    const source = try Io.Dir.cwd().readFileAllocOptions(io, path, gpa, .unlimited, .@"1", 0);
+    defer gpa.free(source);
+
+    var compiler: Compiler = .init(gpa, source);
+    defer compiler.deinit();
+    try compiler.compile();
+    if (compiler.errors.items.len > 0) {
+        for (compiler.errors.items) |err| {
+            const loc = compiler.sourceLocation(err.span).start;
+            log.err("{}:{}: part {?c}: {f}", .{ loc.line, loc.column, err.part, err });
+        }
+        return error.CompileError;
+    }
+
+    return try compiler.toModule();
+}
+
+fn readInputMod(gpa: Allocator, io: Io, path: []const u8) !Module {
+    var file = try Io.Dir.cwd().openFile(io, path, .{});
+    defer file.close(io);
+    var buf: [1024]u8 = undefined;
+    var reader = file.reader(io, &buf);
+    return try .readUnchecked(gpa, &reader.interface);
 }
 
 fn fatal(comptime format: []const u8, args: anytype) noreturn {
@@ -156,12 +177,22 @@ fn mainPlay(io: Io, player: *Player) !void {
     ctx.done.waitUncancelable(io);
 }
 
-fn mainSave(io: Io, player: *Player, output: [:0]const u8) !void {
+fn mainSave(io: Io, player: *Player, path: [:0]const u8) !void {
+    if (std.mem.endsWith(u8, path, ".wav")) {
+        try saveWav(io, player, path);
+    } else if (std.mem.endsWith(u8, path, ".mod")) {
+        try saveMod(io, player, path);
+    } else {
+        fatal("unknown output file type", .{});
+    }
+}
+
+fn saveWav(io: Io, player: *Player, path: [:0]const u8) !void {
     _ = io; // TODO: use Zig IO rather than miniaudio
 
     const config = c.ma_encoder_config_init(c.ma_encoding_format_wav, c.ma_format_f32, 2, zfm.sample_rate);
     var encoder: c.ma_encoder = undefined;
-    if (c.ma_encoder_init_file(output.ptr, &config, &encoder) != c.MA_SUCCESS) {
+    if (c.ma_encoder_init_file(path.ptr, &config, &encoder) != c.MA_SUCCESS) {
         return error.AudioError;
     }
     defer c.ma_encoder_uninit(&encoder);
@@ -174,6 +205,15 @@ fn mainSave(io: Io, player: *Player, output: [:0]const u8) !void {
         }
         if (done) break;
     }
+}
+
+fn saveMod(io: Io, player: *Player, path: []const u8) !void {
+    var file = try Io.Dir.cwd().createFile(io, path, .{});
+    defer file.close(io);
+    var buf: [1024]u8 = undefined;
+    var writer = file.writer(io, &buf);
+    try player.driver.mod.write(&writer.interface);
+    try writer.interface.flush();
 }
 
 const AudioContext = struct {
@@ -204,13 +244,14 @@ fn audioCallback(
 
 // Inspired by https://github.com/judofyr/parg
 const ArgIterator = struct {
-    args: std.process.Args.Iterator,
+    args: []const [:0]const u8,
+    index: usize,
     state: union(enum) {
         normal,
-        short: []const u8,
+        short: [:0]const u8,
         long: struct {
             option: []const u8,
-            value: []const u8,
+            value: [:0]const u8,
         },
         params_only,
     },
@@ -241,25 +282,21 @@ const ArgIterator = struct {
         },
     };
 
-    fn init(args: std.process.Args.Iterator) ArgIterator {
+    fn init(args: []const [:0]const u8) ArgIterator {
         return .{
             .args = args,
+            .index = 0,
             .state = .normal,
         };
-    }
-
-    fn deinit(iter: *ArgIterator) void {
-        iter.args.deinit();
-        iter.* = undefined;
     }
 
     fn next(iter: *ArgIterator) ?Arg {
         switch (iter.state) {
             .normal => {
-                const arg = iter.args.next() orelse return null;
+                const arg = iter.nextRaw() orelse return null;
                 if (std.mem.eql(u8, arg, "--")) {
                     iter.state = .params_only;
-                    return .{ .param = iter.args.next() orelse return null };
+                    return .{ .param = iter.nextRaw() orelse return null };
                 } else if (std.mem.startsWith(u8, arg, "--")) {
                     if (std.mem.indexOfScalar(u8, arg, '=')) |equals_index| {
                         const option = arg["--".len..equals_index];
@@ -290,13 +327,13 @@ const ArgIterator = struct {
                 .option = long.option,
                 .value = long.value,
             } },
-            .params_only => return .{ .param = iter.args.next() orelse return null },
+            .params_only => return .{ .param = iter.nextRaw() orelse return null },
         }
     }
 
-    fn optionValue(iter: *ArgIterator) ?[]const u8 {
+    fn optionValue(iter: *ArgIterator) ?[:0]const u8 {
         switch (iter.state) {
-            .normal => return iter.args.next(),
+            .normal => return iter.nextRaw(),
             .short => |rest| {
                 iter.state = .normal;
                 return rest;
@@ -308,9 +345,17 @@ const ArgIterator = struct {
             .params_only => unreachable,
         }
     }
+
+    fn nextRaw(iter: *ArgIterator) ?[:0]const u8 {
+        if (iter.index == iter.args.len) return null;
+        const arg = iter.args[iter.index];
+        iter.index += 1;
+        return arg;
+    }
 };
 
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const Writer = Io.Writer;
 const log = std.log;

@@ -2,7 +2,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const zfm = b.dependency("zfm", .{
+    const zfm = b.dependency("zfm_core", .{
         .target = target,
         .optimize = optimize,
     }).module("zfm");

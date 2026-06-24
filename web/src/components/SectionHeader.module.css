@@ -1,0 +1,12 @@
+/* Shared section header: title bar with a bottom border, used by BankEditor
+   and PatchEditor. */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}

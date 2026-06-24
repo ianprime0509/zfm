@@ -1,0 +1,50 @@
+.modal {
+  /* Reset native dialog defaults so it adopts our card style. */
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  max-width: min(960px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+}
+
+.modal::backdrop {
+  background: var(--color-backdrop);
+}
+
+.modalInner {
+  background: var(--color-bg);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px var(--color-modal-shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Clamp to the dialog's max-height so overflow is handled by the body
+     below, instead of scrolling the entire dialog (header included). */
+  max-height: inherit;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+  gap: 12px;
+  /* Keep the header pinned at the top; never shrink it. */
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.modalBody {
+  /* Let the caller's content drive its own layout. When it would overflow
+     the dialog, shrink (instead of the header) and scroll within the body,
+     so the header stays pinned at the top. */
+  min-height: 0;
+  overflow: auto;
+}

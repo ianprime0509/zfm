@@ -1,0 +1,13 @@
+.{
+    .name = .zfm_core,
+    .version = "0.0.1",
+    .fingerprint = 0xf4343523314ce35b,
+    .minimum_zig_version = "0.17.0-dev.1415+64dfaa568",
+    .paths = .{
+        "README.md",
+        "LICENSE",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

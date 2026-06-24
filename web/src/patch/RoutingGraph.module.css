@@ -1,0 +1,87 @@
+.grid {
+  display: grid;
+  /* +1 for the header column */
+  grid-template-columns: repeat(9, 28px);
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+}
+
+.corner {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-faint);
+  text-align: center;
+  width: 28px;
+}
+
+.head {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.head:hover {
+  filter: brightness(0.9);
+}
+
+.active {
+  border: 2px solid var(--color-outline);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.btn {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+}
+
+.illegal {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-illegal-bg),
+    var(--color-illegal-bg) 3px,
+    var(--color-bg) 3px,
+    var(--color-bg) 6px
+  );
+  border-color: var(--color-illegal-border);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.diag {
+  width: 28px;
+  height: 28px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-diag-stripe),
+    var(--color-diag-stripe) 3px,
+    var(--color-bg) 3px,
+    var(--color-bg) 6px
+  );
+  border: 1px solid transparent;
+  border-radius: 4px;
+}

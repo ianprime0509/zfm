@@ -1,0 +1,7 @@
+.root {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--color-bg);
+  border-radius: 3px;
+}

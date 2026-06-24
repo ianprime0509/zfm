@@ -1,10 +1,10 @@
 .{
     .name = .zfm_web,
     .version = "0.0.1",
-    .fingerprint = 0x139df1174b0ca04b,
-    .minimum_zig_version = "0.17.0-dev.956+2dca73595",
+    .fingerprint = 0x139df1171f33ab34,
+    .minimum_zig_version = "0.17.0-dev.1415+64dfaa568",
     .paths = .{""},
     .dependencies = .{
-        .zfm = .{ .path = ".." },
+        .zfm_core = .{ .path = "../core" },
     },
 }
