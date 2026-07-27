@@ -3,6 +3,7 @@ pos: SourceIndex,
 current_part: ?u8,
 parts: std.array_hash_map.Auto(u8, Part),
 patches: std.array_hash_map.Auto(StringPool.Index, Extra.Index),
+macros: std.array_hash_map.Auto(StringPool.Index, SourceIndex),
 extra: Extra.Wip,
 strings: StringPool,
 
@@ -16,35 +17,6 @@ gpa: Allocator,
 
 const eof: u8 = 0;
 
-pub const SourceIndex = enum(u32) {
-    start,
-    _,
-
-    pub fn next(index: SourceIndex) SourceIndex {
-        return @enumFromInt(@intFromEnum(index) + 1);
-    }
-
-    pub const Span = struct {
-        start: SourceIndex,
-        end: SourceIndex,
-    };
-};
-
-pub const SourceLocation = struct {
-    line: u32,
-    column: u32,
-
-    pub const start: SourceLocation = .{
-        .line = 1,
-        .column = 1,
-    };
-
-    pub const Span = struct {
-        start: SourceLocation,
-        end: SourceLocation,
-    };
-};
-
 pub fn init(gpa: Allocator, source: [:0]const u8) Compiler {
     return .{
         .source = source,
@@ -52,6 +24,7 @@ pub fn init(gpa: Allocator, source: [:0]const u8) Compiler {
         .current_part = null,
         .parts = .empty,
         .patches = .empty,
+        .macros = .empty,
         .extra = .empty,
         .strings = .empty,
 
@@ -69,6 +42,7 @@ pub fn deinit(c: *Compiler) void {
     for (c.parts.values()) |*part| part.deinit(c.gpa);
     c.parts.deinit(c.gpa);
     c.patches.deinit(c.gpa);
+    c.macros.deinit(c.gpa);
     c.extra.deinit(c.gpa);
     c.strings.deinit(c.gpa);
     c.errors.deinit(c.gpa);
@@ -146,6 +120,9 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
     var patches = c.patches;
     errdefer patches.deinit(c.gpa);
     c.patches = .empty;
+    var macros = c.macros;
+    errdefer macros.deinit(c.gpa);
+    c.macros = .empty;
     var extra = try c.extra.finish(c.gpa);
     errdefer extra.deinit(c.gpa);
     var strings = try c.strings.toOwnedSlice(c.gpa);
@@ -155,6 +132,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         .commands = commands.toOwnedSlice(),
         .parts = parts,
         .patches = patches,
+        .macros = macros,
         .extra = extra,
         .strings = strings,
 
@@ -169,6 +147,7 @@ fn compileLine(c: *Compiler) !void {
     switch (c.peekByte()) {
         '#' => try c.compileDirective(),
         '@' => try c.compilePatch(),
+        '!' => try c.compileMacro(),
         'A'...'Z', 'a'...'z' => try c.compileParts(),
         else => try c.endLineAndContinuation(),
     }
@@ -321,6 +300,22 @@ fn takeConnections(c: *Compiler) !?Voice.Connections {
     }
 }
 
+fn compileMacro(c: *Compiler) !void {
+    assert(c.sourceByte(c.pos) == '!');
+    c.skipByte();
+    const name = c.takeName() orelse {
+        try c.report(.expected_name);
+        c.skipLineAndContinuation();
+        return;
+    };
+    try c.expectSpace();
+
+    const name_str = try c.strings.intern(c.gpa, name);
+    try c.macros.put(c.gpa, name_str, c.pos);
+    // Skip the actual macro definition: macros are processed only when used.
+    c.skipLineAndContinuation();
+}
+
 fn compileParts(c: *Compiler) !void {
     const part_names = try c.takePartNames();
     if (!c.continueLine()) return;
@@ -343,10 +338,14 @@ fn compileParts(c: *Compiler) !void {
 }
 
 fn compilePart(c: *Compiler, part: *Part) !void {
-    while (c.continueLine()) try c.compileCommand(part);
+    var call_stack: CallStack = .empty;
+    while (true) {
+        while (c.continueLine()) try c.compileCommand(part, &call_stack);
+        c.pos = call_stack.returnTo() orelse break;
+    }
 }
 
-fn compileCommand(c: *Compiler, part: *Part) !void {
+fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
     const start_pos = c.pos;
     switch (c.peekByte()) {
         'a'...'g' => {
@@ -415,6 +414,15 @@ fn compileCommand(c: *Compiler, part: *Part) !void {
             const name_str = c.strings.find(name) orelse return c.reportSpan(.undefined_patch, name_pos, c.pos);
             const index = c.patches.get(name_str) orelse return c.reportSpan(.undefined_patch, name_pos, c.pos);
             try part.addCommand(c.gpa, .set_patch, .{ .extra = index });
+        },
+        '!' => {
+            c.skipByte();
+            const name_pos = c.pos;
+            const name = c.takeName() orelse return c.report(.expected_name);
+            const name_str = c.strings.find(name) orelse return c.reportSpan(.undefined_macro, name_pos, c.pos);
+            const call_pos = c.macros.get(name_str) orelse return c.reportSpan(.undefined_macro, name_pos, c.pos);
+            call_stack.callFrom(c.pos) catch return c.reportSpan(.macro_too_deep, call_pos, c.pos);
+            c.pos = call_pos;
         },
         'v' => {
             c.skipByte();
@@ -1024,7 +1032,7 @@ const Part = struct {
 
         const Stack = struct {
             loops: [max_loop_depth]Loop,
-            len: u32,
+            len: std.math.IntFittingRange(0, max_loop_depth),
 
             const empty: Stack = .{ .loops = undefined, .len = 0 };
 
@@ -1041,13 +1049,29 @@ const Part = struct {
             fn pop(s: *Stack) ?Loop {
                 if (s.len == 0) return null;
                 s.len -= 1;
-                return if (s.len < s.loops.len)
-                    s.loops[s.len]
-                else
-                    .{ .start = undefined, .pos = .start };
+                return s.loops[s.len];
             }
         };
     };
+};
+
+const CallStack = struct {
+    ret_addrs: [max_macro_depth]SourceIndex,
+    len: std.math.IntFittingRange(0, max_macro_depth),
+
+    const empty: CallStack = .{ .ret_addrs = undefined, .len = 0 };
+
+    fn callFrom(s: *CallStack, ret_addr: SourceIndex) error{Overflow}!void {
+        if (s.len == s.ret_addrs.len) return error.Overflow;
+        s.ret_addrs[s.len] = ret_addr;
+        s.len += 1;
+    }
+
+    fn returnTo(s: *CallStack) ?SourceIndex {
+        if (s.len == 0) return null;
+        s.len -= 1;
+        return s.ret_addrs[s.len];
+    }
 };
 
 pub const Error = struct {
@@ -1071,6 +1095,8 @@ pub const Error = struct {
         invalid_int,
         invalid_float,
         undefined_patch,
+        undefined_macro,
+        macro_too_deep,
         indivisible_note_length,
         last_command_not_note,
         cannot_dot,
@@ -1104,6 +1130,8 @@ pub const Error = struct {
             }), err.data.int.bits }),
             .invalid_float => try w.print("invalid float", .{}),
             .undefined_patch => try w.print("undefined patch", .{}),
+            .undefined_macro => try w.print("undefined macro", .{}),
+            .macro_too_deep => try w.print("macro call stack too deep", .{}),
             .indivisible_note_length => try w.print("note length cannot be represented as ticks", .{}),
             .last_command_not_note => try w.print("last command was not a note", .{}),
             .cannot_dot => try w.print("note length cannot be dotted", .{}),
@@ -1124,6 +1152,8 @@ const assert = std.debug.assert;
 const zfm = @import("./zfm.zig");
 const Driver = zfm.Driver;
 const Module = zfm.Module;
+const SourceIndex = Module.SourceIndex;
+const SourceLocation = Module.SourceLocation;
 const Command = Module.Command;
 const Patch = Module.Patch;
 const Lfo = Module.Lfo;
@@ -1132,6 +1162,7 @@ const Ticks = Module.Ticks;
 const Tempo = Module.Tempo;
 const LoopCount = Module.LoopCount;
 const max_loop_depth = Module.max_loop_depth;
+const max_macro_depth = Module.max_macro_depth;
 const Synth = zfm.Synth;
 const Voice = Synth.Voice;
 const Slot = Synth.Slot;
