@@ -110,6 +110,11 @@ pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
             => {
                 try w.writeInt(u32, @intFromEnum(d.lfo), .little);
             },
+            .set_lfo_enabled,
+            => {
+                try w.writeInt(u32, @intFromEnum(d.lfo_enabled.index), .little);
+                try w.writeByte(@intFromBool(d.lfo_enabled.enabled));
+            },
             .set_lfo_target,
             => {
                 try w.writeInt(u32, @intFromEnum(d.lfo_target.index), .little);
@@ -227,6 +232,13 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
             .toggle_lfo,
             => .{
                 .lfo = @enumFromInt(try r.takeInt(u32, .little)),
+            },
+            .set_lfo_enabled,
+            => .{
+                .lfo_enabled = .{
+                    .index = @enumFromInt(try r.takeInt(u32, .little)),
+                    .enabled = try r.takeByte() != 0,
+                },
             },
             .set_lfo_target,
             => .{
@@ -403,6 +415,7 @@ pub const Command = struct {
         set_volume,
         add_volume,
         toggle_lfo,
+        set_lfo_enabled,
         set_lfo_target,
         set_lfo_size,
         set_lfo_wave,
@@ -418,6 +431,10 @@ pub const Command = struct {
         amount: f32,
         extra: Extra.Index,
         lfo: Lfo.Index,
+        lfo_enabled: struct {
+            index: Lfo.Index,
+            enabled: bool,
+        },
         lfo_target: struct {
             index: Lfo.Index,
             target: Lfo.Target,

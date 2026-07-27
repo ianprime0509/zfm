@@ -88,7 +88,7 @@ function lfoToMml(index: number, p: LfoParams): string {
     `MS${index},${formatNumber(p.size.scale)},${formatNumber(p.size.offset)}`,
     wave,
     `MO${index},${p.trigger}`,
-    `MA${index},${p.adjust ? 1 : 0}`,
+    `MA${index},${p.adjust ? "on" : "off"}`,
   ].join(" ");
 }
 

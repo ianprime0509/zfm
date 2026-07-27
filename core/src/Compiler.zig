@@ -461,7 +461,12 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
         '*' => {
             c.skipByte();
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
-            try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .user(lfo) });
+            if (c.takeComma()) {
+                const new_state = try c.takeEnum(enum { on, off }) orelse return c.report(.expected_param);
+                try c.addSetLfoEnabledCommand(part, .user(lfo), new_state == .on);
+            } else {
+                try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .user(lfo) });
+            }
         },
         'M' => {
             c.skipByte();
@@ -603,9 +608,9 @@ fn compileLfoCommand(c: *Compiler, part: *Part, start_pos: SourceIndex) !void {
 
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (!c.takeComma()) return c.report(.expected_param);
-            const adjust = try c.takeBoolean() orelse return c.report(.expected_param);
+            const adjust = try c.takeEnum(enum { on, off }) orelse return c.report(.expected_param);
 
-            try c.addSetLfoAdjustCommand(part, .user(lfo), adjust);
+            try c.addSetLfoAdjustCommand(part, .user(lfo), adjust == .on);
         },
         else => {
             c.skipByte();
@@ -629,6 +634,13 @@ fn compileKeyChange(c: *Compiler, part: *Part) !void {
             c.skipByte();
         },
     };
+}
+
+fn addSetLfoEnabledCommand(c: *Compiler, part: *Part, index: Lfo.Index, enabled: bool) !void {
+    try part.addCommand(c.gpa, .set_lfo_enabled, .{ .lfo_enabled = .{
+        .index = index,
+        .enabled = enabled,
+    } });
 }
 
 fn addSetLfoTargetCommand(c: *Compiler, part: *Part, index: Lfo.Index, target: Lfo.Target) !void {
@@ -839,10 +851,6 @@ fn takeNoteLength(c: *Compiler) !?Ticks {
         try c.reportPos(.indivisible_note_length, start);
         return null;
     };
-}
-
-fn takeBoolean(c: *Compiler) !?bool {
-    return (try c.takeNumber(u1) orelse return null) != 0;
 }
 
 fn takeNumber(c: *Compiler, T: type) !?T {

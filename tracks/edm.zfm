@@ -7,8 +7,8 @@
 @edm-kick .
   sine 1 1 1 1 0.00003 0 0 0.00003
 
-A @heavy-edm-bass MT0,freq MS0,440,0 MW0,exp,-100 MO0,key_on MA0,1 *0
-B @edm-kick MT0,freq MS0,440,-330 MW0,exp,-50 MO0,key_on MA0,1 *0
+A @heavy-edm-bass MT0,freq MS0,440,0 MW0,exp,-100 MO0,key_on MA0,on *0
+B @edm-kick MT0,freq MS0,440,-330 MW0,exp,-50 MO0,key_on MA0,on *0
 
 A o3 [c4.g2+8 g+4.c+2+8 c4.g2+8 g+4.c+4c+8c+16d+8.]2
 B o3 [r1]4 [[c4]4]4

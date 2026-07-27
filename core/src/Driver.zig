@@ -118,6 +118,13 @@ fn execute(
             lfo.t = 0.0;
             return command.next();
         },
+        .set_lfo_enabled => {
+            const lfo_enabled = driver.mod.data(command).lfo_enabled;
+            const lfo = part.lfoPtr(lfo_enabled.index);
+            lfo.enabled = lfo_enabled.enabled;
+            lfo.t = 0.0;
+            return command.next();
+        },
         .set_lfo_target => {
             const lfo_target = driver.mod.data(command).lfo_target;
             part.lfoPtr(lfo_target.index).params.target = lfo_target.target;
