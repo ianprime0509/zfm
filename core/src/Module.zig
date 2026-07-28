@@ -1,7 +1,6 @@
 commands: Command.List.Slice,
 parts: []Part,
 patches: std.array_hash_map.Auto(StringPool.Index, Extra.Index),
-macros: std.array_hash_map.Auto(StringPool.Index, SourceIndex),
 extra: Extra,
 strings: StringPool.Slice,
 
@@ -16,7 +15,6 @@ pub const empty: Module = .{
     .commands = .empty,
     .parts = &.{},
     .patches = .empty,
-    .macros = .empty,
     .extra = .empty,
     .strings = .empty,
 
@@ -30,7 +28,6 @@ pub fn deinit(mod: *Module, gpa: Allocator) void {
     mod.commands.deinit(gpa);
     gpa.free(mod.parts);
     mod.patches.deinit(gpa);
-    mod.macros.deinit(gpa);
     mod.extra.deinit(gpa);
     mod.strings.deinit(gpa);
     mod.* = undefined;
@@ -60,12 +57,6 @@ pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
 
     try w.writeInt(u32, @intCast(mod.patches.count()), .little);
     for (mod.patches.keys(), mod.patches.values()) |key, value| {
-        try w.writeInt(u32, @intFromEnum(key), .little);
-        try w.writeInt(u32, @intFromEnum(value), .little);
-    }
-
-    try w.writeInt(u32, @intCast(mod.macros.count()), .little);
-    for (mod.macros.keys(), mod.macros.values()) |key, value| {
         try w.writeInt(u32, @intFromEnum(key), .little);
         try w.writeInt(u32, @intFromEnum(value), .little);
     }
@@ -177,17 +168,6 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
         );
     }
 
-    const n_macros = try r.takeInt(u32, .little);
-    var macros: std.array_hash_map.Auto(StringPool.Index, SourceIndex) = .empty;
-    errdefer macros.deinit(gpa);
-    try macros.ensureTotalCapacity(gpa, n_macros);
-    for (0..n_macros) |_| {
-        macros.putAssumeCapacity(
-            @enumFromInt(try r.takeInt(u32, .little)),
-            @enumFromInt(try r.takeInt(u32, .little)),
-        );
-    }
-
     const n_extra_data = try r.takeInt(u32, .little);
     const extra_data = try gpa.alloc(Extra.Datum, n_extra_data);
     errdefer gpa.free(extra_data);
@@ -284,7 +264,6 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
         .commands = commands.toOwnedSlice(),
         .parts = parts,
         .patches = patches,
-        .macros = macros,
         .extra = .{ .data = extra_data },
         .strings = .{ .bytes = strings_bytes },
         .title = title,

@@ -52,7 +52,6 @@ fn emptyModule(n_voices: usize) Allocator.Error!Module {
         .commands = mod_commands.toOwnedSlice(),
         .parts = mod_parts,
         .patches = .empty,
-        .macros = .empty,
         .extra = .empty,
         .strings = .empty,
 

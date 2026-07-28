@@ -120,9 +120,6 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
     var patches = c.patches;
     errdefer patches.deinit(c.gpa);
     c.patches = .empty;
-    var macros = c.macros;
-    errdefer macros.deinit(c.gpa);
-    c.macros = .empty;
     var extra = try c.extra.finish(c.gpa);
     errdefer extra.deinit(c.gpa);
     var strings = try c.strings.toOwnedSlice(c.gpa);
@@ -132,7 +129,6 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         .commands = commands.toOwnedSlice(),
         .parts = parts,
         .patches = patches,
-        .macros = macros,
         .extra = extra,
         .strings = strings,
 
