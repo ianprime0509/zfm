@@ -117,11 +117,15 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         });
     }
 
-    var patches = c.patches;
-    errdefer patches.deinit(c.gpa);
-    c.patches = .empty;
+    const patches = try c.gpa.alloc(Patch.Entry, c.patches.count());
+    errdefer c.gpa.free(patches);
+    for (patches, c.patches.keys(), c.patches.values()) |*entry, name, index| {
+        entry.* = .{ .name = name, .index = index };
+    }
+
     var extra = try c.extra.finish(c.gpa);
     errdefer extra.deinit(c.gpa);
+
     var strings = try c.strings.toOwnedSlice(c.gpa);
     errdefer strings.deinit(c.gpa);
 

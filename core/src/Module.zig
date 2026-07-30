@@ -1,6 +1,6 @@
 commands: Command.List.Slice,
 parts: []Part,
-patches: std.array_hash_map.Auto(StringPool.Index, Extra.Index),
+patches: []Patch.Entry,
 extra: Extra,
 strings: StringPool.Slice,
 
@@ -9,12 +9,10 @@ composer: StringPool.Index,
 arranger: StringPool.Index,
 initial_tempo: Tempo,
 
-pub const version: u8 = 0;
-
 pub const empty: Module = .{
     .commands = .empty,
     .parts = &.{},
-    .patches = .empty,
+    .patches = &.{},
     .extra = .empty,
     .strings = .empty,
 
@@ -27,7 +25,7 @@ pub const empty: Module = .{
 pub fn deinit(mod: *Module, gpa: Allocator) void {
     mod.commands.deinit(gpa);
     gpa.free(mod.parts);
-    mod.patches.deinit(gpa);
+    gpa.free(mod.patches);
     mod.extra.deinit(gpa);
     mod.strings.deinit(gpa);
     mod.* = undefined;
@@ -41,236 +39,134 @@ pub fn data(mod: *const Module, command: Command.Index) Command.Data {
     return mod.commands.items(.data)[@backingInt(command)];
 }
 
-pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
-    try w.writeByte(version);
-
-    try w.writeInt(u32, @backingInt(mod.title), .little);
-    try w.writeInt(u32, @backingInt(mod.composer), .little);
-    try w.writeInt(u32, @backingInt(mod.arranger), .little);
-    try w.writeInt(u32, @bitCast(mod.initial_tempo.bpm), .little);
-
-    try w.writeByte(@intCast(mod.parts.len));
-    for (mod.parts) |part| {
-        try w.writeInt(u32, @backingInt(part.start), .little);
-        try w.writeInt(u32, @backingInt(part.global_loop), .little);
+// The approach taken for dump/save is exactly the same as what Zig does
+// internally for its ZIR cache (see Zcu.zig, loadZirCache and saveZirCache).
+// This is obviously unsafe and depends on compiler internals, but it's so
+// efficient and nice...
+const data_has_safety_tag = @sizeOf(Command.Data) != 8;
+const DataBytes = [8]u8;
+const HackDataLayout = extern struct {
+    data: DataBytes align(@alignOf(Command.Data)),
+    safety_tag: u8,
+};
+comptime {
+    if (data_has_safety_tag) {
+        assert(@sizeOf(HackDataLayout) == @sizeOf(Command.Data));
     }
-
-    try w.writeInt(u32, @intCast(mod.patches.count()), .little);
-    for (mod.patches.keys(), mod.patches.values()) |key, value| {
-        try w.writeInt(u32, @backingInt(key), .little);
-        try w.writeInt(u32, @backingInt(value), .little);
-    }
-
-    try w.writeInt(u32, @intCast(mod.extra.data.len), .little);
-    for (mod.extra.data) |datum| {
-        try w.writeInt(Extra.Datum, datum, .little);
-    }
-
-    try w.writeInt(u32, @intCast(mod.strings.bytes.len), .little);
-    try w.writeAll(mod.strings.bytes);
-
-    // Commands are written last, because decoding the commands requires knowing
-    // the data associated to each tag. If new tags are added later which readers
-    // don't understand, at least they can still read the other metadata.
-    for (mod.commands.items(.tag), mod.commands.items(.data)) |t, d| {
-        try w.writeByte(@backingInt(t));
-        switch (t) {
-            .end,
-            .key_off,
-            => {
-                // No data.
-            },
-            .rest,
-            => {
-                try w.writeInt(u32, @backingInt(d.ticks), .little);
-            },
-            .key_on,
-            => {
-                try w.writeInt(u32, @bitCast(d.freq), .little);
-            },
-            .set_patch,
-            => {
-                try w.writeInt(u32, @backingInt(d.extra), .little);
-            },
-            .set_volume,
-            .add_volume,
-            => {
-                try w.writeInt(u32, @bitCast(d.amount), .little);
-            },
-            .toggle_lfo,
-            => {
-                try w.writeByte(@backingInt(d.lfo));
-            },
-            .set_lfo_enabled,
-            => {
-                try w.writeByte(@backingInt(d.lfo_enabled.index));
-                try w.writeByte(@intFromBool(d.lfo_enabled.enabled));
-            },
-            .set_lfo_target,
-            => {
-                try w.writeByte(@backingInt(d.lfo_target.index));
-                try w.writeInt(u32, @backingInt(d.lfo_target.target), .little);
-            },
-            .set_lfo_trigger,
-            => {
-                try w.writeByte(@backingInt(d.lfo_trigger.index));
-                try w.writeInt(u32, @backingInt(d.lfo_trigger.trigger), .little);
-            },
-            .set_lfo_adjust,
-            => {
-                try w.writeByte(@backingInt(d.lfo_adjust.index));
-                try w.writeInt(u8, @intFromBool(d.lfo_adjust.adjust), .little);
-            },
-            .set_lfo_size,
-            .set_lfo_wave,
-            => {
-                try w.writeByte(@backingInt(d.lfo_data.index));
-                try w.writeInt(u32, @backingInt(d.lfo_data.data), .little);
-            },
-            .loop,
-            => {
-                try w.writeInt(u32, @backingInt(d.loop.branch), .little);
-                try w.writeByte(@backingInt(d.loop.count));
-            },
-        }
-    }
-    try w.writeByte(0xFF);
 }
 
-pub const ReadUncheckedError = Allocator.Error || Reader.Error || error{UnsupportedVersion};
+const Header = extern struct {
+    n_commands: u32,
+    n_parts: u8,
+    n_patches: u32,
+    n_extra: u32,
+    strings_len: u32,
 
-pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
-    if (try r.takeByte() != version) return error.UnsupportedVersion;
+    title: StringPool.Index,
+    composer: StringPool.Index,
+    arranger: StringPool.Index,
+    initial_tempo_bpm: f32,
+};
 
-    const title: StringPool.Index = @fromBackingInt(try r.takeInt(u32, .little));
-    const composer: StringPool.Index = @fromBackingInt(try r.takeInt(u32, .little));
-    const arranger: StringPool.Index = @fromBackingInt(try r.takeInt(u32, .little));
-    const initial_tempo: Tempo = .{ .bpm = @bitCast(try r.takeInt(u32, .little)) };
+pub fn dump(mod: *const Module, gpa: Allocator, w: *Writer) (Writer.Error || Allocator.Error)!void {
+    const header: Header = .{
+        .n_commands = @intCast(mod.commands.len),
+        .n_parts = @intCast(mod.parts.len),
+        .n_patches = @intCast(mod.patches.len),
+        .n_extra = @intCast(mod.extra.data.len),
+        .strings_len = @intCast(mod.strings.bytes.len),
 
-    const n_parts = try r.takeByte();
-    const parts = try gpa.alloc(Part, n_parts);
-    errdefer gpa.free(parts);
-    for (parts) |*part| {
-        part.* = .{
-            .start = @fromBackingInt(try r.takeInt(u32, .little)),
-            .global_loop = @fromBackingInt(try r.takeInt(u32, .little)),
-        };
-    }
-
-    const n_patches = try r.takeInt(u32, .little);
-    var patches: std.array_hash_map.Auto(StringPool.Index, Extra.Index) = .empty;
-    errdefer patches.deinit(gpa);
-    try patches.ensureTotalCapacity(gpa, n_patches);
-    for (0..n_patches) |_| {
-        patches.putAssumeCapacity(
-            @fromBackingInt(try r.takeInt(u32, .little)),
-            @fromBackingInt(try r.takeInt(u32, .little)),
-        );
-    }
-
-    const n_extra_data = try r.takeInt(u32, .little);
-    const extra_data = try gpa.alloc(Extra.Datum, n_extra_data);
-    errdefer gpa.free(extra_data);
-    for (extra_data) |*datum| {
-        datum.* = try r.takeInt(Extra.Datum, .little);
-    }
-
-    const strings_bytes_len = try r.takeInt(u32, .little);
-    const strings_bytes = try gpa.alloc(u8, strings_bytes_len);
-    errdefer gpa.free(strings_bytes);
-    try r.readSliceAll(strings_bytes);
-
-    var commands: Command.List = .empty;
-    errdefer commands.deinit(gpa);
-    while (true) {
-        const t_raw = try r.takeByte();
-        if (t_raw == 0xFF) break;
-        const t = std.enums.fromInt(Command.Tag, t_raw) orelse return error.UnsupportedVersion;
-        const d: Command.Data = switch (t) {
-            .end,
-            .key_off,
-            => .{
-                .none = {},
-            },
-            .rest,
-            => .{
-                .ticks = @fromBackingInt(try r.takeInt(u32, .little)),
-            },
-            .key_on,
-            => .{
-                .freq = @bitCast(try r.takeInt(u32, .little)),
-            },
-            .set_patch,
-            => .{
-                .extra = @fromBackingInt(try r.takeInt(u32, .little)),
-            },
-            .set_volume,
-            .add_volume,
-            => .{
-                .amount = @bitCast(try r.takeInt(u32, .little)),
-            },
-            .toggle_lfo,
-            => .{
-                .lfo = @fromBackingInt(try r.takeByte()),
-            },
-            .set_lfo_enabled,
-            => .{
-                .lfo_enabled = .{
-                    .index = @fromBackingInt(try r.takeByte()),
-                    .enabled = try r.takeByte() != 0,
-                },
-            },
-            .set_lfo_target,
-            => .{
-                .lfo_target = .{
-                    .index = @fromBackingInt(try r.takeByte()),
-                    .target = @fromBackingInt(try r.takeInt(u32, .little)),
-                },
-            },
-            .set_lfo_trigger,
-            => .{
-                .lfo_trigger = .{
-                    .index = @fromBackingInt(try r.takeByte()),
-                    .trigger = @fromBackingInt(try r.takeInt(u32, .little)),
-                },
-            },
-            .set_lfo_adjust,
-            => .{
-                .lfo_adjust = .{
-                    .index = @fromBackingInt(try r.takeByte()),
-                    .adjust = try r.takeByte() != 0,
-                },
-            },
-            .set_lfo_size,
-            .set_lfo_wave,
-            => .{
-                .lfo_data = .{
-                    .index = @fromBackingInt(try r.takeByte()),
-                    .data = @fromBackingInt(try r.takeInt(u32, .little)),
-                },
-            },
-            .loop,
-            => .{
-                .loop = .{
-                    .branch = @fromBackingInt(try r.takeInt(u32, .little)),
-                    .count = @fromBackingInt(try r.takeByte()),
-                },
-            },
-        };
-        try commands.append(gpa, .{ .tag = t, .data = d });
-    }
-
-    return .{
-        .commands = commands.toOwnedSlice(),
-        .parts = parts,
-        .patches = patches,
-        .extra = .{ .data = extra_data },
-        .strings = .{ .bytes = strings_bytes },
-        .title = title,
-        .composer = composer,
-        .arranger = arranger,
-        .initial_tempo = initial_tempo,
+        .title = mod.title,
+        .composer = mod.composer,
+        .arranger = mod.arranger,
+        .initial_tempo_bpm = mod.initial_tempo.bpm,
     };
+
+    const safety_buffer = if (data_has_safety_tag)
+        try gpa.alloc(DataBytes, mod.commands.len)
+    else
+        undefined;
+    defer if (data_has_safety_tag) gpa.free(safety_buffer);
+    if (data_has_safety_tag) {
+        for (safety_buffer, mod.commands.items(.data)) |*data_bytes, *cmd_data| {
+            const as_hack: *const HackDataLayout = @ptrCast(cmd_data);
+            data_bytes.* = as_hack.data;
+        }
+    }
+
+    var vecs = [_][]const u8{
+        @ptrCast((&header)[0..1]),
+        @ptrCast(mod.commands.items(.tag)),
+        if (data_has_safety_tag)
+            @ptrCast(safety_buffer)
+        else
+            @ptrCast(mod.commands.items(.data)),
+        @ptrCast(mod.parts),
+        @ptrCast(mod.patches),
+        @ptrCast(mod.extra.data),
+        mod.strings.bytes,
+    };
+    try w.writeVecAll(&vecs);
+}
+
+pub fn load(gpa: Allocator, r: *Reader) (Reader.Error || Allocator.Error)!Module {
+    const header = (try r.takeStructPointer(Header)).*;
+
+    var mod: Module = mod: {
+        var commands: Command.List = .empty;
+        defer commands.deinit(gpa);
+        try commands.setCapacity(gpa, header.n_commands);
+        commands.len = header.n_commands;
+        break :mod .{
+            .commands = commands.toOwnedSlice(),
+            .parts = &.{},
+            .patches = &.{},
+            .extra = .empty,
+            .strings = .empty,
+
+            .title = header.title,
+            .composer = header.composer,
+            .arranger = header.arranger,
+            .initial_tempo = .{ .bpm = header.initial_tempo_bpm },
+        };
+    };
+    errdefer mod.deinit(gpa);
+
+    mod.parts = try gpa.alloc(Part, header.n_parts);
+    mod.patches = try gpa.alloc(Patch.Entry, header.n_patches);
+    mod.extra = .{ .data = try gpa.alloc(Extra.Datum, header.n_extra) };
+    mod.strings = .{ .bytes = try gpa.alloc(u8, header.strings_len) };
+
+    const safety_buffer = if (data_has_safety_tag)
+        try gpa.alloc(DataBytes, header.n_commands)
+    else
+        undefined;
+    defer if (data_has_safety_tag) gpa.free(safety_buffer);
+
+    var vecs = [_][]u8{
+        @ptrCast(mod.commands.items(.tag)),
+        if (data_has_safety_tag)
+            @ptrCast(safety_buffer)
+        else
+            @ptrCast(mod.commands.items(.data)),
+        @ptrCast(mod.parts),
+        @ptrCast(mod.patches),
+        @ptrCast(mod.extra.data),
+        mod.strings.bytes,
+    };
+    try r.readVecAll(&vecs);
+
+    if (data_has_safety_tag) {
+        for (mod.commands.items(.data), mod.commands.items(.tag), safety_buffer) |*cmd_data, cmd_tag, data_bytes| {
+            const as_hack: *HackDataLayout = @ptrCast(cmd_data);
+            as_hack.* = .{
+                .data = data_bytes,
+                .safety_tag = @backingInt(Command.Tag.data_tags[@backingInt(cmd_tag)]),
+            };
+        }
+    }
+
+    return mod;
 }
 
 pub const SourceIndex = enum(u32) {
@@ -401,6 +297,24 @@ pub const Command = struct {
         set_lfo_trigger,
         set_lfo_adjust,
         loop,
+
+        const data_tags = std.enums.directEnumArray(Tag, std.meta.FieldEnum(Data), 0, .{
+            .end = .none,
+            .rest = .ticks,
+            .key_on = .freq,
+            .key_off = .none,
+            .set_patch = .extra,
+            .set_volume = .amount,
+            .add_volume = .amount,
+            .toggle_lfo = .lfo,
+            .set_lfo_enabled = .lfo_enabled,
+            .set_lfo_target = .lfo_target,
+            .set_lfo_size = .lfo_data,
+            .set_lfo_wave = .lfo_data,
+            .set_lfo_trigger = .lfo_trigger,
+            .set_lfo_adjust = .lfo_adjust,
+            .loop = .loop,
+        });
     };
 
     pub const Data = union {
@@ -434,6 +348,12 @@ pub const Command = struct {
             branch: Command.Index.Offset,
             count: LoopCount,
         },
+
+        comptime {
+            if (!builtin.mode.runtimeSafety()) {
+                assert(@sizeOf(Data) == 8);
+            }
+        }
     };
 };
 
@@ -539,6 +459,11 @@ pub const Patch = struct {
     slot_waves: [Voice.n_slots]Slot.Wave,
     slot_params: [Voice.n_slots]Slot.Params,
     slot_env_params: [Voice.n_slots]Envelope.Params,
+
+    pub const Entry = struct {
+        name: StringPool.Index,
+        index: Extra.Index,
+    };
 
     pub fn decode(extra: Extra, index: Extra.Index) struct { Patch, Extra.Index } {
         var res: Patch = undefined;
@@ -668,11 +593,13 @@ pub const LoopCount = enum(u8) {
 
 const Module = @This();
 
+const builtin = @import("builtin");
 const std = @import("std");
 const Io = std.Io;
 const Reader = Io.Reader;
 const Writer = Io.Writer;
 const Allocator = std.mem.Allocator;
+const assert = std.debug.assert;
 const zfm = @import("./zfm.zig");
 const Synth = zfm.Synth;
 const Voice = Synth.Voice;

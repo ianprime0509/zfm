@@ -12,6 +12,8 @@ const usage =
     \\
 ;
 
+const debug_features = builtin.mode == .debug;
+
 pub fn main(init: std.process.Init) !void {
     const gpa = init.gpa;
     const arena = init.arena.allocator();
@@ -64,7 +66,7 @@ pub fn main(init: std.process.Init) !void {
     var player: Player = .init(&synth, &mod, parts, options);
 
     if (maybe_output_path) |output_path| {
-        try mainSave(io, &player, output_path);
+        try mainSave(gpa, io, &player, output_path);
     } else {
         try mainPlay(io, &player);
     }
@@ -73,7 +75,7 @@ pub fn main(init: std.process.Init) !void {
 fn readInput(gpa: Allocator, io: Io, path: []const u8) !Module {
     if (std.mem.endsWith(u8, path, ".zfm")) {
         return try readInputZfm(gpa, io, path);
-    } else if (std.mem.endsWith(u8, path, ".mod")) {
+    } else if (debug_features and std.mem.endsWith(u8, path, ".mod")) {
         return try readInputMod(gpa, io, path);
     } else {
         fatal("unknown input file type", .{});
@@ -103,7 +105,7 @@ fn readInputMod(gpa: Allocator, io: Io, path: []const u8) !Module {
     defer file.close(io);
     var buf: [1024]u8 = undefined;
     var reader = file.reader(io, &buf);
-    return try .readUnchecked(gpa, &reader.interface);
+    return try .load(gpa, &reader.interface);
 }
 
 fn fatal(comptime format: []const u8, args: anytype) noreturn {
@@ -177,11 +179,11 @@ fn mainPlay(io: Io, player: *Player) !void {
     ctx.done.waitUncancelable(io);
 }
 
-fn mainSave(io: Io, player: *Player, path: [:0]const u8) !void {
+fn mainSave(gpa: Allocator, io: Io, player: *Player, path: [:0]const u8) !void {
     if (std.mem.endsWith(u8, path, ".wav")) {
         try saveWav(io, player, path);
-    } else if (std.mem.endsWith(u8, path, ".mod")) {
-        try saveMod(io, player, path);
+    } else if (debug_features and std.mem.endsWith(u8, path, ".mod")) {
+        try saveMod(gpa, io, player, path);
     } else {
         fatal("unknown output file type", .{});
     }
@@ -207,12 +209,12 @@ fn saveWav(io: Io, player: *Player, path: [:0]const u8) !void {
     }
 }
 
-fn saveMod(io: Io, player: *Player, path: []const u8) !void {
+fn saveMod(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
     var file = try Io.Dir.cwd().createFile(io, path, .{});
     defer file.close(io);
     var buf: [1024]u8 = undefined;
     var writer = file.writer(io, &buf);
-    try player.driver.mod.write(&writer.interface);
+    try player.driver.mod.dump(gpa, &writer.interface);
     try writer.interface.flush();
 }
 
@@ -354,6 +356,7 @@ const ArgIterator = struct {
     }
 };
 
+const builtin = @import("builtin");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Io = std.Io;

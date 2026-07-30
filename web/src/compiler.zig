@@ -91,13 +91,13 @@ fn transferPatchesInner() (Allocator.Error || Writer.Error)!void {
     var out: std.json.Stringify = .{ .writer = &writer.writer };
 
     try out.beginArray();
-    for (mod.patches.keys(), mod.patches.values()) |name, index| {
-        const patch, _ = mod.extra.decode(Patch, index);
+    for (mod.patches) |entry| {
+        const patch, _ = mod.extra.decode(Patch, entry.index);
 
         try out.beginObject();
 
         try out.objectField("name");
-        try out.write(mod.strings.string(name));
+        try out.write(mod.strings.string(entry.name));
 
         try out.objectField("connections");
         try out.beginObject();
@@ -135,7 +135,8 @@ fn transferModuleInner() (Allocator.Error || Writer.Error)!void {
     var writer: Writer.Allocating = .fromArrayList(gpa, &transfer);
     defer transfer = writer.toArrayList();
     writer.clearRetainingCapacity();
-    try mod.write(&writer.writer);
+    try mod.dump(gpa, &writer.writer);
+    try writer.writer.flush();
 }
 
 pub const std_options: std.Options = .{

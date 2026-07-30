@@ -51,7 +51,7 @@ fn emptyModule(n_voices: usize) Allocator.Error!Module {
     return .{
         .commands = mod_commands.toOwnedSlice(),
         .parts = mod_parts,
-        .patches = .empty,
+        .patches = &.{},
         .extra = .empty,
         .strings = .empty,
 
@@ -68,11 +68,11 @@ export fn load() void {
 
 fn loadInner() Allocator.Error!void {
     var reader: Reader = .fixed(transfer.items);
-    const new_mod = Module.readUnchecked(gpa, &reader) catch |err| switch (err) {
+    const new_mod = Module.load(gpa, &reader) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         error.ReadFailed => unreachable,
         // The module is assumed to be valid, as it was compiled by the compiler worker.
-        error.EndOfStream, error.UnsupportedVersion => unreachable,
+        error.EndOfStream => unreachable,
     };
     try loadModule(new_mod);
 }
