@@ -24,7 +24,7 @@ pub fn toOwnedSlice(sp: *StringPool, gpa: Allocator) Allocator.Error!Slice {
 }
 
 pub fn string(sp: *const StringPool, s: Index) []const u8 {
-    return std.mem.sliceTo(sp.bytes.items[@intFromEnum(s)..], 0);
+    return std.mem.sliceTo(sp.bytes.items[@backingInt(s)..], 0);
 }
 
 pub fn find(sp: *const StringPool, s: []const u8) ?Index {
@@ -35,7 +35,7 @@ pub fn intern(sp: *StringPool, gpa: Allocator, s: []const u8) Allocator.Error!In
     const gop = try sp.lookup.getOrPutContextAdapted(gpa, s, Adapter{ .bytes = &sp.bytes }, .{ .bytes = &sp.bytes });
     if (gop.found_existing) return gop.key_ptr.*;
     errdefer sp.lookup.removeByPtr(gop.key_ptr);
-    const index: Index = @enumFromInt(sp.bytes.items.len + 1);
+    const index: Index = @fromBackingInt(@intCast(sp.bytes.items.len + 1));
     gop.key_ptr.* = index;
     try sp.bytes.ensureUnusedCapacity(gpa, s.len + 1);
     sp.bytes.appendAssumeCapacity(0);
@@ -44,7 +44,7 @@ pub fn intern(sp: *StringPool, gpa: Allocator, s: []const u8) Allocator.Error!In
 }
 
 pub fn writingIndex(sp: *const StringPool) PendingIndex {
-    return @enumFromInt(sp.bytes.items.len);
+    return @fromBackingInt(@intCast(sp.bytes.items.len));
 }
 
 pub fn startWriting(sp: *StringPool, gpa: Allocator) Allocator.Error!PendingIndex {
@@ -53,14 +53,14 @@ pub fn startWriting(sp: *StringPool, gpa: Allocator) Allocator.Error!PendingInde
 }
 
 pub fn finishWriting(sp: *StringPool, gpa: Allocator, start: PendingIndex) Allocator.Error!Index {
-    const s = std.mem.sliceTo(sp.bytes.items[@intFromEnum(start)..], 0);
+    const s = std.mem.sliceTo(sp.bytes.items[@backingInt(start)..], 0);
     const gop = try sp.lookup.getOrPutContextAdapted(gpa, s, Adapter{ .bytes = &sp.bytes }, .{ .bytes = &sp.bytes });
     if (gop.found_existing) {
         // Same string already found in the pool; use that one.
-        sp.bytes.shrinkRetainingCapacity(@intFromEnum(start) - 1);
+        sp.bytes.shrinkRetainingCapacity(@backingInt(start) - 1);
         return gop.key_ptr.*;
     }
-    gop.key_ptr.* = @enumFromInt(@intFromEnum(start));
+    gop.key_ptr.* = @fromBackingInt(@backingInt(start));
     return gop.key_ptr.*;
 }
 
@@ -75,7 +75,7 @@ pub const Slice = struct {
     }
 
     pub fn string(ss: *const Slice, s: Index) []const u8 {
-        return std.mem.sliceTo(ss.bytes[@intFromEnum(s)..], 0);
+        return std.mem.sliceTo(ss.bytes[@backingInt(s)..], 0);
     }
 };
 
@@ -89,7 +89,7 @@ const Context = struct {
     }
 
     pub fn hash(ctx: @This(), key: Index) u64 {
-        return std.hash_map.hashString(std.mem.sliceTo(ctx.bytes.items[@intFromEnum(key)..], 0));
+        return std.hash_map.hashString(std.mem.sliceTo(ctx.bytes.items[@backingInt(key)..], 0));
     }
 };
 
@@ -98,7 +98,7 @@ const Adapter = struct {
     bytes: *const std.ArrayList(u8),
 
     pub fn eql(ctx: @This(), a: []const u8, b: Index) bool {
-        return std.mem.eql(u8, a, std.mem.sliceTo(ctx.bytes.items[@intFromEnum(b)..], 0));
+        return std.mem.eql(u8, a, std.mem.sliceTo(ctx.bytes.items[@backingInt(b)..], 0));
     }
 
     pub fn hash(ctx: @This(), adapted_key: []const u8) u64 {

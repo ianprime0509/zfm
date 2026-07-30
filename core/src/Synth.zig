@@ -16,19 +16,19 @@ pub fn init(voices: []Voice, slots: []Slot, volume: f32) Synth {
 }
 
 pub fn voicePtr(synth: *Synth, voice: Voice.Index) *Voice {
-    return &synth.voices[@intFromEnum(voice)];
+    return &synth.voices[@backingInt(voice)];
 }
 
 pub fn voiceSlots(synth: *Synth, voice: Voice.Index) *[Voice.n_slots]Slot {
-    return synth.slots[Voice.n_slots * @intFromEnum(voice) ..][0..Voice.n_slots];
+    return synth.slots[Voice.n_slots * @backingInt(voice) ..][0..Voice.n_slots];
 }
 
 pub fn slotPtr(synth: *Synth, slot: Slot.Index) *Slot {
-    return &synth.slots[@intFromEnum(slot)];
+    return &synth.slots[@backingInt(slot)];
 }
 
 pub fn voiceSlotPtr(synth: *Synth, voice: Voice.Index, slot: Voice.SlotIndex) *Slot {
-    return &synth.slots[Voice.n_slots * @intFromEnum(voice) + slot];
+    return &synth.slots[Voice.n_slots * @backingInt(voice) + slot];
 }
 
 pub fn keyOn(synth: *Synth, voice: Voice.Index) void {
@@ -42,7 +42,7 @@ pub fn keyOff(synth: *Synth, voice: Voice.Index) void {
 pub fn sample(synth: *Synth) Frame {
     var total: Frame = @splat(0);
     for (synth.voices, 0..) |*voice, i| {
-        const left, const right = voice.sample(synth.voiceSlots(@enumFromInt(i)));
+        const left, const right = voice.sample(synth.voiceSlots(@fromBackingInt(@intCast(i))));
         total[0] += std.math.clamp(synth.volume * left, -1.0, 1.0);
         total[1] += std.math.clamp(synth.volume * right, -1.0, 1.0);
     }

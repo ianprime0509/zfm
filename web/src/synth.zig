@@ -42,7 +42,7 @@ fn emptyModule(n_voices: usize) Allocator.Error!Module {
     var mod_commands: Command.List = .empty;
     errdefer mod_commands.deinit(gpa);
     try mod_commands.append(gpa, .{ .tag = .end, .data = .{ .none = {} } });
-    const end: Command.Index = @enumFromInt(0);
+    const end: Command.Index = @fromBackingInt(0);
 
     const mod_parts = try gpa.alloc(Module.Part, n_voices);
     errdefer gpa.free(mod_parts);
@@ -189,7 +189,7 @@ fn logFn(
 ) void {
     var buf: [1024]u8 = undefined;
     const msg: []const u8 = std.fmt.bufPrint(&buf, "({t}) " ++ format, .{scope} ++ args) catch &buf;
-    consoleLog(@intFromEnum(level), msg.ptr, msg.len);
+    consoleLog(@backingInt(level), msg.ptr, msg.len);
 }
 
 const std = @import("std");

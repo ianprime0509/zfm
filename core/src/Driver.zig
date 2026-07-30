@@ -5,7 +5,7 @@ tick_delay: Samples,
 lfo_delay: Samples,
 tempo: Tempo,
 
-const lfo_delay_reset: Samples = @enumFromInt(48);
+const lfo_delay_reset: Samples = @fromBackingInt(48);
 
 pub fn init(synth: *Synth, mod: *const Module, parts: []Part) Driver {
     assert(parts.len == mod.parts.len);
@@ -21,7 +21,7 @@ pub fn init(synth: *Synth, mod: *const Module, parts: []Part) Driver {
 }
 
 pub fn partPtr(driver: *Driver, voice: Voice.Index) *Part {
-    return &driver.parts[@intFromEnum(voice)];
+    return &driver.parts[@backingInt(voice)];
 }
 
 pub fn sample(driver: *Driver) Frame {
@@ -40,14 +40,14 @@ pub fn sample(driver: *Driver) Frame {
 
 fn tick(driver: *Driver) void {
     for (driver.parts, 0..) |*part, i| {
-        const voice: Voice.Index = @enumFromInt(i);
+        const voice: Voice.Index = @fromBackingInt(@intCast(i));
         driver.executePending(part, voice);
     }
 }
 
 fn tickLfos(driver: *Driver) void {
     for (driver.parts, 0..) |*part, i| {
-        const voice: Voice.Index = @enumFromInt(i);
+        const voice: Voice.Index = @fromBackingInt(@intCast(i));
         var sp = part.synth_params;
         for (&part.lfos.values) |*lfo| lfo.process(&sp, lfo_delay_reset, driver.tempo);
         sp.applyTo(driver.synth, voice);
@@ -257,7 +257,7 @@ pub const Part = struct {
                 }
                 const loop = &s.loops[s.len - 1];
                 loop.iteration +%= 1;
-                const res = count == .infinite or loop.iteration < @intFromEnum(count);
+                const res = count == .infinite or loop.iteration < @backingInt(count);
                 if (!res) s.len -= 1;
                 return res;
             }
@@ -291,8 +291,8 @@ pub const Part = struct {
 
         fn sample(lfo: *LfoState, elapsed_samples: Samples, tempo: Tempo, note_freq: f32) f32 {
             const elapsed_time = switch (lfo.params.time_unit) {
-                .seconds => @as(f32, @floatFromInt(@intFromEnum(elapsed_samples))) * zfm.sample_time,
-                .ticks => @as(f32, @floatFromInt(@intFromEnum(elapsed_samples))) / @as(f32, @floatFromInt(@intFromEnum(tempo.samplesPerTick()))),
+                .seconds => @as(f32, @floatFromInt(@backingInt(elapsed_samples))) * zfm.sample_time,
+                .ticks => @as(f32, @floatFromInt(@backingInt(elapsed_samples))) / @as(f32, @floatFromInt(@backingInt(tempo.samplesPerTick()))),
             };
             const base = base: switch (lfo.params.wave) {
                 .constant => 1.0,

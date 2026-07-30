@@ -65,9 +65,9 @@ fn transferErrorsInner() (Allocator.Error || Writer.Error)!void {
         try out.objectField("span");
         try out.beginObject();
         try out.objectField("start");
-        try out.write(@intFromEnum(err.span.start));
+        try out.write(@backingInt(err.span.start));
         try out.objectField("end");
-        try out.write(@intFromEnum(err.span.end));
+        try out.write(@backingInt(err.span.end));
         try out.endObject();
 
         if (err.part) |part| {
@@ -152,7 +152,7 @@ fn logFn(
 ) void {
     var buf: [1024]u8 = undefined;
     const msg: []const u8 = std.fmt.bufPrint(&buf, "({t}) " ++ format, .{scope} ++ args) catch &buf;
-    consoleLog(@intFromEnum(level), msg.ptr, msg.len);
+    consoleLog(@backingInt(level), msg.ptr, msg.len);
 }
 
 const std = @import("std");

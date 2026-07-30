@@ -34,31 +34,31 @@ pub fn deinit(mod: *Module, gpa: Allocator) void {
 }
 
 pub fn tag(mod: *const Module, command: Command.Index) Command.Tag {
-    return mod.commands.items(.tag)[@intFromEnum(command)];
+    return mod.commands.items(.tag)[@backingInt(command)];
 }
 
 pub fn data(mod: *const Module, command: Command.Index) Command.Data {
-    return mod.commands.items(.data)[@intFromEnum(command)];
+    return mod.commands.items(.data)[@backingInt(command)];
 }
 
 pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
     try w.writeByte(version);
 
-    try w.writeInt(u32, @intFromEnum(mod.title), .little);
-    try w.writeInt(u32, @intFromEnum(mod.composer), .little);
-    try w.writeInt(u32, @intFromEnum(mod.arranger), .little);
+    try w.writeInt(u32, @backingInt(mod.title), .little);
+    try w.writeInt(u32, @backingInt(mod.composer), .little);
+    try w.writeInt(u32, @backingInt(mod.arranger), .little);
     try w.writeInt(u32, @bitCast(mod.initial_tempo.bpm), .little);
 
     try w.writeByte(@intCast(mod.parts.len));
     for (mod.parts) |part| {
-        try w.writeInt(u32, @intFromEnum(part.start), .little);
-        try w.writeInt(u32, @intFromEnum(part.global_loop), .little);
+        try w.writeInt(u32, @backingInt(part.start), .little);
+        try w.writeInt(u32, @backingInt(part.global_loop), .little);
     }
 
     try w.writeInt(u32, @intCast(mod.patches.count()), .little);
     for (mod.patches.keys(), mod.patches.values()) |key, value| {
-        try w.writeInt(u32, @intFromEnum(key), .little);
-        try w.writeInt(u32, @intFromEnum(value), .little);
+        try w.writeInt(u32, @backingInt(key), .little);
+        try w.writeInt(u32, @backingInt(value), .little);
     }
 
     try w.writeInt(u32, @intCast(mod.extra.data.len), .little);
@@ -73,7 +73,7 @@ pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
     // the data associated to each tag. If new tags are added later which readers
     // don't understand, at least they can still read the other metadata.
     for (mod.commands.items(.tag), mod.commands.items(.data)) |t, d| {
-        try w.writeByte(@intFromEnum(t));
+        try w.writeByte(@backingInt(t));
         switch (t) {
             .end,
             .key_off,
@@ -82,7 +82,7 @@ pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
             },
             .rest,
             => {
-                try w.writeInt(u32, @intFromEnum(d.ticks), .little);
+                try w.writeInt(u32, @backingInt(d.ticks), .little);
             },
             .key_on,
             => {
@@ -90,7 +90,7 @@ pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
             },
             .set_patch,
             => {
-                try w.writeInt(u32, @intFromEnum(d.extra), .little);
+                try w.writeInt(u32, @backingInt(d.extra), .little);
             },
             .set_volume,
             .add_volume,
@@ -99,38 +99,38 @@ pub fn write(mod: *const Module, w: *Writer) Writer.Error!void {
             },
             .toggle_lfo,
             => {
-                try w.writeInt(u32, @intFromEnum(d.lfo), .little);
+                try w.writeByte(@backingInt(d.lfo));
             },
             .set_lfo_enabled,
             => {
-                try w.writeInt(u32, @intFromEnum(d.lfo_enabled.index), .little);
+                try w.writeByte(@backingInt(d.lfo_enabled.index));
                 try w.writeByte(@intFromBool(d.lfo_enabled.enabled));
             },
             .set_lfo_target,
             => {
-                try w.writeInt(u32, @intFromEnum(d.lfo_target.index), .little);
-                try w.writeInt(u32, @intFromEnum(d.lfo_target.target), .little);
+                try w.writeByte(@backingInt(d.lfo_target.index));
+                try w.writeInt(u32, @backingInt(d.lfo_target.target), .little);
             },
             .set_lfo_trigger,
             => {
-                try w.writeInt(u32, @intFromEnum(d.lfo_trigger.index), .little);
-                try w.writeInt(u32, @intFromEnum(d.lfo_trigger.trigger), .little);
+                try w.writeByte(@backingInt(d.lfo_trigger.index));
+                try w.writeInt(u32, @backingInt(d.lfo_trigger.trigger), .little);
             },
             .set_lfo_adjust,
             => {
-                try w.writeInt(u32, @intFromEnum(d.lfo_adjust.index), .little);
+                try w.writeByte(@backingInt(d.lfo_adjust.index));
                 try w.writeInt(u8, @intFromBool(d.lfo_adjust.adjust), .little);
             },
             .set_lfo_size,
             .set_lfo_wave,
             => {
-                try w.writeInt(u32, @intFromEnum(d.lfo_data.index), .little);
-                try w.writeInt(u32, @intFromEnum(d.lfo_data.data), .little);
+                try w.writeByte(@backingInt(d.lfo_data.index));
+                try w.writeInt(u32, @backingInt(d.lfo_data.data), .little);
             },
             .loop,
             => {
-                try w.writeInt(u32, @intFromEnum(d.loop.branch), .little);
-                try w.writeInt(u32, @intFromEnum(d.loop.count), .little);
+                try w.writeInt(u32, @backingInt(d.loop.branch), .little);
+                try w.writeByte(@backingInt(d.loop.count));
             },
         }
     }
@@ -142,9 +142,9 @@ pub const ReadUncheckedError = Allocator.Error || Reader.Error || error{Unsuppor
 pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
     if (try r.takeByte() != version) return error.UnsupportedVersion;
 
-    const title: StringPool.Index = @enumFromInt(try r.takeInt(u32, .little));
-    const composer: StringPool.Index = @enumFromInt(try r.takeInt(u32, .little));
-    const arranger: StringPool.Index = @enumFromInt(try r.takeInt(u32, .little));
+    const title: StringPool.Index = @fromBackingInt(try r.takeInt(u32, .little));
+    const composer: StringPool.Index = @fromBackingInt(try r.takeInt(u32, .little));
+    const arranger: StringPool.Index = @fromBackingInt(try r.takeInt(u32, .little));
     const initial_tempo: Tempo = .{ .bpm = @bitCast(try r.takeInt(u32, .little)) };
 
     const n_parts = try r.takeByte();
@@ -152,8 +152,8 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
     errdefer gpa.free(parts);
     for (parts) |*part| {
         part.* = .{
-            .start = @enumFromInt(try r.takeInt(u32, .little)),
-            .global_loop = @enumFromInt(try r.takeInt(u32, .little)),
+            .start = @fromBackingInt(try r.takeInt(u32, .little)),
+            .global_loop = @fromBackingInt(try r.takeInt(u32, .little)),
         };
     }
 
@@ -163,8 +163,8 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
     try patches.ensureTotalCapacity(gpa, n_patches);
     for (0..n_patches) |_| {
         patches.putAssumeCapacity(
-            @enumFromInt(try r.takeInt(u32, .little)),
-            @enumFromInt(try r.takeInt(u32, .little)),
+            @fromBackingInt(try r.takeInt(u32, .little)),
+            @fromBackingInt(try r.takeInt(u32, .little)),
         );
     }
 
@@ -194,7 +194,7 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
             },
             .rest,
             => .{
-                .ticks = @enumFromInt(try r.takeInt(u32, .little)),
+                .ticks = @fromBackingInt(try r.takeInt(u32, .little)),
             },
             .key_on,
             => .{
@@ -202,7 +202,7 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
             },
             .set_patch,
             => .{
-                .extra = @enumFromInt(try r.takeInt(u32, .little)),
+                .extra = @fromBackingInt(try r.takeInt(u32, .little)),
             },
             .set_volume,
             .add_volume,
@@ -211,33 +211,33 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
             },
             .toggle_lfo,
             => .{
-                .lfo = @enumFromInt(try r.takeInt(u32, .little)),
+                .lfo = @fromBackingInt(try r.takeByte()),
             },
             .set_lfo_enabled,
             => .{
                 .lfo_enabled = .{
-                    .index = @enumFromInt(try r.takeInt(u32, .little)),
+                    .index = @fromBackingInt(try r.takeByte()),
                     .enabled = try r.takeByte() != 0,
                 },
             },
             .set_lfo_target,
             => .{
                 .lfo_target = .{
-                    .index = @enumFromInt(try r.takeInt(u32, .little)),
-                    .target = @enumFromInt(try r.takeInt(u32, .little)),
+                    .index = @fromBackingInt(try r.takeByte()),
+                    .target = @fromBackingInt(try r.takeInt(u32, .little)),
                 },
             },
             .set_lfo_trigger,
             => .{
                 .lfo_trigger = .{
-                    .index = @enumFromInt(try r.takeInt(u32, .little)),
-                    .trigger = @enumFromInt(try r.takeInt(u32, .little)),
+                    .index = @fromBackingInt(try r.takeByte()),
+                    .trigger = @fromBackingInt(try r.takeInt(u32, .little)),
                 },
             },
             .set_lfo_adjust,
             => .{
                 .lfo_adjust = .{
-                    .index = @enumFromInt(try r.takeInt(u32, .little)),
+                    .index = @fromBackingInt(try r.takeByte()),
                     .adjust = try r.takeByte() != 0,
                 },
             },
@@ -245,15 +245,15 @@ pub fn readUnchecked(gpa: Allocator, r: *Reader) ReadUncheckedError!Module {
             .set_lfo_wave,
             => .{
                 .lfo_data = .{
-                    .index = @enumFromInt(try r.takeInt(u32, .little)),
-                    .data = @enumFromInt(try r.takeInt(u32, .little)),
+                    .index = @fromBackingInt(try r.takeByte()),
+                    .data = @fromBackingInt(try r.takeInt(u32, .little)),
                 },
             },
             .loop,
             => .{
                 .loop = .{
-                    .branch = @enumFromInt(try r.takeInt(u32, .little)),
-                    .count = @enumFromInt(try r.takeInt(u32, .little)),
+                    .branch = @fromBackingInt(try r.takeInt(u32, .little)),
+                    .count = @fromBackingInt(try r.takeByte()),
                 },
             },
         };
@@ -278,7 +278,7 @@ pub const SourceIndex = enum(u32) {
     _,
 
     pub fn next(index: SourceIndex) SourceIndex {
-        return @enumFromInt(@intFromEnum(index) + 1);
+        return @fromBackingInt(@backingInt(index) + 1);
     }
 
     pub const Span = struct {
@@ -306,24 +306,24 @@ pub const Ticks = enum(u32) {
     zero,
     _,
 
-    pub const zenlen: Ticks = @enumFromInt(96);
+    pub const zenlen: Ticks = @fromBackingInt(96);
 
     pub fn minusOne(ticks: Ticks) Ticks {
-        return @enumFromInt(@intFromEnum(ticks) - 1);
+        return @fromBackingInt(@backingInt(ticks) - 1);
     }
 
     pub fn plus(ticks: Ticks, more: Ticks) Ticks {
-        return @enumFromInt(@intFromEnum(ticks) + @intFromEnum(more));
+        return @fromBackingInt(@backingInt(ticks) + @backingInt(more));
     }
 
     pub fn fraction(ticks: Ticks, divisor: u32) error{NotDivisible}!Ticks {
-        if (divisor == 0 or @intFromEnum(ticks) % divisor != 0) return error.NotDivisible;
-        return @enumFromInt(@divExact(@intFromEnum(ticks), divisor));
+        if (divisor == 0 or @backingInt(ticks) % divisor != 0) return error.NotDivisible;
+        return @fromBackingInt(@divExact(@backingInt(ticks), divisor));
     }
 
     pub fn dot(ticks: Ticks) error{NotDivisible}!Ticks {
-        if (@intFromEnum(ticks) % 2 != 0) return error.NotDivisible;
-        return @enumFromInt(@divExact(@intFromEnum(ticks), 2) * 3);
+        if (@backingInt(ticks) % 2 != 0) return error.NotDivisible;
+        return @fromBackingInt(@divExact(@backingInt(ticks), 2) * 3);
     }
 };
 
@@ -332,11 +332,11 @@ pub const Samples = enum(u32) {
     _,
 
     pub fn plusOne(samples: Samples) Samples {
-        return @enumFromInt(@intFromEnum(samples) + 1);
+        return @fromBackingInt(@backingInt(samples) + 1);
     }
 
     pub fn minusOne(samples: Samples) Samples {
-        return @enumFromInt(@intFromEnum(samples) - 1);
+        return @fromBackingInt(@backingInt(samples) - 1);
     }
 };
 
@@ -351,7 +351,7 @@ pub const Tempo = struct {
 
     pub fn samplesPerTick(tempo: Tempo) Samples {
         const zen_seconds = 60.0 / tempo.bpm * 4.0;
-        return @enumFromInt(@as(u32, @intFromFloat(@round(zen_seconds * zfm.sample_rate / @as(f32, @floatFromInt(@intFromEnum(Ticks.zenlen)))))));
+        return @fromBackingInt(@as(u32, @intFromFloat(@round(zen_seconds * zfm.sample_rate / @as(f32, @floatFromInt(@backingInt(Ticks.zenlen)))))));
     }
 };
 
@@ -368,18 +368,18 @@ pub const Command = struct {
         _,
 
         pub fn next(index: Index) Index {
-            return @enumFromInt(@intFromEnum(index) + 1);
+            return @fromBackingInt(@backingInt(index) + 1);
         }
 
         pub fn offset(index: Index, off: Offset) Index {
-            return @enumFromInt(@intFromEnum(index) +% @intFromEnum(off));
+            return @fromBackingInt(@backingInt(index) +% @backingInt(off));
         }
 
         pub const Offset = enum(u32) {
             _,
 
             pub fn between(from: Index, to: Index) Offset {
-                return @enumFromInt(@intFromEnum(to) -% @intFromEnum(from));
+                return @fromBackingInt(@backingInt(to) -% @backingInt(from));
             }
         };
     };
@@ -444,7 +444,7 @@ pub const Extra = struct {
     pub const Index = enum(u32) {
         _,
         pub fn plus(index: Index, n: u32) Index {
-            return @enumFromInt(@intFromEnum(index) + n);
+            return @fromBackingInt(@backingInt(index) + n);
         }
     };
 
@@ -456,7 +456,7 @@ pub const Extra = struct {
     }
 
     pub fn datum(extra: Extra, index: Index) Datum {
-        return extra.data[@intFromEnum(index)];
+        return extra.data[@backingInt(index)];
     }
 
     pub fn decode(extra: Extra, T: type, index: Index) struct { T, Index } {
@@ -474,7 +474,7 @@ pub const Extra = struct {
             else => switch (@typeInfo(T)) {
                 .@"enum" => |@"enum"| {
                     const res, const next_index = extra.decode(@"enum".tag_type, index);
-                    return .{ @enumFromInt(res), next_index };
+                    return .{ @fromBackingInt(res), next_index };
                 },
                 .@"struct" => |@"struct"| {
                     var res: T = undefined;
@@ -500,7 +500,7 @@ pub const Extra = struct {
         }
 
         pub fn currentIndex(wip: *const Wip) Extra.Index {
-            return @enumFromInt(wip.data.items.len);
+            return @fromBackingInt(@intCast(wip.data.items.len));
         }
 
         pub fn finish(wip: *Wip, gpa: Allocator) Allocator.Error!Extra {
@@ -521,7 +521,7 @@ pub const Extra = struct {
                 },
                 f32 => try wip.data.append(gpa, @bitCast(value)),
                 else => switch (@typeInfo(T)) {
-                    .@"enum" => try wip.encode(gpa, @intFromEnum(value)),
+                    .@"enum" => try wip.encode(gpa, @backingInt(value)),
                     .@"struct" => |@"struct"| {
                         inline for (@"struct".field_names) |field| {
                             try wip.encode(gpa, @field(value, field));
@@ -591,7 +591,7 @@ pub const Lfo = struct {
         pub const User = u2;
 
         pub fn user(n: User) Index {
-            return @enumFromInt(@intFromEnum(Index.user_0) + n);
+            return @fromBackingInt(@backingInt(Index.user_0) + n);
         }
     };
 

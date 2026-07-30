@@ -19,9 +19,12 @@ This project uses the latest Zig master version, not a tagged release. Some aspe
   ```
 
 - The `**` operator no longer exists. Use `@splat` instead:
+
   ```zig
   // Before:
   const arr: [4]u8 = .{0} ** 4;
   // After:
   const arr: [4]u8 = @splat(0);
   ```
+
+- `@intFromEnum`, `@enumFromInt`: replaced by `@backingInt` and `@fromBackingInt`, respectively

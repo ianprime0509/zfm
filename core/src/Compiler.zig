@@ -96,7 +96,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
     errdefer c.gpa.free(parts);
 
     for (c.parts.values(), parts) |part, *mod_part| {
-        const start: Command.Index = @enumFromInt(commands.len);
+        const start: Command.Index = @fromBackingInt(@intCast(commands.len));
         try commands.ensureUnusedCapacity(c.gpa, part.commands.len + 1);
         const slice = part.commands.slice();
         for (slice.items(.tag), slice.items(.data)) |tag, data| {
@@ -109,7 +109,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         const global_loop = part.global_loop orelse part.nextCommandIndex();
         mod_part.* = .{
             .start = start,
-            .global_loop = start.offset(.between(@enumFromInt(0), global_loop)),
+            .global_loop = start.offset(.between(@fromBackingInt(0), global_loop)),
         };
         commands.appendAssumeCapacity(.{
             .tag = .end,
@@ -376,8 +376,8 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             const datas = commands.items(.data);
             const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, start_pos, c.pos);
             datas[rest].ticks = switch (op) {
-                '+' => @enumFromInt(@intFromEnum(datas[rest].ticks) +| @intFromEnum(length)),
-                '-' => @enumFromInt(@intFromEnum(datas[rest].ticks) -| @intFromEnum(length)),
+                '+' => @fromBackingInt(@backingInt(datas[rest].ticks) +| @backingInt(length)),
+                '-' => @fromBackingInt(@backingInt(datas[rest].ticks) -| @backingInt(length)),
                 else => unreachable,
             };
         },
@@ -536,7 +536,7 @@ fn compilePortamento(c: *Compiler, part: *Part) !void {
     try c.addSetLfoTargetCommand(part, .porta, .freq);
     try c.addSetLfoSizeCommand(part, .porta, .{ .scale = from, .offset = -from });
     try c.addSetLfoWaveCommand(part, .porta, .{ .exp = .{
-        .mul = (@log2(to) - @log2(from)) / @as(f32, @floatFromInt(@intFromEnum(length))),
+        .mul = (@log2(to) - @log2(from)) / @as(f32, @floatFromInt(@backingInt(length))),
     } });
     try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
     try part.addCommand(c.gpa, .key_on, .{ .freq = from });
@@ -679,19 +679,19 @@ fn addSetLfoAdjustCommand(c: *Compiler, part: *Part, index: Lfo.Index, adjust: b
 }
 
 fn sourceByte(c: *const Compiler, index: SourceIndex) u8 {
-    return c.source[@intFromEnum(index)];
+    return c.source[@backingInt(index)];
 }
 
 fn sourceSlice(c: *const Compiler, start: SourceIndex, end: SourceIndex) []const u8 {
-    return c.source[@intFromEnum(start)..@intFromEnum(end)];
+    return c.source[@backingInt(start)..@backingInt(end)];
 }
 
 fn peekByte(c: *const Compiler) u8 {
-    return c.source[@intFromEnum(c.pos)];
+    return c.source[@backingInt(c.pos)];
 }
 
 fn skipByte(c: *Compiler) void {
-    if (@intFromEnum(c.pos) < c.source.len) c.pos = c.pos.next();
+    if (@backingInt(c.pos) < c.source.len) c.pos = c.pos.next();
 }
 
 fn expectByte(c: *Compiler, b: u8) !void {
@@ -711,12 +711,12 @@ fn expectSpace(c: *Compiler) !void {
 }
 
 fn skipLine(c: *Compiler) void {
-    var eol = std.mem.findAnyPos(u8, c.source, @intFromEnum(c.pos), "\r\n") orelse {
-        c.pos = @enumFromInt(c.source.len);
+    var eol = std.mem.findAnyPos(u8, c.source, @backingInt(c.pos), "\r\n") orelse {
+        c.pos = @fromBackingInt(@intCast(c.source.len));
         return;
     };
     if (c.source[eol] == '\r' and c.source[eol + 1] == '\n') eol += 1;
-    c.pos = @enumFromInt(eol + 1);
+    c.pos = @fromBackingInt(@intCast(eol + 1));
 }
 
 fn skipLineAndContinuation(c: *Compiler) void {
@@ -853,7 +853,7 @@ fn takeNumber(c: *Compiler, T: type) !?T {
     const start = c.pos;
     switch (@typeInfo(T)) {
         .@"enum" => |@"enum"| {
-            return @enumFromInt(try c.takeNumber(@"enum".tag_type) orelse return null);
+            return @fromBackingInt(try c.takeNumber(@"enum".tag_type) orelse return null);
         },
         .@"struct" => |@"struct"| {
             comptime assert(@"struct".field_names.len == 1);
@@ -1004,7 +1004,7 @@ const Part = struct {
     }
 
     fn nextCommandIndex(part: *const Part) Command.Index {
-        return @enumFromInt(part.commands.len);
+        return @fromBackingInt(@intCast(part.commands.len));
     }
 
     fn addCommand(part: *Part, gpa: Allocator, tag: Command.Tag, data: Command.Data) !void {

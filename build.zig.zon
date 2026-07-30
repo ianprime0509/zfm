@@ -1,7 +1,7 @@
 .{
     .name = .zfm,
     .version = "0.0.1",
-    .minimum_zig_version = "0.17.0-dev.1415+64dfaa568",
+    .minimum_zig_version = "0.17.0-dev.1454+5faa79730",
     .paths = .{""},
     .fingerprint = 0xa683e550ac1c8101,
 }
