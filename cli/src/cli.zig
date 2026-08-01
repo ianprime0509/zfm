@@ -184,6 +184,8 @@ fn mainSave(gpa: Allocator, io: Io, player: *Player, path: [:0]const u8) !void {
         try saveWav(io, player, path);
     } else if (debug_features and std.mem.endsWith(u8, path, ".mod")) {
         try saveMod(gpa, io, player, path);
+    } else if (debug_features and std.mem.endsWith(u8, path, ".json")) {
+        try saveJson(io, player, path);
     } else {
         fatal("unknown output file type", .{});
     }
@@ -215,6 +217,15 @@ fn saveMod(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
     var buf: [1024]u8 = undefined;
     var writer = file.writer(io, &buf);
     try player.driver.mod.dump(gpa, &writer.interface);
+    try writer.interface.flush();
+}
+
+fn saveJson(io: Io, player: *Player, path: []const u8) !void {
+    var file = try Io.Dir.cwd().createFile(io, path, .{});
+    defer file.close(io);
+    var buf: [1024]u8 = undefined;
+    var writer = file.writer(io, &buf);
+    try player.driver.mod.dumpJson(&writer.interface);
     try writer.interface.flush();
 }
 

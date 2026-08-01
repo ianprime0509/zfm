@@ -169,6 +169,68 @@ pub fn load(gpa: Allocator, r: *Reader) (Reader.Error || Allocator.Error)!Module
     return mod;
 }
 
+pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
+    var out: std.json.Stringify = .{ .writer = w, .options = .{
+        .whitespace = .indent_2,
+    } };
+
+    try out.beginObject();
+
+    try out.objectField("commands");
+    try out.beginArray();
+    for (mod.commands.items(.tag), mod.commands.items(.data)) |cmd_tag, cmd_data| {
+        try out.beginObject();
+        try out.objectField(@tagName(cmd_tag));
+        switch (Command.Tag.data_tags[@intFromEnum(cmd_tag)]) {
+            inline else => |data_tag| {
+                if (data_tag == .none) {
+                    try out.beginObject();
+                    try out.endObject();
+                } else {
+                    try out.write(@field(cmd_data, @tagName(data_tag)));
+                }
+            },
+        }
+        try out.endObject();
+    }
+    try out.endArray();
+
+    try out.objectField("parts");
+    try out.write(mod.parts);
+
+    try out.objectField("patches");
+    try out.write(mod.patches);
+
+    try out.objectField("extra");
+    try out.write(mod.extra.data);
+
+    try out.objectField("strings");
+    try out.beginArray();
+    {
+        var i: usize = 0;
+        while (std.mem.findScalarPos(u8, mod.strings.bytes, i, 0)) |end| : (i = end + 1) {
+            try out.write(mod.strings.bytes[i..end]);
+        }
+        try out.write(mod.strings.bytes[i..]);
+    }
+    try out.endArray();
+
+    try out.objectField("title");
+    try out.write(@intFromEnum(mod.title));
+
+    try out.objectField("composer");
+    try out.write(@intFromEnum(mod.composer));
+
+    try out.objectField("arranger");
+    try out.write(@intFromEnum(mod.arranger));
+
+    try out.objectField("initial_tempo");
+    try out.write(mod.initial_tempo.bpm);
+
+    try out.endObject();
+    try w.flush();
+}
+
 pub const SourceIndex = enum(u32) {
     start,
     _,
