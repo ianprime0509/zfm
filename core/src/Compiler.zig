@@ -1,8 +1,9 @@
 source: [:0]const u8,
 pos: SourceIndex,
 current_part: ?u8,
+current_start: SourceIndex,
 parts: std.array_hash_map.Auto(u8, Part),
-patches: std.array_hash_map.Auto(StringPool.Index, Extra.Index),
+patches: std.array_hash_map.Auto(StringPool.Index, Patch.Entry),
 macros: std.array_hash_map.Auto(StringPool.Index, SourceIndex),
 extra: Extra.Wip,
 strings: StringPool,
@@ -22,6 +23,7 @@ pub fn init(gpa: Allocator, source: [:0]const u8) Compiler {
         .source = source,
         .pos = .start,
         .current_part = null,
+        .current_start = undefined,
         .parts = .empty,
         .patches = .empty,
         .macros = .empty,
@@ -99,10 +101,11 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         const start: Command.Index = @fromBackingInt(@intCast(commands.len));
         try commands.ensureUnusedCapacity(c.gpa, part.commands.len + 1);
         const slice = part.commands.slice();
-        for (slice.items(.tag), slice.items(.data)) |tag, data| {
+        for (slice.items(.tag), slice.items(.data), slice.items(.span)) |tag, data, span| {
             commands.appendAssumeCapacity(.{
                 .tag = tag,
                 .data = data,
+                .span = span,
             });
         }
 
@@ -114,14 +117,12 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         commands.appendAssumeCapacity(.{
             .tag = .end,
             .data = .{ .none = {} },
+            .span = undefined,
         });
     }
 
-    const patches = try c.gpa.alloc(Patch.Entry, c.patches.count());
+    const patches = try c.gpa.dupe(Patch.Entry, c.patches.values());
     errdefer c.gpa.free(patches);
-    for (patches, c.patches.keys(), c.patches.values()) |*entry, name, index| {
-        entry.* = .{ .name = name, .index = index };
-    }
 
     var extra = try c.extra.finish(c.gpa);
     errdefer extra.deinit(c.gpa);
@@ -217,6 +218,7 @@ fn compileDirective(c: *Compiler) !void {
 
 fn compilePatch(c: *Compiler) !void {
     assert(c.sourceByte(c.pos) == '@');
+    const start_pos = c.pos;
     c.skipByte();
     const name = c.takeName() orelse {
         try c.report(.expected_name);
@@ -271,7 +273,11 @@ fn compilePatch(c: *Compiler) !void {
     const index = c.extra.currentIndex();
     try c.extra.encode(c.gpa, patch);
     const name_str = try c.strings.intern(c.gpa, name);
-    try c.patches.put(c.gpa, name_str, index);
+    try c.patches.put(c.gpa, name_str, .{
+        .name = name_str,
+        .span = .{ .start = start_pos, .end = c.pos },
+        .index = index,
+    });
 }
 
 fn takeConnections(c: *Compiler) !?Voice.Connections {
@@ -346,27 +352,27 @@ fn compilePart(c: *Compiler, part: *Part) !void {
 }
 
 fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
-    const start_pos = c.pos;
+    c.current_start = c.pos;
     switch (c.peekByte()) {
         'a'...'g' => {
             const note = c.takeNote(part).?;
             const length = try c.takeNoteLength() orelse part.default_length;
-            try part.addCommand(c.gpa, .key_on, .{ .freq = note });
-            try part.addCommand(c.gpa, .rest, .{ .ticks = length });
-            try part.addCommand(c.gpa, .key_off, .{ .none = {} });
+            try part.addCommand(c, .key_on, .{ .freq = note });
+            try part.addCommand(c, .rest, .{ .ticks = length });
+            try part.addCommand(c, .key_off, .{ .none = {} });
         },
         'r' => {
             c.skipByte();
             const length = try c.takeNoteLength() orelse part.default_length;
-            try part.addCommand(c.gpa, .rest, .{ .ticks = length });
+            try part.addCommand(c, .rest, .{ .ticks = length });
         },
         '.' => {
             c.skipByte();
             const commands = part.commands.slice();
             const tags = commands.items(.tag);
             const datas = commands.items(.data);
-            const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, start_pos, c.pos);
-            datas[rest].ticks = datas[rest].ticks.dot() catch return c.reportSpan(.cannot_dot, start_pos, c.pos);
+            const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
+            datas[rest].ticks = datas[rest].ticks.dot() catch return c.reportSpan(.cannot_dot, c.current_start, c.pos);
         },
         'l' => {
             c.skipByte();
@@ -378,7 +384,7 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             const commands = part.commands.slice();
             const tags = commands.items(.tag);
             const datas = commands.items(.data);
-            const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, start_pos, c.pos);
+            const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
             datas[rest].ticks = switch (op) {
                 '+' => @fromBackingInt(@backingInt(datas[rest].ticks) +| @backingInt(length)),
                 '-' => @fromBackingInt(@backingInt(datas[rest].ticks) -| @backingInt(length)),
@@ -390,7 +396,7 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             c.skipByte();
             const tags = part.commands.items(.tag);
             if (tags.len < 1 or tags[tags.len - 1] != .key_off) {
-                return c.reportSpan(.last_command_not_note, start_pos, c.pos);
+                return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
             }
             part.commands.len -= 1;
         },
@@ -412,8 +418,8 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             const name_pos = c.pos;
             const name = c.takeName() orelse return c.report(.expected_name);
             const name_str = c.strings.find(name) orelse return c.reportSpan(.undefined_patch, name_pos, c.pos);
-            const index = c.patches.get(name_str) orelse return c.reportSpan(.undefined_patch, name_pos, c.pos);
-            try part.addCommand(c.gpa, .set_patch, .{ .extra = index });
+            const entry = c.patches.get(name_str) orelse return c.reportSpan(.undefined_patch, name_pos, c.pos);
+            try part.addCommand(c, .set_patch, .{ .extra = entry.index });
         },
         '!' => {
             c.skipByte();
@@ -431,7 +437,7 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
                 else => .set_volume,
             };
             const amount = try c.takeNumber(f32) orelse return c.report(.expected_param);
-            try part.addCommand(c.gpa, tag, .{ .amount = amount });
+            try part.addCommand(c, tag, .{ .amount = amount });
         },
         'L' => {
             c.skipByte();
@@ -439,19 +445,19 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
         },
         '[' => {
             c.skipByte();
-            part.loops.push(.{ .start = part.nextCommandIndex(), .pos = start_pos }) catch
-                return c.reportSpan(.loop_too_deep, start_pos, c.pos);
+            part.loops.push(.{ .start = part.nextCommandIndex(), .pos = c.current_start }) catch
+                return c.reportSpan(.loop_too_deep, c.current_start, c.pos);
         },
         ']' => {
             c.skipByte();
             const count: LoopCount = try c.takeNumber(LoopCount) orelse .infinite;
             if (part.loops.pop()) |loop| {
-                try part.addCommand(c.gpa, .loop, .{ .loop = .{
+                try part.addCommand(c, .loop, .{ .loop = .{
                     .branch = .between(part.nextCommandIndex(), loop.start),
                     .count = count,
                 } });
             } else {
-                return c.reportSpan(.not_in_loop, start_pos, c.pos);
+                return c.reportSpan(.not_in_loop, c.current_start, c.pos);
             }
         },
         '{' => {
@@ -465,12 +471,12 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
                 const new_state = try c.takeEnum(enum { on, off }) orelse return c.report(.expected_param);
                 try c.addSetLfoEnabledCommand(part, .user(lfo), new_state == .on);
             } else {
-                try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .user(lfo) });
+                try part.addCommand(c, .toggle_lfo, .{ .lfo = .user(lfo) });
             }
         },
         'M' => {
             c.skipByte();
-            try c.compileLfoCommand(part, start_pos);
+            try c.compileLfoCommand(part);
         },
         '_' => {
             c.skipByte();
@@ -481,13 +487,13 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
                 },
                 else => {
                     c.skipByte();
-                    try c.reportSpan(.invalid_command, start_pos, c.pos);
+                    try c.reportSpan(.invalid_command, c.current_start, c.pos);
                 },
             }
         },
         else => {
             c.skipByte();
-            try c.reportSpan(.invalid_command, start_pos, c.pos);
+            try c.reportSpan(.invalid_command, c.current_start, c.pos);
         },
     }
 }
@@ -542,15 +548,15 @@ fn compilePortamento(c: *Compiler, part: *Part) !void {
     try c.addSetLfoWaveCommand(part, .porta, .{ .exp = .{
         .mul = (@log2(to) - @log2(from)) / @as(f32, @floatFromInt(@backingInt(length))),
     } });
-    try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
-    try part.addCommand(c.gpa, .key_on, .{ .freq = from });
-    try part.addCommand(c.gpa, .rest, .{ .ticks = length });
-    try part.addCommand(c.gpa, .toggle_lfo, .{ .lfo = .porta });
-    try part.addCommand(c.gpa, .key_on, .{ .freq = to });
-    try part.addCommand(c.gpa, .key_off, .{ .none = {} });
+    try part.addCommand(c, .toggle_lfo, .{ .lfo = .porta });
+    try part.addCommand(c, .key_on, .{ .freq = from });
+    try part.addCommand(c, .rest, .{ .ticks = length });
+    try part.addCommand(c, .toggle_lfo, .{ .lfo = .porta });
+    try part.addCommand(c, .key_on, .{ .freq = to });
+    try part.addCommand(c, .key_off, .{ .none = {} });
 }
 
-fn compileLfoCommand(c: *Compiler, part: *Part, start_pos: SourceIndex) !void {
+fn compileLfoCommand(c: *Compiler, part: *Part) !void {
     switch (c.peekByte()) {
         'T' => {
             c.skipByte();
@@ -614,7 +620,7 @@ fn compileLfoCommand(c: *Compiler, part: *Part, start_pos: SourceIndex) !void {
         },
         else => {
             c.skipByte();
-            try c.reportSpan(.invalid_command, start_pos, c.pos);
+            try c.reportSpan(.invalid_command, c.current_start, c.pos);
         },
     }
 }
@@ -637,14 +643,14 @@ fn compileKeyChange(c: *Compiler, part: *Part) !void {
 }
 
 fn addSetLfoEnabledCommand(c: *Compiler, part: *Part, index: Lfo.Index, enabled: bool) !void {
-    try part.addCommand(c.gpa, .set_lfo_enabled, .{ .lfo_enabled = .{
+    try part.addCommand(c, .set_lfo_enabled, .{ .lfo_enabled = .{
         .index = index,
         .enabled = enabled,
     } });
 }
 
 fn addSetLfoTargetCommand(c: *Compiler, part: *Part, index: Lfo.Index, target: Lfo.Target) !void {
-    try part.addCommand(c.gpa, .set_lfo_target, .{ .lfo_target = .{
+    try part.addCommand(c, .set_lfo_target, .{ .lfo_target = .{
         .index = index,
         .target = target,
     } });
@@ -653,7 +659,7 @@ fn addSetLfoTargetCommand(c: *Compiler, part: *Part, index: Lfo.Index, target: L
 fn addSetLfoSizeCommand(c: *Compiler, part: *Part, index: Lfo.Index, size: Lfo.Size) !void {
     const data = c.extra.currentIndex();
     try c.extra.encode(c.gpa, size);
-    try part.addCommand(c.gpa, .set_lfo_size, .{ .lfo_data = .{
+    try part.addCommand(c, .set_lfo_size, .{ .lfo_data = .{
         .index = index,
         .data = data,
     } });
@@ -662,21 +668,21 @@ fn addSetLfoSizeCommand(c: *Compiler, part: *Part, index: Lfo.Index, size: Lfo.S
 fn addSetLfoWaveCommand(c: *Compiler, part: *Part, index: Lfo.Index, wave: Lfo.Wave) !void {
     const data = c.extra.currentIndex();
     try c.extra.encode(c.gpa, wave);
-    try part.addCommand(c.gpa, .set_lfo_wave, .{ .lfo_data = .{
+    try part.addCommand(c, .set_lfo_wave, .{ .lfo_data = .{
         .index = index,
         .data = data,
     } });
 }
 
 fn addSetLfoTriggerCommand(c: *Compiler, part: *Part, index: Lfo.Index, trigger: Lfo.Trigger) !void {
-    try part.addCommand(c.gpa, .set_lfo_trigger, .{ .lfo_trigger = .{
+    try part.addCommand(c, .set_lfo_trigger, .{ .lfo_trigger = .{
         .index = index,
         .trigger = trigger,
     } });
 }
 
 fn addSetLfoAdjustCommand(c: *Compiler, part: *Part, index: Lfo.Index, adjust: bool) !void {
-    try part.addCommand(c.gpa, .set_lfo_adjust, .{ .lfo_adjust = .{
+    try part.addCommand(c, .set_lfo_adjust, .{ .lfo_adjust = .{
         .index = index,
         .adjust = adjust,
     } });
@@ -1011,10 +1017,11 @@ const Part = struct {
         return @fromBackingInt(@intCast(part.commands.len));
     }
 
-    fn addCommand(part: *Part, gpa: Allocator, tag: Command.Tag, data: Command.Data) !void {
-        try part.commands.append(gpa, .{
+    fn addCommand(part: *Part, c: *const Compiler, tag: Command.Tag, data: Command.Data) !void {
+        try part.commands.append(c.gpa, .{
             .tag = tag,
             .data = data,
+            .span = .{ .start = c.current_start, .end = c.pos },
         });
     }
 

@@ -101,6 +101,7 @@ pub fn dump(mod: *const Module, gpa: Allocator, w: *Writer) (Writer.Error || All
             @ptrCast(safety_buffer)
         else
             @ptrCast(mod.commands.items(.data)),
+        @ptrCast(mod.commands.items(.span)),
         @ptrCast(mod.parts),
         @ptrCast(mod.patches),
         @ptrCast(mod.extra.data),
@@ -149,6 +150,7 @@ pub fn load(gpa: Allocator, r: *Reader) (Reader.Error || Allocator.Error)!Module
             @ptrCast(safety_buffer)
         else
             @ptrCast(mod.commands.items(.data)),
+        @ptrCast(mod.commands.items(.span)),
         @ptrCast(mod.parts),
         @ptrCast(mod.patches),
         @ptrCast(mod.extra.data),
@@ -178,7 +180,7 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
 
     try out.objectField("commands");
     try out.beginArray();
-    for (mod.commands.items(.tag), mod.commands.items(.data)) |cmd_tag, cmd_data| {
+    for (mod.commands.items(.tag), mod.commands.items(.data), mod.commands.items(.span)) |cmd_tag, cmd_data, cmd_span| {
         try out.beginObject();
         try out.objectField(@tagName(cmd_tag));
         switch (Command.Tag.data_tags[@intFromEnum(cmd_tag)]) {
@@ -190,6 +192,10 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
                     try out.write(@field(cmd_data, @tagName(data_tag)));
                 }
             },
+        }
+        if (cmd_tag != .end) {
+            try out.objectField("span");
+            try out.write(cmd_span);
         }
         try out.endObject();
     }
@@ -321,6 +327,7 @@ pub const Part = struct {
 pub const Command = struct {
     tag: Tag,
     data: Data,
+    span: SourceIndex.Span,
 
     pub const Index = enum(u32) {
         _,
@@ -524,6 +531,7 @@ pub const Patch = struct {
 
     pub const Entry = struct {
         name: StringPool.Index,
+        span: SourceIndex.Span,
         index: Extra.Index,
     };
 

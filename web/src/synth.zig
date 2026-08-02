@@ -41,7 +41,7 @@ fn resetInner(n_voices: usize) Allocator.Error!void {
 fn emptyModule(n_voices: usize) Allocator.Error!Module {
     var mod_commands: Command.List = .empty;
     errdefer mod_commands.deinit(gpa);
-    try mod_commands.append(gpa, .{ .tag = .end, .data = .{ .none = {} } });
+    try mod_commands.append(gpa, .{ .tag = .end, .data = .{ .none = {} }, .span = undefined });
     const end: Command.Index = @fromBackingInt(0);
 
     const mod_parts = try gpa.alloc(Module.Part, n_voices);

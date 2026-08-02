@@ -1,5 +1,6 @@
 const gpa = std.heap.wasm_allocator;
 
+var source: [:0]const u8 = "";
 var mod: Module = .empty;
 var errors: std.ArrayList(Compiler.Error) = .empty;
 var transfer: std.ArrayList(u8) = .empty;
@@ -22,11 +23,13 @@ export fn compile() bool {
 }
 
 fn compileInner() Allocator.Error!bool {
+    if (source.len > 0) gpa.free(source);
+    source = "";
     mod.deinit(gpa);
     mod = .empty;
 
-    try transfer.append(gpa, 0);
-    var compiler: Compiler = .init(gpa, transfer.items[0 .. transfer.items.len - 1 :0]);
+    source = if (transfer.items.len > 0) try gpa.dupeSentinel(u8, transfer.items, 0) else "";
+    var compiler: Compiler = .init(gpa, source);
     defer compiler.deinit();
     try compiler.compile();
 
