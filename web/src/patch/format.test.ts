@@ -68,6 +68,37 @@ describe("formatPatch", () => {
     p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
     expect(formatPatch(p)).toBe("@sin .\n  sine 0.5 1 0 1 0 0 0 1");
   });
+
+  it("emits LFO preset comments above the patch for enabled LFOs", () => {
+    const p = { ...emptyPatch(), name: "vib" };
+    p.lfos[0]!.enabled = true;
+    p.lfos[0]!.params = {
+      target: "freq",
+      size: { scale: 5, offset: 0 },
+      wave: { sine: { freq: 5 } },
+      trigger: "key_on",
+      time_unit: "seconds",
+      adjust: true,
+    };
+    p.lfos[1]!.enabled = true;
+    p.lfos[1]!.params = {
+      target: "pan",
+      size: { scale: 0.25, offset: -0.5 },
+      wave: { exp: { mul: -2 } },
+      trigger: "none",
+      time_unit: "seconds",
+      adjust: false,
+    };
+    expect(formatPatch(p).split("\n").slice(0, 3)).toEqual([
+      "; LFO preset: MT0,freq MS0,5,0 MW0,sine,5 MO0,key_on MA0,on",
+      "; LFO preset: MT1,pan MS1,0.25,-0.5 MW1,exp,-2 MO1,none MA1,off",
+      "@vib .",
+    ]);
+  });
+
+  it("omits LFO preset comments when no LFO is enabled", () => {
+    expect(formatPatch({ ...emptyPatch(), name: "quiet" }).split("\n")[0]).toBe("@quiet .");
+  });
 });
 
 describe("insertPatch", () => {

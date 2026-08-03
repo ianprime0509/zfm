@@ -1,8 +1,9 @@
-import { N_SLOTS, type Patch } from "../patch/types.ts";
+import { N_LFOS, N_SLOTS, defaultLfoStates, type LfoWave, type Patch } from "../patch/types.ts";
 
 /** Structural check that a deserialized patch has the expected shape, so a
  *  malformed or version-mismatched persisted bank is ignored rather than
- *  crashing the editor. */
+ *  crashing the editor. `lfos` is optional: banks persisted before LFOs were
+ *  stored on the patch are still accepted (clonePatch fills in defaults). */
 function isPatchLike(v: unknown): v is Patch {
   if (typeof v !== "object" || v === null) return false;
   const p = v as Record<string, unknown>;
@@ -15,7 +16,14 @@ function isPatchLike(v: unknown): v is Patch {
   if (!Array.isArray(p.slotWaves) || p.slotWaves.length !== N_SLOTS) return false;
   if (!Array.isArray(p.slotParams) || p.slotParams.length !== N_SLOTS) return false;
   if (!Array.isArray(p.envParams) || p.envParams.length !== N_SLOTS) return false;
+  if (p.lfos !== undefined && (!Array.isArray(p.lfos) || p.lfos.length !== N_LFOS)) return false;
   return true;
+}
+
+function cloneWave(w: LfoWave): LfoWave {
+  if ("constant" in w) return { constant: {} };
+  if ("sine" in w) return { sine: { freq: w.sine.freq } };
+  return { exp: { mul: w.exp.mul } };
 }
 
 /** Deep-clone a patch so sanitized entries are independent of their source. */
@@ -26,6 +34,12 @@ function clonePatch(p: Patch): Patch {
     slotWaves: [...p.slotWaves],
     slotParams: p.slotParams.map((s) => ({ ...s })),
     envParams: p.envParams.map((e) => ({ ...e })),
+    lfos: p.lfos
+      ? p.lfos.map((l) => ({
+          ...l,
+          params: { ...l.params, size: { ...l.params.size }, wave: cloneWave(l.params.wave) },
+        }))
+      : defaultLfoStates(),
   };
 }
 

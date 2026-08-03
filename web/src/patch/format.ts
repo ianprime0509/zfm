@@ -19,8 +19,10 @@
 // and chain shapes.
 
 import {
+  N_LFOS,
   N_SLOTS,
   type EnvParams,
+  type LfoParams,
   type Patch,
   type SlotParams,
   type SlotWave,
@@ -134,12 +136,37 @@ function formatSlotLine(wave: SlotWave, sp: SlotParams, ep: EnvParams): string {
   return "  " + parts.join(" ");
 }
 
+/** Serialize one user LFO's parameters as the four MML commands
+ *  (MT/MS/MW/MO/MA) that fully describe it, matching core
+ *  Compiler.compileLfoCommand. */
+export function lfoToMml(index: number, p: LfoParams): string {
+  let wave = `MW${index},constant`;
+  if ("sine" in p.wave) wave = `MW${index},sine,${formatNumber(p.wave.sine.freq)}`;
+  else if ("exp" in p.wave) wave = `MW${index},exp,${formatNumber(p.wave.exp.mul)}`;
+
+  return [
+    `MT${index},${p.target}`,
+    `MS${index},${formatNumber(p.size.scale)},${formatNumber(p.size.offset)}`,
+    wave,
+    `MO${index},${p.trigger}`,
+    `MA${index},${p.adjust ? "on" : "off"}`,
+  ].join(" ");
+}
+
 /**
- * Render a patch as MML source text (no trailing newline). Empty routing
- * produces `@<name> .`; slots beyond the last relevant one are omitted.
+ * Render a patch as MML source text (no trailing newline). Enabled LFOs are
+ * emitted as `; LFO preset:` comments directly above the `@` definition
+ * (the compiler parses these back into the patch's LFO state); empty
+ * routing produces `@<name> .`; slots beyond the last relevant one are
+ * omitted.
  */
 export function formatPatch(patch: Patch): string {
-  const lines: string[] = [`@${patch.name} ${formatConnections(patch.connections.edges)}.`];
+  const lines: string[] = [];
+  for (let i = 0; i < N_LFOS; i++) {
+    const lfo = patch.lfos?.[i];
+    if (lfo?.enabled) lines.push(`; LFO preset: ${lfoToMml(i, lfo.params)}`);
+  }
+  lines.push(`@${patch.name} ${formatConnections(patch.connections.edges)}.`);
   const last = lastRelevantSlot(patch);
   for (let i = 0; i <= last; i++) {
     lines.push(formatSlotLine(patch.slotWaves[i]!, patch.slotParams[i]!, patch.envParams[i]!));

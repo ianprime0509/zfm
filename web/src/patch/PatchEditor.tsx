@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type Dispatch, type StateUpdater } from "preact/hooks";
-import type { LfoState, Patch, SlotIndex } from "./types.ts";
-import { defaultLfoStates, N_SLOTS } from "./types.ts";
+import type { Patch, SlotIndex } from "./types.ts";
+import { N_SLOTS } from "./types.ts";
 import { ELECTRIC_PIANO, ROUTING_PRESETS } from "./presets.ts";
 import { edgesEqual } from "./connections.ts";
 import { slotColor } from "./colors.ts";
@@ -34,8 +34,8 @@ const isValidName = (v: string) => v.length > 0 && PATCH_NAME_RE.test(v);
 //   - The routing diagram is an 8x8 directed-edge grid that fully describes
 //     the routing and makes the no-cycles constraint visible/enforced.
 //   - A header offers routing presets.
-//   - Below the body, an LfoPanel lets the user test the 4 user LFOs on the
-//     patch while playing it with the keyboard.
+//   - Below the body, an LfoPanel lets the user test the 4 user LFOs (whose
+//     state is stored on the patch itself) while playing it with the keyboard.
 
 export interface PatchEditorProps {
   initialPatch?: Patch;
@@ -53,11 +53,10 @@ export function PatchEditor({
   const [patch, setPatch] = useState<Patch>(initialPatch);
   const [activeSlot, setActiveSlot] = useState<SlotIndex>(0);
   const [routingOpen, setRoutingOpen] = useState(false);
-  const [lfos, setLfos] = useState<LfoState[]>(defaultLfoStates);
 
-  // Keep the synth's voices in sync with the patch (and the test LFOs) and
+  // Keep the synth's voices in sync with the patch (including its LFOs) and
   // let the physical keyboard play notes polyphonically (8 voices).
-  const { noteOn, noteOff } = usePatchSynth(patch, synth, { disabled, lfos });
+  const { noteOn, noteOff } = usePatchSynth(patch, synth, { disabled });
   useSynthKeyboard(noteOn, noteOff);
 
   // Keep the parent's copy of the patch in sync. We lift via an effect
@@ -169,7 +168,7 @@ export function PatchEditor({
         <pre class={classes.previewMml}>{mml}</pre>
       </section>
 
-      <LfoPanel lfos={lfos} onChange={setLfos} />
+      <LfoPanel lfos={patch.lfos} onChange={(f) => setPatch((p) => ({ ...p, lfos: f(p.lfos) }))} />
     </div>
   );
 }

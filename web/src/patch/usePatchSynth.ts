@@ -28,9 +28,9 @@ import { VoiceAllocator } from "./voiceAllocator.ts";
 // resolve the (memoized) AudioContext once it's live, but constructing it is
 // gated behind the first gesture.
 //
-// LFO states (e.g. from the LfoPanel) are synced the same way: staged until
-// audio is live, diffed on change, and re-applied in full whenever the
-// staged state is forced to re-apply.
+// LFO states (stored on the patch, edited via the LfoPanel) are synced the
+// same way: staged until audio is live, diffed on change, and re-applied in
+// full whenever the staged state is forced to re-apply.
 //
 // Ownership: the `synth` is shared with the rest of the app. While `disabled`
 // is true (the track editor is playing back a compiled module), this hook is
@@ -136,9 +136,6 @@ export interface UsePatchSynthOptions {
   /** When true, this hook neither touches the synth nor triggers notes. Used
    *  to yield the synth to track playback so the two never collide. */
   disabled?: boolean;
-  /** User LFO states to sync to all voices (e.g. from the LfoPanel). Synced
-   *  with the same staging discipline as the patch. */
-  lfos?: LfoState[];
 }
 
 export function usePatchSynth(
@@ -147,7 +144,6 @@ export function usePatchSynth(
   options?: UsePatchSynthOptions,
 ): PatchSynth {
   const disabled = options?.disabled ?? false;
-  const lfos = options?.lfos;
 
   const allocatorRef = useRef<VoiceAllocator | null>(null);
   if (allocatorRef.current === null) allocatorRef.current = new VoiceAllocator();
@@ -162,7 +158,7 @@ export function usePatchSynth(
   const lastAppliedRef = useRef<Patch | undefined>(undefined);
   const stagedRef = useRef<Patch>(patch);
   const lastAppliedLfosRef = useRef<LfoState[] | undefined>(undefined);
-  const stagedLfosRef = useRef<LfoState[] | undefined>(lfos);
+  const stagedLfosRef = useRef<LfoState[] | undefined>(patch.lfos);
 
   // `disabled` as a ref so the memoized note callbacks read the latest value
   // without being recreated on every toggle.
@@ -191,7 +187,7 @@ export function usePatchSynth(
     prevDisabledRef.current = disabled;
 
     stagedRef.current = patch;
-    stagedLfosRef.current = lfos;
+    stagedLfosRef.current = patch.lfos;
     if (disabled) return;
 
     if (justEnabled) {
@@ -202,12 +198,12 @@ export function usePatchSynth(
     if (audioLiveRef.current) {
       applyPatch(synth, lastAppliedRef.current, patch);
       lastAppliedRef.current = patch;
-      if (lfos) {
-        applyLfos(synth, lastAppliedLfosRef.current, lfos);
-        lastAppliedLfosRef.current = lfos;
+      if (patch.lfos) {
+        applyLfos(synth, lastAppliedLfosRef.current, patch.lfos);
+        lastAppliedLfosRef.current = patch.lfos;
       }
     }
-  }, [patch, lfos, synth, disabled]);
+  }, [patch, synth, disabled]);
 
   const noteOn = useCallback(
     (midi: number) => {

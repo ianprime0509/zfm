@@ -104,19 +104,3 @@
   color: var(--color-text-secondary);
   cursor: pointer;
 }
-
-.mmlHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.mml {
-  margin: 0;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: pre;
-  overflow-x: auto;
-  color: var(--color-text-muted);
-}

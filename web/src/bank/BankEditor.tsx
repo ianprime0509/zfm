@@ -32,6 +32,10 @@ function clonePatch(p: Patch): Patch {
     slotWaves: [...p.slotWaves],
     slotParams: p.slotParams.map((s) => ({ ...s })),
     envParams: p.envParams.map((e) => ({ ...e })),
+    lfos: p.lfos.map((l) => ({
+      ...l,
+      params: { ...l.params, size: { ...l.params.size }, wave: { ...l.params.wave } },
+    })),
   };
 }
 

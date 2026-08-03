@@ -1,8 +1,5 @@
-import type { Dispatch, StateUpdater } from "preact/hooks";
 import type { LfoParams, LfoState, LfoTarget, LfoWave, LfoWaveTag } from "./types.ts";
 import { ParamField } from "./ParamField.tsx";
-import { formatNumber } from "./format.ts";
-import { CopyButton } from "../components/CopyButton.tsx";
 import classes from "./LfoPanel.module.css";
 
 // LfoPanel lets the user test the effect of the 4 user LFOs on the patch
@@ -14,14 +11,16 @@ import classes from "./LfoPanel.module.css";
 // vibrato; a constant wave with scale -2 is a 2 Hz pitch drop). For "pan" it
 // is the voice pan, where -1 is full left and +1 is full right.
 //
-// The panel only edits editor-side state (lifted into the PatchEditor);
-// usePatchSynth applies it to all 8 keyboard voices with the same staging
-// discipline as patch edits (nothing touches the synth until audio is live,
-// and edits are staged while the track player owns the synth).
+// The panel edits the LFO state stored on the patch (which also carries it
+// into the MML preview as `; LFO preset:` comments); usePatchSynth applies
+// it to all 8 keyboard voices with the same staging discipline as patch
+// edits (nothing touches the synth until audio is live, and edits are staged
+// while the track player owns the synth).
 
 export interface LfoPanelProps {
   lfos: LfoState[];
-  onChange: Dispatch<StateUpdater<LfoState[]>>;
+  /** Functional-updater-only so the parent can write back into the patch. */
+  onChange: (f: (lfos: LfoState[]) => LfoState[]) => void;
 }
 
 const WAVE_DEFAULTS: Record<LfoWaveTag, () => LfoWave> = {
@@ -76,22 +75,6 @@ function waveTag(wave: LfoWave): LfoWaveTag {
   return "exp";
 }
 
-/** Renders the four MML commands (MT/MS/MW/MO) that fully describe one user
- *  LFO's parameters, matching core Compiler.compileLfoCommand. */
-function lfoToMml(index: number, p: LfoParams): string {
-  let wave = `MW${index},constant`;
-  if ("sine" in p.wave) wave = `MW${index},sine,${formatNumber(p.wave.sine.freq)}`;
-  else if ("exp" in p.wave) wave = `MW${index},exp,${formatNumber(p.wave.exp.mul)}`;
-
-  return [
-    `MT${index},${p.target}`,
-    `MS${index},${formatNumber(p.size.scale)},${formatNumber(p.size.offset)}`,
-    wave,
-    `MO${index},${p.trigger}`,
-    `MA${index},${p.adjust ? "on" : "off"}`,
-  ].join(" ");
-}
-
 interface LfoCardProps {
   index: number;
   lfo: LfoState;
@@ -105,7 +88,6 @@ function LfoCard({ index, lfo, onChange }: LfoCardProps) {
 
   const tag = waveTag(lfo.params.wave);
   const out = OUTPUT_CFG[lfo.params.target];
-  const mml = lfoToMml(index, lfo.params);
 
   return (
     <div class={classes.card}>
@@ -216,13 +198,6 @@ function LfoCard({ index, lfo, onChange }: LfoCardProps) {
           />
           adjust scale/offset proportionally to 440Hz base
         </label>
-        <div class={classes.group}>
-          <div class={classes.mmlHeader}>
-            <div class={classes.groupLabel}>MML</div>
-            <CopyButton text={mml} title="Copy MML to clipboard" />
-          </div>
-          <pre class={classes.mml}>{mml}</pre>
-        </div>
       </div>
     </div>
   );

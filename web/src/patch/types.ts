@@ -99,6 +99,9 @@ export interface Patch {
   slotWaves: SlotWave[];
   slotParams: SlotParams[];
   envParams: EnvParams[];
+  /** Per-LFO editor state (enabled flag + parameters), stored with the
+   *  patch so it round-trips through MML as `; LFO preset:` comments. */
+  lfos: LfoState[];
 }
 
 export const SLOT_PARAMS_ZERO: SlotParams = { tl: 0, ml: 0, fb: 0, ws: 0 };
@@ -116,6 +119,7 @@ export function emptyPatch(): Patch {
     slotWaves: Array.from({ length: N_SLOTS }, () => SLOT_WAVE_DEFAULT),
     slotParams: Array.from({ length: N_SLOTS }, () => ({ ...SLOT_PARAMS_ZERO })),
     envParams: Array.from({ length: N_SLOTS }, () => ({ ...ENV_PARAMS_ZERO })),
+    lfos: defaultLfoStates(),
   };
 }
 

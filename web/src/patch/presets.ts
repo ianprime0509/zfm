@@ -1,7 +1,7 @@
 // Built-in patch and routing presets shown in the editor's header.
 
 import type { Connections, EnvParams, Patch, SlotParams, SlotWave } from "./types.ts";
-import { N_SLOTS, SLOT_WAVE_DEFAULT, emptyConnections } from "./types.ts";
+import { N_SLOTS, SLOT_WAVE_DEFAULT, defaultLfoStates, emptyConnections } from "./types.ts";
 
 // --- Default patch: electric-piano from patches/patches.zfm ---
 // @electric-piano 0 1, 2 3.
@@ -53,6 +53,7 @@ export const ELECTRIC_PIANO: Patch = {
   slotWaves: electricPianoWaves,
   slotParams: electricPianoSlots,
   envParams: electricPianoEnvs,
+  lfos: defaultLfoStates(),
 };
 
 // --- Routing presets (algorithm shapes only; slot params are preserved
