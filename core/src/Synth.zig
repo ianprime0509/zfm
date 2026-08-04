@@ -257,18 +257,19 @@ pub const Slot = struct {
                     return v;
                 },
                 .square => |*t| {
-                    const v = 1.0 - 2.0 * @floor(freq * t.* + ws);
+                    const x = freq * t.* + phase / std.math.tau;
+                    const v = 1.0 - 2.0 * @floor(x + 1.0 - ws) + 2.0 * @floor(x);
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .triangle => |*t| {
-                    const x = freq * t.*;
+                    const x = freq * t.* + phase / std.math.tau;
                     const v = 2.0 * @abs(2.0 * (x - @floor(x + 0.5))) - 1.0;
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .saw => |*t| {
-                    const x = freq * t.*;
+                    const x = freq * t.* + phase / std.math.tau;
                     const v = 2.0 * (x - @floor(x + 0.5));
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
