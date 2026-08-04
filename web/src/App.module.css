@@ -24,6 +24,10 @@
   gap: 8px;
 }
 
+.fileInput {
+  display: none;
+}
+
 .logo {
   display: block;
   height: 28px;
