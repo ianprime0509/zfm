@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
-import type { ComponentChild, JSX } from "preact";
+import type { ComponentChild, TargetedMouseEvent } from "preact";
 import { X } from "lucide-preact";
 import { Button } from "./Button.tsx";
 import classes from "./Dialog.module.css";
@@ -42,7 +42,7 @@ export function Dialog({ open, onClose, title, closeTitle = "Close", children }:
   // Backdrop click: a click on a <dialog> (showModal backdrop) has the
   // dialog itself as the target. Ignore clicks that land on descendant
   // content.
-  const onClick = (e: JSX.TargetedMouseEvent<HTMLDialogElement>) => {
+  const onClick = (e: TargetedMouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) onClose();
   };
 

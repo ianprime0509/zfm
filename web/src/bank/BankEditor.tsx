@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-import type { JSX } from "preact";
-import { FolderOpen, Minus, Plus, Download } from "lucide-preact";
+import { useEffect, useState } from "preact/hooks";
+import { Minus, Plus, Download } from "lucide-preact";
 import { PatchEditor } from "../patch/PatchEditor.tsx";
 import { ELECTRIC_PIANO } from "../patch/presets.ts";
 import { usePatchSynth } from "../patch/usePatchSynth.ts";
@@ -10,6 +9,7 @@ import type { Compiler } from "../compiler.ts";
 import type { Synth } from "../synth.ts";
 import { Dialog } from "../components/Dialog.tsx";
 import { Button } from "../components/Button.tsx";
+import { LoadButton } from "../components/LoadButton.tsx";
 import { downloadText } from "../download.ts";
 import { formatBank } from "../patch/format.ts";
 import classes from "./BankEditor.module.css";
@@ -97,7 +97,6 @@ export function BankEditor({
   }, [bank, onChange]);
 
   const [loadError, setLoadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addPatch = () => {
     setBank((b) => {
@@ -126,11 +125,7 @@ export function BankEditor({
   // Load bank: prompt for a .zfm file, compile it, and (on success) replace
   // the bank with the module's patches. Compilation errors are surfaced in a
   // modal instead of clobbering the bank.
-  const loadBank = async (e: JSX.TargetedEvent<HTMLInputElement>) => {
-    const file = e.currentTarget.files?.[0];
-    // Reset the input so selecting the same file again re-fires change.
-    e.currentTarget.value = "";
-    if (!file) return;
+  const loadBank = async (file: File) => {
     const src = await file.text();
     const ok = await compiler.compile(src);
     if (!ok) {
@@ -154,9 +149,7 @@ export function BankEditor({
       <header class={classes.header}>
         <h1 class={classes.title}>Bank</h1>
         <div class={classes.actions}>
-          <Button title="Load bank" onClick={() => fileInputRef.current?.click()}>
-            <FolderOpen />
-          </Button>
+          <LoadButton title="Load bank" onFile={loadBank} />
           <Button
             title="Download bank"
             disabled={bank.length === 0}
@@ -164,13 +157,6 @@ export function BankEditor({
           >
             <Download />
           </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".zfm"
-            onChange={loadBank}
-            class={classes.fileInput}
-          />
           <Button onClick={addPatch} title="Add patch">
             <Plus />
           </Button>

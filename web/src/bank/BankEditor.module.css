@@ -116,10 +116,6 @@
   background: var(--color-accent-soft);
 }
 
-.fileInput {
-  display: none;
-}
-
 .errorBody {
   margin: 0;
   font-family: ui-monospace, monospace;

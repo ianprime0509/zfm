@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { TrackEditor } from "./TrackEditor.tsx";
 import { BankEditor, type Bank } from "./bank/BankEditor.tsx";
 import { sanitizeBank } from "./bank/sanitize.ts";
@@ -9,8 +9,9 @@ import { insertPatch } from "./patch/format.ts";
 import type { Patch } from "./patch/types.ts";
 import { loadString, saveString, loadJSON, saveJSON } from "./storage.ts";
 import classes from "./App.module.css";
-import { PanelRightClose, PanelRightOpen, Play, Square, Download, FolderOpen } from "lucide-preact";
+import { PanelRightClose, PanelRightOpen, Play, Square, Download } from "lucide-preact";
 import { Button } from "./components/Button.tsx";
+import { LoadButton } from "./components/LoadButton.tsx";
 import { downloadText } from "./download.ts";
 
 // App shell: a fixed "ZFM" header above a body that pairs a Monaco text
@@ -73,18 +74,9 @@ function App() {
     };
   }, []);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Load track: prompt for a .zfm file and replace the editor source with
   // its contents. The linter surfaces any compile errors in the editor.
-  const loadTrack = (e: Event) => {
-    const input = e.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    // Reset the input so selecting the same file again re-fires change.
-    input.value = "";
-    if (!file) return;
-    void file.text().then(setSource);
-  };
+  const loadTrack = (file: File) => void file.text().then(setSource);
 
   const onPlayStop = async () => {
     if (!compiler || !synth) return;
@@ -125,16 +117,7 @@ function App() {
       <header class={classes.header}>
         <img class={classes.logo} src="/favicon.svg" alt="ZFM" title="ZFM" />
         <div class={classes.headerActions}>
-          <Button title="Load track" onClick={() => fileInputRef.current?.click()}>
-            <FolderOpen />
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".zfm"
-            onChange={loadTrack}
-            class={classes.fileInput}
-          />
+          <LoadButton title="Load track" onFile={loadTrack} />
           <Button title="Download track" onClick={() => downloadText("track.zfm", source)}>
             <Download />
           </Button>

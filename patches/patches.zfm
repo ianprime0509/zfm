@@ -104,6 +104,11 @@
   sine 1 1 2 0.0005 0 0 0 1
   sine 1 1 1 0.0005 0 0 0 1
 
+@breathy-flute 0 1.
+  sine 1 2 0 0.0005 0 0 0 1
+  sine 1 2 0 0.0005 0.0001 0.8 0 1
+  noise 0.3 4 0 30 0.0005 0.0002 0 0 1
+
 ; LFO preset: MT0,freq MS0,100,-100 MW0,exp,-20 MO0,key_on MA0,on
 @ray-gun 0 1.
   ; Note: MA0,off results in a wider (more inconsistent) variety of sounds
