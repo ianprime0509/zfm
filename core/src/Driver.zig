@@ -111,6 +111,14 @@ fn execute(
             part.synth_params.voice.vol += driver.mod.data(command).amount;
             return command.next();
         },
+        .set_tempo => {
+            driver.tempo.bpm = driver.mod.data(command).amount;
+            return command.next();
+        },
+        .add_tempo => {
+            driver.tempo.bpm += driver.mod.data(command).amount;
+            return command.next();
+        },
         .toggle_lfo => {
             const index = driver.mod.data(command).lfo;
             const lfo = part.lfoPtr(index);

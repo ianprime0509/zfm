@@ -439,6 +439,15 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             const amount = try c.takeNumber(f32) orelse return c.report(.expected_param);
             try part.addCommand(c, tag, .{ .amount = amount });
         },
+        't' => {
+            c.skipByte();
+            const tag: Command.Tag = switch (c.peekByte()) {
+                '+', '-' => .add_tempo,
+                else => .set_tempo,
+            };
+            const amount = try c.takeNumber(f32) orelse return c.report(.expected_param);
+            try part.addCommand(c, tag, .{ .amount = amount });
+        },
         'L' => {
             c.skipByte();
             part.global_loop = part.nextCommandIndex();
