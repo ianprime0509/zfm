@@ -9,7 +9,7 @@
 //
 // The wave-specific (WS) parameter is emitted only for waveforms that use
 // it (`square`, `noise`), matching how core Compiler.zig parses slots: WS
-// is skipped entirely for `sine`.
+// is skipped entirely for `sine`, `triangle`, and `saw`.
 //
 // The connections part is a whitespace-separated list of slot-index chains
 // (`0 1 2` connects 0->1->2), with `,` starting a fresh chain and `.` ending

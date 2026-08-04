@@ -65,8 +65,8 @@ export interface SetSlotParamsArgs {
 export interface SetSlotWaveArgs {
   voice: number;
   slot: number;
-  /** Waveform name ("sine" | "square" | "noise"). Converted to its
-   *  numeric enum value when passed to the wasm layer. */
+  /** Waveform name ("sine" | "square" | "triangle" | "saw" | "noise").
+   *  Converted to its numeric enum value when passed to the wasm layer. */
   wave: SlotWave;
 }
 

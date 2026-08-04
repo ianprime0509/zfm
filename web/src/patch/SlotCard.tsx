@@ -22,6 +22,8 @@ export interface SlotCardProps {
 const WAVE_PATHS: Record<SlotWave, string> = {
   sine: "M0 9 Q5 -1 10 9 Q15 19 20 9 Q25 -1 30 9 Q35 19 40 9",
   square: "M0 9 L0 15 L20 15 L20 3 L40 3 L40 9",
+  triangle: "M0 15 L20 3 L40 15",
+  saw: "M0 15 L40 3 L40 15",
   noise: "M0 9 L4 6 L8 12 L12 4 L16 11 L20 7 L24 14 L28 5 L32 10 L36 8 L40 9",
 };
 

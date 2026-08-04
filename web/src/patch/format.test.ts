@@ -69,6 +69,22 @@ describe("formatPatch", () => {
     expect(formatPatch(p)).toBe("@sin .\n  sine 0.5 1 0 1 0 0 0 1");
   });
 
+  it("omits WS for triangle even when ws is non-zero", () => {
+    const p = { ...emptyPatch(), name: "tri" };
+    p.slotWaves[0] = "triangle";
+    p.slotParams[0] = { tl: 0.5, ml: 1, fb: 0, ws: 9 };
+    p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
+    expect(formatPatch(p)).toBe("@tri .\n  triangle 0.5 1 0 1 0 0 0 1");
+  });
+
+  it("omits WS for saw even when ws is non-zero", () => {
+    const p = { ...emptyPatch(), name: "sw" };
+    p.slotWaves[0] = "saw";
+    p.slotParams[0] = { tl: 0.5, ml: 1, fb: 0, ws: 9 };
+    p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
+    expect(formatPatch(p)).toBe("@sw .\n  saw 0.5 1 0 1 0 0 0 1");
+  });
+
   it("emits LFO preset comments above the patch for enabled LFOs", () => {
     const p = { ...emptyPatch(), name: "vib" };
     p.lfos[0]!.enabled = true;

@@ -5,9 +5,9 @@ export type SlotIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 /** Waveform of a slot oscillator, mirroring core Synth.Slot.Wave.
  *  The string names match the Zig enum tags, which is how the wave is
  *  spelled in MML and how the compiler serializes it to JSON. */
-export type SlotWave = "sine" | "square" | "noise";
+export type SlotWave = "sine" | "square" | "triangle" | "saw" | "noise";
 
-export const SLOT_WAVES: SlotWave[] = ["sine", "square", "noise"];
+export const SLOT_WAVES: SlotWave[] = ["sine", "square", "triangle", "saw", "noise"];
 
 /** Numeric values of the core `Synth.Slot.Wave` enum, used when passing a
  *  waveform to the wasm layer (which accepts the raw enum discriminant).
@@ -16,19 +16,23 @@ export const SLOT_WAVES: SlotWave[] = ["sine", "square", "noise"];
 export const SLOT_WAVE_VALUES: Record<SlotWave, number> = {
   sine: 0,
   square: 1,
-  noise: 2,
+  triangle: 2,
+  saw: 3,
+  noise: 4,
 };
 
 /** Abbreviated waveform name for compact display (e.g. in SlotOverview). */
 export const SLOT_WAVE_ABBR: Record<SlotWave, string> = {
   sine: "sin",
   square: "squ",
+  triangle: "tri",
+  saw: "saw",
   noise: "noi",
 };
 
 /** Whether a waveform uses the wave-specific (WS) parameter. Mirrors core
  *  `Synth.Slot.Wave.usesWs`: `square` (duty cycle) and `noise` (band-pass Q)
- *  use it; `sine` does not. */
+ *  use it; `sine`, `triangle`, and `saw` do not. */
 export function usesWs(wave: SlotWave): boolean {
   return wave === "square" || wave === "noise";
 }
@@ -37,8 +41,8 @@ export function usesWs(wave: SlotWave): boolean {
  *  duty cycle in [0.01, 0.99] — 0 and 1 produce a constant DC offset
  *  rather than a wave, so they are excluded. `noise`: band-pass filter
  *  quality factor (Q) in [1, 50] (Q must be > 0 to avoid division by zero
- *  in the bi-quad filter). The range for `sine` is unused (WS is not
- *  displayed). */
+ *  in the bi-quad filter). The range for `sine`, `triangle`, and `saw` is
+ *  unused (WS is not displayed). */
 export function wsRange(wave: SlotWave): { min: number; max: number } {
   if (wave === "noise") return { min: 1, max: 50 };
   return { min: 0.01, max: 0.99 };
@@ -68,7 +72,7 @@ export interface SlotParams {
   /** Wave-specific parameter (core `Synth.Slot.Params.ws`). Only
    *  meaningful for waveforms that use it (see `usesWs`): duty cycle for
    *  `square` ([0.01, 0.99]) and band-pass filter quality factor (Q) for
-   *  `noise` ([1, 50]). Ignored for `sine`. */
+   *  `noise` ([1, 50]). Ignored for `sine`, `triangle`, and `saw`. */
   ws: number;
 }
 

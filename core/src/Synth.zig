@@ -208,12 +208,14 @@ pub const Slot = struct {
     pub const Wave = enum(u32) {
         sine,
         square,
+        triangle,
+        saw,
         noise,
 
         pub fn usesWs(wave: Wave) bool {
             return switch (wave) {
                 .square, .noise => true,
-                .sine => false,
+                .sine, .triangle, .saw => false,
             };
         }
     };
@@ -221,6 +223,8 @@ pub const Slot = struct {
     pub const State = union(Wave) {
         sine: f32,
         square: f32,
+        triangle: f32,
+        saw: f32,
         noise: struct {
             rng: std.Random.Xoroshiro128,
             x1: f32,
@@ -233,6 +237,8 @@ pub const Slot = struct {
             return switch (wave) {
                 .sine => .{ .sine = 0.0 },
                 .square => .{ .square = 0.0 },
+                .triangle => .{ .triangle = 0.0 },
+                .saw => .{ .saw = 0.0 },
                 .noise => .{ .noise = .{
                     .rng = .init(0),
                     .x1 = 0.0,
@@ -247,12 +253,24 @@ pub const Slot = struct {
             switch (s.*) {
                 .sine => |*t| {
                     const v = @sin(freq * t.* * std.math.tau + phase);
-                    t.* = @mod(t.* + sample_time, 1 / freq);
+                    t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .square => |*t| {
                     const v = 1.0 - 2.0 * @floor(freq * t.* + ws);
-                    t.* = @mod(t.* + sample_time, 1 / freq);
+                    t.* = @mod(t.* + sample_time, 1.0 / freq);
+                    return v;
+                },
+                .triangle => |*t| {
+                    const x = freq * t.*;
+                    const v = 2.0 * @abs(2.0 * (x - @floor(x + 0.5))) - 1.0;
+                    t.* = @mod(t.* + sample_time, 1.0 / freq);
+                    return v;
+                },
+                .saw => |*t| {
+                    const x = freq * t.*;
+                    const v = 2.0 * (x - @floor(x + 0.5));
+                    t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .noise => |*noise| {
