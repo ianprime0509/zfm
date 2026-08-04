@@ -257,9 +257,10 @@ pub const Slot = struct {
                 },
                 .noise => |*noise| {
                     const x0 = 2.0 * noise.rng.random().float(f32) - 1.0;
+                    const freq_adj = @max(freq, 20.0);
                     // Bi-quad band pass algorithm
                     const q = ws;
-                    const omega = std.math.tau * freq / sample_rate;
+                    const omega = std.math.tau * freq_adj / sample_rate;
                     const alpha = @sin(omega) / (2.0 * q);
                     const norm = 1.0 + alpha;
                     const b0 = alpha / norm;
@@ -271,7 +272,7 @@ pub const Slot = struct {
                     noise.x1 = x0;
                     noise.y2 = noise.y1;
                     noise.y1 = y0;
-                    const correction = @sqrt(q * sample_rate / @max(freq, 20.0));
+                    const correction = @sqrt(q * sample_rate / freq_adj);
                     return y0 * correction;
                 },
             }
