@@ -1,7 +1,8 @@
 import { useEffect, useState } from "preact/hooks";
-import { Minus, Plus, Download } from "lucide-preact";
+import { Minus, Plus, Download, Pencil } from "lucide-preact";
 import { PatchEditor } from "../patch/PatchEditor.tsx";
 import { ELECTRIC_PIANO } from "../patch/presets.ts";
+import { INITIAL_BANK } from "./initial-bank.ts";
 import { usePatchSynth } from "../patch/usePatchSynth.ts";
 import { useSynthKeyboard } from "../patch/useSynthKeyboard.ts";
 import { type Patch } from "../patch/types.ts";
@@ -76,7 +77,7 @@ export interface BankEditorProps {
 }
 
 export function BankEditor({
-  initialBank = [clonePatch(ELECTRIC_PIANO)],
+  initialBank = INITIAL_BANK,
   compiler,
   synth,
   disabled = false,
@@ -179,11 +180,15 @@ export function BankEditor({
                 onDblClick={() => onInsertPatch?.(patch)}
                 aria-pressed={i === selected}
               >
-                <span class={classes.index}>{i}</span>
                 <span class={classes.name}>{patch.name}</span>
               </button>
-              <button type="button" class={classes.editBtn} onClick={() => openEdit(i)}>
-                Edit
+              <button
+                type="button"
+                class={classes.editBtn}
+                title="Edit"
+                onClick={() => openEdit(i)}
+              >
+                <Pencil />
               </button>
             </li>
           ))}

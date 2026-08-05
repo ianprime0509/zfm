@@ -1,5 +1,6 @@
 import { defineConfig, lazyPlugins } from "vite-plus";
 import preact from "@preact/preset-vite";
+import { initialBankPlugin } from "./vite-plugin-initial-bank.ts";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -134,5 +135,5 @@ export default defineConfig({
       "vite-plus/prefer-vite-plus-imports": "error",
     },
   },
-  plugins: lazyPlugins(() => [preact()]),
+  plugins: lazyPlugins(() => [initialBankPlugin(), preact()]),
 });
