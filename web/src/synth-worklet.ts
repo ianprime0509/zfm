@@ -93,63 +93,12 @@ export interface SetLfoParamsArgs {
   params: LfoParams;
 }
 
-// Encode `str` as UTF-8 bytes. `TextEncoder` is unavailable in an
-// AudioWorkletGlobalScope, so this is a minimal hand-rolled equivalent,
-// correct for all of UTF-8 (including surrogate pairs). For our JSON
-// output the ASCII fast path is always taken.
-function encodeUtf8(str: string): Uint8Array {
-  const len = str.length;
-  let ascii = true;
-  for (let i = 0; i < len; i++) {
-    if (str.charCodeAt(i) > 0x7f) {
-      ascii = false;
-      break;
-    }
-  }
-  if (ascii) {
-    const out = new Uint8Array(len);
-    for (let i = 0; i < len; i++) out[i] = str.charCodeAt(i);
-    return out;
-  }
-
-  // Size the buffer from the UTF-8 byte length, then fill it.
-  let size = 0;
-  for (let i = 0; i < len; i++) {
-    const c = str.charCodeAt(i);
-    if (c < 0x80) size += 1;
-    else if (c < 0x800) size += 2;
-    else if (c >= 0xd800 && c <= 0xdbff) {
-      // High surrogate: one code point with the following low surrogate,
-      // encoded as 4 bytes (and consume the next char).
-      size += 4;
-      i += 1;
-    } else size += 3;
-  }
-
-  const out = new Uint8Array(size);
-  let o = 0;
-  for (let i = 0; i < len; i++) {
-    const c = str.charCodeAt(i);
-    if (c < 0x80) {
-      out[o++] = c;
-    } else if (c < 0x800) {
-      out[o++] = 0xc0 | (c >> 6);
-      out[o++] = 0x80 | (c & 0x3f);
-    } else if (c >= 0xd800 && c <= 0xdbff) {
-      const next = str.charCodeAt(i + 1);
-      const cp = 0x10000 + ((c - 0xd800) << 10) + (next - 0xdc00);
-      out[o++] = 0xf0 | (cp >> 18);
-      out[o++] = 0x80 | ((cp >> 12) & 0x3f);
-      out[o++] = 0x80 | ((cp >> 6) & 0x3f);
-      out[o++] = 0x80 | (cp & 0x3f);
-      i += 1;
-    } else {
-      out[o++] = 0xe0 | (c >> 12);
-      out[o++] = 0x80 | ((c >> 6) & 0x3f);
-      out[o++] = 0x80 | (c & 0x3f);
-    }
-  }
-  return out;
+// Encode `str` as single-byte (ASCII) characters, without `TextEncoder`
+// (unavailable in an AudioWorkletGlobalScope). The transferred JSON only
+// contains ASCII (digits, brackets, commas, `null`), so each character maps
+// directly to one byte.
+function encodeBytes(str: string): Uint8Array {
+  return Uint8Array.from(str, (c) => c.charCodeAt(0));
 }
 
 // Decode a buffer of single-byte (ASCII) characters into a string, without
@@ -245,7 +194,7 @@ export class SynthProcessor extends AudioWorkletProcessor {
 
   setLfoParams({ voice, index, params }: SetLfoParamsArgs) {
     // The wasm side decodes the params as JSON from the transfer buffer.
-    this.transferWrite(encodeUtf8(JSON.stringify(params)));
+    this.transferWrite(encodeBytes(JSON.stringify(params)));
     this.wasm.setLfoParams(voice, index);
   }
 
