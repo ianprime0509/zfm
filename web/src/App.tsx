@@ -57,6 +57,9 @@ function App() {
   useEffect(() => saveString(TRACK_KEY, source), [source]);
 
   const [playing, setPlaying] = useState(false);
+  // Per-part source ranges of the currently executing command, refreshed
+  // periodically while a track plays. `null` means nothing is playing.
+  const [commandSpans, setCommandSpans] = useState<(number[] | null)[] | null>(null);
 
   // Single shared compiler (Web Worker) and synth (AudioWorklet). Created in
   // an effect so cleanup terminates them; the `ready` flag lets the play
@@ -73,6 +76,19 @@ function App() {
       void s.close();
     };
   }, []);
+
+  // Poll the synth while playing so the track editor can keep the currently
+  // executing commands highlighted.
+  useEffect(() => {
+    if (!playing || !synth) {
+      setCommandSpans(null);
+      return;
+    }
+    const poll = async () => setCommandSpans(await synth.currentCommandSpans());
+    void poll();
+    const id = setInterval(() => void poll(), 100);
+    return () => clearInterval(id);
+  }, [playing, synth]);
 
   // Load track: prompt for a .zfm file and replace the editor source with
   // its contents. The linter surfaces any compile errors in the editor.
@@ -142,7 +158,15 @@ function App() {
       </header>
       <div class={classes.body}>
         <div class={classes.editorPane}>
-          {compiler && <TrackEditor compiler={compiler} value={source} onChange={setSource} />}
+          {compiler && (
+            <TrackEditor
+              compiler={compiler}
+              value={source}
+              onChange={setSource}
+              readOnly={playing}
+              currentCommandSpans={commandSpans}
+            />
+          )}
         </div>
         <aside
           id="bank-pane"

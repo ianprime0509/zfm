@@ -39,6 +39,10 @@ pub fn data(mod: *const Module, command: Command.Index) Command.Data {
     return mod.commands.items(.data)[@backingInt(command)];
 }
 
+pub fn span(mod: *const Module, command: Command.Index) SourceIndex.Span {
+    return mod.commands.items(.span)[@backingInt(command)];
+}
+
 // The approach taken for dump/save is exactly the same as what Zig does
 // internally for its ZIR cache (see Zcu.zig, loadZirCache and saveZirCache).
 // This is obviously unsafe and depends on compiler internals, but it's so

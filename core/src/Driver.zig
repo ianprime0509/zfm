@@ -57,8 +57,8 @@ fn tickLfos(driver: *Driver) void {
 fn executePending(driver: *Driver, part: *Part, voice: Voice.Index) void {
     while (part.delay == .zero) {
         if (part.ended) return;
-        const next_command = driver.execute(part, voice, part.command);
-        part.command = next_command;
+        part.executing_command = part.next_command;
+        part.next_command = driver.execute(part, voice, part.executing_command);
     }
     part.delay = part.delay.minusOne();
 }
@@ -213,7 +213,8 @@ pub fn setLfoParams(driver: *Driver, voice: Voice.Index, index: Lfo.Index, param
 }
 
 pub const Part = struct {
-    command: Command.Index,
+    executing_command: Command.Index,
+    next_command: Command.Index,
     delay: Ticks,
     cycle: u8,
     global_loop: Command.Index,
@@ -224,7 +225,8 @@ pub const Part = struct {
 
     fn init(mod_part: Module.Part) Part {
         var part: Part = .{
-            .command = mod_part.start,
+            .executing_command = mod_part.start,
+            .next_command = mod_part.start,
             .delay = .zero,
             .cycle = 0,
             .global_loop = mod_part.global_loop,

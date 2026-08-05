@@ -165,6 +165,34 @@ fn setLfoParamsInner(voice: Voice.Index, index: Lfo.Index) !void {
     driver.setLfoParams(voice, index, params.value);
 }
 
+export fn transferCurrentCommandSpans() void {
+    transferCurrentCommandSpansInner() catch @panic("OOM");
+}
+
+fn transferCurrentCommandSpansInner() (Allocator.Error || Writer.Error)!void {
+    var writer: Writer.Allocating = .fromArrayList(gpa, &transfer);
+    defer transfer = writer.toArrayList();
+    writer.clearRetainingCapacity();
+    var out: std.json.Stringify = .{ .writer = &writer.writer };
+
+    try out.beginArray();
+    for (driver.parts) |*part| {
+        const command = part.executing_command;
+        if (driver.mod.tag(command) == .end) {
+            // `end` marks the end of the part's commands; it has no source
+            // span to highlight, so signal that no command is executing.
+            try out.write(null);
+        } else {
+            const span = driver.mod.span(command);
+            try out.beginArray();
+            try out.write(@backingInt(span.start));
+            try out.write(@backingInt(span.end));
+            try out.endArray();
+        }
+    }
+    try out.endArray();
+}
+
 var render_buf: [256]Frame = undefined;
 
 export fn ptrRenderBuf() *[256]Frame {
@@ -197,6 +225,7 @@ const log = std.log;
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const Reader = Io.Reader;
+const Writer = Io.Writer;
 const zfm = @import("zfm");
 const Synth = zfm.Synth;
 const Frame = zfm.Frame;

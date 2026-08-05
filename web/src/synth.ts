@@ -82,4 +82,8 @@ export class Synth {
   async setLfoParams({ voice, index, params }: SetLfoParamsArgs) {
     await (await this.state()).port.setLfoParams({ voice, index, params });
   }
+
+  async currentCommandSpans(): Promise<(number[] | null)[]> {
+    return await (await this.state()).port.currentCommandSpans();
+  }
 }

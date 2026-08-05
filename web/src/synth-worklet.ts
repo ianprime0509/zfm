@@ -29,6 +29,7 @@ interface WasmExports {
   setLfoParams(voice: number, index: number): void;
   ptrRenderBuf(): number;
   render(n: number): void;
+  transferCurrentCommandSpans(): void;
 }
 
 export interface ResetArgs {
@@ -151,6 +152,14 @@ function encodeUtf8(str: string): Uint8Array {
   return out;
 }
 
+// Decode a buffer of single-byte (ASCII) characters into a string, without
+// `TextDecoder` (unavailable in an AudioWorkletGlobalScope). The transferred
+// JSON only contains ASCII (digits, brackets, commas, `null`), so each byte
+// maps directly to one character.
+function decodeBytes(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => String.fromCharCode(b)).join("");
+}
+
 export class SynthProcessor extends AudioWorkletProcessor {
   private wasm: WasmExports;
 
@@ -167,6 +176,12 @@ export class SynthProcessor extends AudioWorkletProcessor {
     this.wasm = instance.exports as unknown as WasmExports;
 
     Comlink.expose(this, this.port);
+  }
+
+  private transferRead(): Uint8Array {
+    const ptr = this.wasm.transferPtr();
+    const len = this.wasm.transferLen();
+    return new Uint8Array(this.wasm.memory.buffer, ptr, len);
   }
 
   private transferWrite(data: Uint8Array): void {
@@ -232,6 +247,12 @@ export class SynthProcessor extends AudioWorkletProcessor {
     // The wasm side decodes the params as JSON from the transfer buffer.
     this.transferWrite(encodeUtf8(JSON.stringify(params)));
     this.wasm.setLfoParams(voice, index);
+  }
+
+  currentCommandSpans() {
+    this.wasm.transferCurrentCommandSpans();
+    const buf = this.transferRead();
+    return JSON.parse(decodeBytes(buf)) as (number[] | null)[];
   }
 
   override process(_inputs: Float32Array[][], outputs: Float32Array[][]) {
