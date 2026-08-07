@@ -76,9 +76,12 @@ export interface SlotParams {
   ws: number;
 }
 
-/** Envelope parameters for a single slot (core Synth.Envelope.Params).
- *  ar/dr/sr/rr are per-sample deltas (rates), so sensible values are in
- *  (0, 1] but span many orders of magnitude. sl is a level in [0, 1]. */
+/** Envelope parameters for a single slot (core Synth.Envelope.TimeParams).
+ *  ar/dr/sr/rr are times in seconds: how long the phase takes to reach the
+ *  next envelope state (ar: linear rise 0 -> 1; dr: exponential fall
+ *  1 -> sl; sr/rr: exponential fall by 80 dB). A time of 0 means the phase
+ *  never advances (the envelope holds until key-off). sl is a level in
+ *  [0, 1]. */
 export interface EnvParams {
   ar: number;
   dr: number;

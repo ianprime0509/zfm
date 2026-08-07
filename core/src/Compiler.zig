@@ -237,7 +237,7 @@ fn compilePatch(c: *Compiler) !void {
 
     var slot_waves: [Voice.n_slots]Slot.Wave = @splat(.sine);
     var slot_params: [Voice.n_slots]Slot.Params = @splat(.zero);
-    var slot_env_params: [Voice.n_slots]Envelope.Params = @splat(.zero);
+    var slot_env_params: [Voice.n_slots]Envelope.TimeParams = @splat(.zero);
     for (&slot_waves, &slot_params, &slot_env_params) |*wave, *params, *env_params| {
         if (!c.canContinueLine()) break;
         assert(c.continueLine());
@@ -256,7 +256,7 @@ fn compilePatch(c: *Compiler) !void {
                 @field(params, field) = 0.0;
             }
         }
-        inline for (@typeInfo(Envelope.Params).@"struct".field_names) |field| {
+        inline for (@typeInfo(Envelope.TimeParams).@"struct".field_names) |field| {
             if (!c.continueLine()) return c.report(.unexpected_end_of_patch);
             @field(env_params, field) = try c.takeNumber(f32) orelse {
                 try c.report(.unexpected_end_of_patch);

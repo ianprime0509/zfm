@@ -6,8 +6,8 @@ import classes from "./ParamField.module.css";
 // and dragging the slider both feel responsive.
 //
 // `log` selects a logarithmic slider mapping, which is essential for the
-// envelope rates (ar/dr/sr/rr) — these are per-sample deltas that range over
-// many orders of magnitude (e.g. 0.00001 .. 1).
+// envelope times (ar/dr/sr/rr) — these range over many orders of magnitude
+// (e.g. 0.0001 .. 10 seconds).
 //
 // `step` is shared by the linear slider and the numeric input: it sets both
 // the slider's resolution and the numeric input's step increment (which

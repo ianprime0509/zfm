@@ -187,7 +187,7 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
     for (mod.commands.items(.tag), mod.commands.items(.data), mod.commands.items(.span)) |cmd_tag, cmd_data, cmd_span| {
         try out.beginObject();
         try out.objectField(@tagName(cmd_tag));
-        switch (Command.Tag.data_tags[@intFromEnum(cmd_tag)]) {
+        switch (Command.Tag.data_tags[@backingInt(cmd_tag)]) {
             inline else => |data_tag| {
                 if (data_tag == .none) {
                     try out.beginObject();
@@ -226,13 +226,13 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
     try out.endArray();
 
     try out.objectField("title");
-    try out.write(@intFromEnum(mod.title));
+    try out.write(@backingInt(mod.title));
 
     try out.objectField("composer");
-    try out.write(@intFromEnum(mod.composer));
+    try out.write(@backingInt(mod.composer));
 
     try out.objectField("arranger");
-    try out.write(@intFromEnum(mod.arranger));
+    try out.write(@backingInt(mod.arranger));
 
     try out.objectField("initial_tempo");
     try out.write(mod.initial_tempo.bpm);
@@ -541,7 +541,7 @@ pub const Patch = struct {
     connections: Voice.Connections,
     slot_waves: [Voice.n_slots]Slot.Wave,
     slot_params: [Voice.n_slots]Slot.Params,
-    slot_env_params: [Voice.n_slots]Envelope.Params,
+    slot_env_params: [Voice.n_slots]Envelope.TimeParams,
 
     pub const Entry = struct {
         name: StringPool.Index,
@@ -562,7 +562,7 @@ pub const Patch = struct {
             slot_params.*, current_index = extra.decode(Slot.Params, current_index);
         }
         for (&res.slot_env_params) |*slot_env_params| {
-            slot_env_params.*, current_index = extra.decode(Envelope.Params, current_index);
+            slot_env_params.*, current_index = extra.decode(Envelope.TimeParams, current_index);
         }
 
         return .{ res, current_index };

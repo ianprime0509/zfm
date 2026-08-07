@@ -167,21 +167,21 @@ export function SlotCard({ slot, patch, onChange }: SlotCardProps) {
             label="AR"
             value={env.ar}
             onChange={(v) => setEnvParam("ar", v)}
-            min={1e-6}
-            max={1}
+            min={1e-4}
+            max={10}
             log
             accent={color.accent}
-            title="Attack rate (per-sample delta)"
+            title="Attack time in seconds (0 = hold)"
           />
           <ParamField
             label="DR"
             value={env.dr}
             onChange={(v) => setEnvParam("dr", v)}
-            min={1e-6}
-            max={1}
+            min={1e-4}
+            max={10}
             log
             accent={color.accent}
-            title="Decay rate (per-sample delta)"
+            title="Decay time in seconds (0 = hold)"
           />
           <ParamField
             label="SL"
@@ -197,21 +197,21 @@ export function SlotCard({ slot, patch, onChange }: SlotCardProps) {
             label="SR"
             value={env.sr}
             onChange={(v) => setEnvParam("sr", v)}
-            min={1e-6}
-            max={1}
+            min={1e-4}
+            max={10}
             log
             accent={color.accent}
-            title="Sustain rate (per-sample delta)"
+            title="Sustain decay time in seconds (0 = hold)"
           />
           <ParamField
             label="RR"
             value={env.rr}
             onChange={(v) => setEnvParam("rr", v)}
-            min={1e-6}
-            max={1}
+            min={1e-4}
+            max={10}
             log
             accent={color.accent}
-            title="Release rate (per-sample delta)"
+            title="Release time in seconds (0 = hold)"
           />
         </div>
       </div>

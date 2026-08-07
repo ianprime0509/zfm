@@ -1,14 +1,16 @@
 #title Test
 #tempo 120
 
-@test 0 1.
-  sine 1 1 0 1 0 0 0 1
-  sine 1 1 0 1 0 0 0 1
+@electric-piano 0 1, 2 3.
+  sine 0.7 11 3 0.00001 0 0 0 0.00001
+  sine 0.3 12 0 0.00001 0.5 0 0 0.00001
+  sine 0.7 1 0 0.00001 2 0.2 0 2
+  sine 1 1 0 0.00001 4 0 0 1
 
 !a c !b f
 !b de
 
-AB @test
+AB @electric-piano
 A c1d1-8
 ;A o3 c1        c1            d1        d1
 ;B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8

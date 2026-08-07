@@ -5,10 +5,10 @@ import { N_SLOTS, SLOT_WAVE_DEFAULT, defaultLfoStates, emptyConnections } from "
 
 // --- Default patch: electric-piano from patches/patches.zfm ---
 // @electric-piano 0 1, 2 3.
-//   0.7 11 3 1 0 0 0 1
-//   0.3 12 0 1 0.0001 0 0 1
-//   0.7 1 0 1 0.000025 0.2 0 0.00001
-//   1 1 0 1 0.00001 0 0 0.00005
+//   sine 0.7 11 3 0.00001 0 0 0 0.00001
+//   sine 0.3 12 0 0.00001 0.5 0 0 0.00001
+//   sine 0.7 1 0 0.00001 2 0.2 0 2
+//   sine 1 1 0 0.00001 4 0 0 1
 
 const electricPianoConnections: Connections = {
   edges: [
@@ -37,10 +37,10 @@ const electricPianoSlots: SlotParams[] = [
 ];
 
 const electricPianoEnvs: EnvParams[] = [
-  { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 },
-  { ar: 1, dr: 0.0001, sl: 0, sr: 0, rr: 1 },
-  { ar: 1, dr: 0.000025, sl: 0.2, sr: 0, rr: 0.00001 },
-  { ar: 1, dr: 0.00001, sl: 0, sr: 0, rr: 0.00005 },
+  { ar: 0.00001, dr: 0, sl: 0, sr: 0, rr: 0.00001 },
+  { ar: 0.00001, dr: 0.5, sl: 0, sr: 0, rr: 0.00001 },
+  { ar: 0.00001, dr: 2, sl: 0.2, sr: 0, rr: 2 },
+  { ar: 0.00001, dr: 4, sl: 0, sr: 0, rr: 1 },
   { ar: 0, dr: 0, sl: 0, sr: 0, rr: 0 },
   { ar: 0, dr: 0, sl: 0, sr: 0, rr: 0 },
   { ar: 0, dr: 0, sl: 0, sr: 0, rr: 0 },

@@ -196,7 +196,7 @@ pub fn setSlotParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex,
     driver.partPtr(voice).synth_params.slot[slot] = params;
 }
 
-pub fn setSlotEnvParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Envelope.Params) void {
+pub fn setSlotEnvParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Envelope.TimeParams) void {
     driver.partPtr(voice).synth_params.slot_env[slot] = params;
 }
 
@@ -332,7 +332,7 @@ pub const Part = struct {
     pub const SynthParams = struct {
         voice: Voice.Params,
         slot: [Voice.n_slots]Slot.Params,
-        slot_env: [Voice.n_slots]Envelope.Params,
+        slot_env: [Voice.n_slots]Envelope.TimeParams,
 
         pub const init: SynthParams = .{
             .voice = .init,
@@ -344,7 +344,7 @@ pub const Part = struct {
             synth.voicePtr(voice).params = sp.voice;
             for (synth.voiceSlots(voice), sp.slot, sp.slot_env) |*slot, slot_params, env_params| {
                 slot.params = slot_params;
-                slot.env.params = env_params;
+                slot.env.params = .fromSeconds(env_params);
             }
         }
     };

@@ -8,10 +8,10 @@ describe("formatPatch", () => {
     expect(formatPatch(ELECTRIC_PIANO)).toBe(
       [
         "@electric-piano 0 1, 2 3.",
-        "  sine 0.7 11 3 1 0 0 0 1",
-        "  sine 0.3 12 0 1 0.0001 0 0 1",
-        "  sine 0.7 1 0 1 0.000025 0.2 0 0.00001",
-        "  sine 1 1 0 1 0.00001 0 0 0.00005",
+        "  sine 0.7 11 3 0.00001 0 0 0 0.00001",
+        "  sine 0.3 12 0 0.00001 0.5 0 0 0.00001",
+        "  sine 0.7 1 0 0.00001 2 0.2 0 2",
+        "  sine 1 1 0 0.00001 4 0 0 1",
       ].join("\n"),
     );
   });
@@ -24,7 +24,7 @@ describe("formatPatch", () => {
         i === 0 ? { ...s, tl: 0.699999988079071 } : s,
       ),
     };
-    expect(formatPatch(p).split("\n")[1]).toBe("  sine 0.7 11 3 1 0 0 0 1");
+    expect(formatPatch(p).split("\n")[1]).toBe("  sine 0.7 11 3 0.00001 0 0 0 0.00001");
   });
 
   it("emits empty routing as `@name .`", () => {

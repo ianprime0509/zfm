@@ -339,6 +339,14 @@ pub const Envelope = struct {
         release,
     },
 
+    /// Level below which an exponentially-decaying envelope is considered
+    /// silent and snaps to zero (-80 dB).
+    pub const silence: f32 = 1e-4;
+
+    /// Raw envelope parameters in sample-rate-dependent units, as executed
+    /// by `update`: `ar` is a per-sample level delta (linear attack), while
+    /// `dr`, `sr` and `rr` are per-sample level multipliers (exponential
+    /// decays). Convert from user-facing time units with `fromSeconds`.
     pub const Params = struct {
         ar: f32,
         dr: f32,
@@ -347,6 +355,51 @@ pub const Envelope = struct {
         rr: f32,
 
         pub const zero: Params = .{
+            .ar = 0.0,
+            .dr = 0.0,
+            .sl = 0.0,
+            .sr = 0.0,
+            .rr = 0.0,
+        };
+
+        pub fn fromSeconds(tp: TimeParams) Params {
+            return .{
+                .ar = if (tp.ar > 0) @min(1 / (tp.ar * sample_rate), 1) else 0,
+                .dr = mulTo(tp.sl, tp.dr),
+                .sl = tp.sl,
+                .sr = mulTo(silence, tp.sr),
+                .rr = mulTo(silence, tp.rr),
+            };
+        }
+
+        /// Per-sample multiplier for an exponential fall from level 1 to
+        /// `target` over `time` seconds. Non-positive times hold the level
+        /// indefinitely (multiplier 1).
+        fn mulTo(target: f32, time: f32) f32 {
+            if (time <= 0.0) return 1.0;
+            return std.math.pow(f32, @max(target, silence), 1.0 / (time * sample_rate));
+        }
+    };
+
+    /// User-facing envelope parameters. Rates are measured as the time in
+    /// seconds the phase takes to reach the next envelope state:
+    ///
+    /// - `ar`: linear rise from 0 to 1.
+    /// - `dr`: exponential fall from 1 to `sl`.
+    /// - `sr`: exponential fall by a factor of `silence` (80 dB).
+    /// - `rr`: exponential fall by a factor of `silence` (80 dB), from
+    ///   whatever level the envelope is at on key-off.
+    ///
+    /// A rate of 0 means the phase never advances: the envelope holds at
+    /// the phase's starting level until key-off. `sl` is a level in [0, 1].
+    pub const TimeParams = struct {
+        ar: f32,
+        dr: f32,
+        sl: f32,
+        sr: f32,
+        rr: f32,
+
+        pub const zero: TimeParams = .{
             .ar = 0.0,
             .dr = 0.0,
             .sl = 0.0,
@@ -387,21 +440,19 @@ pub const Envelope = struct {
                 }
             },
             .decay => {
-                env.v -= env.params.dr;
-                if (env.v <= env.params.sl) {
+                env.v *= env.params.dr;
+                if (env.v <= env.params.sl or env.v < silence) {
                     env.v = env.params.sl;
                     env.state = .sustain;
                 }
             },
             .sustain => {
-                env.v -= env.params.sr;
-                if (env.v <= 0.0) {
-                    env.v = 0.0;
-                }
+                env.v *= env.params.sr;
+                if (env.v < silence) env.v = 0.0;
             },
             .release => {
-                env.v -= env.params.rr;
-                if (env.v <= 0.0) {
+                env.v *= env.params.rr;
+                if (env.v < silence) {
                     env.v = 0.0;
                     env.state = .idle;
                 }
