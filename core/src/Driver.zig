@@ -119,6 +119,10 @@ fn execute(
             driver.tempo.bpm += driver.mod.data(command).amount;
             return command.next();
         },
+        .set_pan => {
+            part.synth_params.voice.pan = driver.mod.data(command).amount;
+            return command.next();
+        },
         .toggle_lfo => {
             const index = driver.mod.data(command).lfo;
             const lfo = part.lfoPtr(index);

@@ -443,6 +443,11 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             const amount = try c.takeNumber(f32) orelse return c.report(.expected_param);
             try part.addCommand(c, tag, .{ .amount = amount });
         },
+        'p' => {
+            c.skipByte();
+            const amount = try c.takeNumber(f32) orelse return c.report(.expected_param);
+            try part.addCommand(c, .set_pan, .{ .amount = amount });
+        },
         'L' => {
             c.skipByte();
             part.global_loop = part.nextCommandIndex();
