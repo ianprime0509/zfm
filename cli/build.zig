@@ -16,6 +16,17 @@ pub fn build(b: *std.Build) void {
     const miniaudio = b.dependency("miniaudio", .{});
     t.addIncludePath(miniaudio.path("."));
     t.mod.addCSourceFile(.{ .file = miniaudio.path("miniaudio.c") });
+    const miniaudio_options: []const []const u8 = &.{
+        "MA_NO_DECODING",
+        "MA_NO_ENCODING",
+        "MA_NO_RESOURCE_MANAGER",
+        "MA_NO_NODE_GRAPH",
+        "MA_NO_ENGINE",
+        "MA_NO_GENERATION",
+    };
+    for (miniaudio_options) |opt| {
+        t.defineCMacro(opt, "");
+    }
 
     const mod = b.createModule(.{
         .root_source_file = b.path("src/cli.zig"),

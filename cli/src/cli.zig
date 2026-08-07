@@ -192,23 +192,51 @@ fn mainSave(gpa: Allocator, io: Io, player: *Player, path: [:0]const u8) !void {
 }
 
 fn saveWav(io: Io, player: *Player, path: [:0]const u8) !void {
-    _ = io; // TODO: use Zig IO rather than miniaudio
+    const channels: u16 = 2;
+    const bits_per_sample: u16 = @bitSizeOf(f32);
+    const block_align = channels * @sizeOf(f32);
+    const byte_rate = zfm.sample_rate * @as(u32, block_align);
 
-    const config = c.ma_encoder_config_init(c.ma_encoding_format_wav, c.ma_format_f32, 2, zfm.sample_rate);
-    var encoder: c.ma_encoder = undefined;
-    if (c.ma_encoder_init_file(path.ptr, &config, &encoder) != c.MA_SUCCESS) {
-        return error.AudioError;
-    }
-    defer c.ma_encoder_uninit(&encoder);
+    var file = try Io.Dir.cwd().createFile(io, path, .{});
+    defer file.close(io);
+    var buf: [1024]u8 = undefined;
+    var writer = file.writer(io, &buf);
+
+    var header: [44]u8 = undefined;
+    header[0..4].* = "RIFF".*;
+    std.mem.writeInt(u32, header[4..8], 0, .little); // chunk size (patched)
+    header[8..12].* = "WAVE".*;
+    header[12..16].* = "fmt ".*;
+    std.mem.writeInt(u32, header[16..20], 16, .little); // fmt chunk size
+    std.mem.writeInt(u16, header[20..22], 3, .little); // format tag: IEEE float
+    std.mem.writeInt(u16, header[22..24], channels, .little);
+    std.mem.writeInt(u32, header[24..28], zfm.sample_rate, .little);
+    std.mem.writeInt(u32, header[28..32], byte_rate, .little);
+    std.mem.writeInt(u16, header[32..34], block_align, .little);
+    std.mem.writeInt(u16, header[34..36], bits_per_sample, .little);
+    header[36..40].* = "data".*;
+    std.mem.writeInt(u32, header[40..44], 0, .little); // data chunk size (patched)
+    try writer.interface.writeAll(&header);
 
     var frames: [256]Frame = undefined;
+    var data_bytes: u64 = 0;
     while (true) {
         const done = !player.render(&frames);
-        if (c.ma_encoder_write_pcm_frames(&encoder, &frames, frames.len, null) != c.MA_SUCCESS) {
-            return error.AudioError;
+        for (frames) |frame| {
+            for (frame) |sample| {
+                try writer.interface.writeInt(u32, @bitCast(sample), .little);
+            }
+            data_bytes += @sizeOf(Frame);
         }
         if (done) break;
     }
+    try writer.interface.flush();
+
+    var size_bytes: [4]u8 = undefined;
+    std.mem.writeInt(u32, &size_bytes, @intCast(36 + data_bytes), .little);
+    try file.writePositionalAll(io, &size_bytes, 4);
+    std.mem.writeInt(u32, &size_bytes, @intCast(data_bytes), .little);
+    try file.writePositionalAll(io, &size_bytes, 40);
 }
 
 fn saveMod(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
@@ -374,6 +402,7 @@ const Io = std.Io;
 const Writer = Io.Writer;
 const log = std.log;
 const zfm = @import("zfm");
+const Sample = zfm.Sample;
 const Frame = zfm.Frame;
 const Driver = zfm.Driver;
 const Synth = zfm.Synth;
