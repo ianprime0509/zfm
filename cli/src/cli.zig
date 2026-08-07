@@ -86,6 +86,11 @@ fn readInputZfm(gpa: Allocator, io: Io, path: []const u8) !Module {
     const source = try Io.Dir.cwd().readFileAllocOptions(io, path, gpa, .unlimited, .@"1", 0);
     defer gpa.free(source);
 
+    if (!std.unicode.utf8ValidateSlice(source)) {
+        log.err("invalid UTF-8 in input", .{});
+        return error.CompileError;
+    }
+
     var compiler: Compiler = .init(gpa, source);
     defer compiler.deinit();
     try compiler.compile();

@@ -245,8 +245,8 @@ pub const SourceIndex = enum(u32) {
     start,
     _,
 
-    pub fn next(index: SourceIndex) SourceIndex {
-        return @fromBackingInt(@backingInt(index) + 1);
+    pub fn plusBytes(index: SourceIndex, bytes: u32) SourceIndex {
+        return @fromBackingInt(@backingInt(index) + bytes);
     }
 
     pub const Span = struct {

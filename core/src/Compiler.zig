@@ -19,6 +19,7 @@ gpa: Allocator,
 const eof: u8 = 0;
 
 pub fn init(gpa: Allocator, source: [:0]const u8) Compiler {
+    assert(std.unicode.utf8ValidateSlice(source));
     return .{
         .source = source,
         .pos = .start,
@@ -65,19 +66,22 @@ fn advanceSourceLocation(
 ) SourceLocation {
     var pos = start_pos;
     var loc = start_loc;
-    while (pos != end_pos) : (pos = pos.next()) {
-        switch (c.sourceByte(pos)) {
+    while (pos != end_pos) {
+        switch (c.sourceChar(pos)) {
             '\r' => {
-                if (c.sourceByte(pos.next()) == '\n') pos = pos.next();
+                if (c.sourceChar(pos.plusBytes(1)) == '\n') pos = pos.plusBytes(1);
                 loc.line += 1;
                 loc.column = 1;
+                pos = pos.plusBytes(1);
             },
             '\n' => {
                 loc.line += 1;
                 loc.column = 1;
+                pos = pos.plusBytes(1);
             },
-            else => {
+            else => |ch| {
                 loc.column += 1;
+                pos = pos.plusBytes(std.unicode.utf8CodepointSequenceLength(ch) catch unreachable);
             },
         }
     }
@@ -85,7 +89,7 @@ fn advanceSourceLocation(
 }
 
 pub fn compile(c: *Compiler) Allocator.Error!void {
-    while (c.peekByte() != eof) try c.compileLine();
+    while (c.peekChar() != eof) try c.compileLine();
     try c.finishCompilation();
 }
 
@@ -145,7 +149,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
 }
 
 fn compileLine(c: *Compiler) !void {
-    switch (c.peekByte()) {
+    switch (c.peekChar()) {
         '#' => try c.compileDirective(),
         '@' => try c.compilePatch(),
         '!' => try c.compileMacro(),
@@ -170,8 +174,8 @@ fn finishPart(c: *Compiler, part: *Part) !void {
 }
 
 fn compileDirective(c: *Compiler) !void {
-    assert(c.sourceByte(c.pos) == '#');
-    c.skipByte();
+    assert(c.sourceChar(c.pos) == '#');
+    c.skipChar();
     const name_pos = c.pos;
     const name = c.takeName() orelse {
         try c.report(.expected_name);
@@ -217,9 +221,9 @@ fn compileDirective(c: *Compiler) !void {
 }
 
 fn compilePatch(c: *Compiler) !void {
-    assert(c.sourceByte(c.pos) == '@');
+    assert(c.sourceChar(c.pos) == '@');
     const start_pos = c.pos;
-    c.skipByte();
+    c.skipChar();
     const name = c.takeName() orelse {
         try c.report(.expected_name);
         c.skipLineAndContinuation();
@@ -285,13 +289,13 @@ fn takeConnections(c: *Compiler) !?Voice.Connections {
     var last: ?Voice.SlotIndex = null;
     while (true) {
         if (!c.continueLine()) return null;
-        switch (c.peekByte()) {
+        switch (c.peekChar()) {
             ',' => {
-                c.skipByte();
+                c.skipChar();
                 last = null;
             },
             '.' => {
-                c.skipByte();
+                c.skipChar();
                 return res;
             },
             else => {
@@ -307,8 +311,8 @@ fn takeConnections(c: *Compiler) !?Voice.Connections {
 }
 
 fn compileMacro(c: *Compiler) !void {
-    assert(c.sourceByte(c.pos) == '!');
-    c.skipByte();
+    assert(c.sourceChar(c.pos) == '!');
+    c.skipChar();
     const name = c.takeName() orelse {
         try c.report(.expected_name);
         c.skipLineAndContinuation();
@@ -327,7 +331,7 @@ fn compileParts(c: *Compiler) !void {
     if (!c.continueLine()) return;
     const start = c.pos;
     for (part_names) |part_name| {
-        if (!isPartName(part_name)) continue;
+        if (!isPartNameChar(part_name)) continue;
         const gop = try c.parts.getOrPut(c.gpa, part_name);
         if (!gop.found_existing) {
             gop.value_ptr.* = .init;
@@ -353,7 +357,7 @@ fn compilePart(c: *Compiler, part: *Part) !void {
 
 fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
     c.current_start = c.pos;
-    switch (c.peekByte()) {
+    switch (c.peekChar()) {
         'a'...'g' => {
             const note = c.takeNote(part).?;
             const length = try c.takeNoteLength(part);
@@ -362,16 +366,16 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             try part.addCommand(c, .key_off, .{ .none = {} });
         },
         'r' => {
-            c.skipByte();
+            c.skipChar();
             const length = try c.takeNoteLength(part);
             try part.addCommand(c, .rest, .{ .ticks = length });
         },
         'l' => {
-            c.skipByte();
+            c.skipChar();
             part.default_length = try c.takeNoteLength(part);
         },
         '&' => {
-            c.skipByte();
+            c.skipChar();
 
             const tags = part.commands.items(.tag);
             if (tags.len < 1 or tags[tags.len - 1] != .key_off) {
@@ -380,20 +384,20 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             part.commands.len -= 1;
         },
         'o' => {
-            c.skipByte();
+            c.skipChar();
             const n = try c.takeNumber(u4) orelse return c.report(.expected_param);
             part.octave = @floatFromInt(n);
         },
         '>' => {
-            c.skipByte();
+            c.skipChar();
             part.octave += 1.0;
         },
         '<' => {
-            c.skipByte();
+            c.skipChar();
             part.octave -= 1.0;
         },
         '@' => {
-            c.skipByte();
+            c.skipChar();
             const name_pos = c.pos;
             const name = c.takeName() orelse return c.report(.expected_name);
             const name_str = c.strings.find(name) orelse return c.reportSpan(.undefined_patch, name_pos, c.pos);
@@ -401,7 +405,7 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             try part.addCommand(c, .set_patch, .{ .extra = entry.index });
         },
         '!' => {
-            c.skipByte();
+            c.skipChar();
             const name_pos = c.pos;
             const name = c.takeName() orelse return c.report(.expected_name);
             const name_str = c.strings.find(name) orelse return c.reportSpan(.undefined_macro, name_pos, c.pos);
@@ -410,8 +414,8 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             c.pos = call_pos;
         },
         'v' => {
-            c.skipByte();
-            const tag: Command.Tag = switch (c.peekByte()) {
+            c.skipChar();
+            const tag: Command.Tag = switch (c.peekChar()) {
                 '+', '-' => .add_volume,
                 else => .set_volume,
             };
@@ -419,8 +423,8 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             try part.addCommand(c, tag, .{ .amount = amount });
         },
         't' => {
-            c.skipByte();
-            const tag: Command.Tag = switch (c.peekByte()) {
+            c.skipChar();
+            const tag: Command.Tag = switch (c.peekChar()) {
                 '+', '-' => .add_tempo,
                 else => .set_tempo,
             };
@@ -428,21 +432,21 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             try part.addCommand(c, tag, .{ .amount = amount });
         },
         'p' => {
-            c.skipByte();
+            c.skipChar();
             const amount = try c.takeNumber(f32) orelse return c.report(.expected_param);
             try part.addCommand(c, .set_pan, .{ .amount = amount });
         },
         'L' => {
-            c.skipByte();
+            c.skipChar();
             part.global_loop = part.nextCommandIndex();
         },
         '[' => {
-            c.skipByte();
+            c.skipChar();
             part.loops.push(.{ .start = part.nextCommandIndex(), .pos = c.current_start }) catch
                 return c.reportSpan(.loop_too_deep, c.current_start, c.pos);
         },
         ']' => {
-            c.skipByte();
+            c.skipChar();
             const count: LoopCount = try c.takeNumber(LoopCount) orelse .infinite;
             if (part.loops.pop()) |loop| {
                 try part.addCommand(c, .loop, .{ .loop = .{
@@ -454,11 +458,11 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             }
         },
         '{' => {
-            c.skipByte();
+            c.skipChar();
             try c.compilePortamento(part);
         },
         '*' => {
-            c.skipByte();
+            c.skipChar();
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (c.takeComma()) {
                 const new_state = try c.takeEnum(enum { on, off }) orelse return c.report(.expected_param);
@@ -468,24 +472,24 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
             }
         },
         'M' => {
-            c.skipByte();
+            c.skipChar();
             try c.compileLfoCommand(part);
         },
         '_' => {
-            c.skipByte();
-            switch (c.peekByte()) {
+            c.skipChar();
+            switch (c.peekChar()) {
                 '{' => {
-                    c.skipByte();
+                    c.skipChar();
                     try c.compileKeyChange(part);
                 },
                 else => {
-                    c.skipByte();
+                    c.skipChar();
                     try c.reportSpan(.invalid_command, c.current_start, c.pos);
                 },
             }
         },
         else => {
-            c.skipByte();
+            c.skipChar();
             try c.reportSpan(.invalid_command, c.current_start, c.pos);
         },
     }
@@ -495,18 +499,18 @@ fn compilePortamento(c: *Compiler, part: *Part) !void {
     var from: f32 = 0.0;
     var to: f32 = 0.0;
     var state: enum { start, after_from, after_to } = .start;
-    while (true) switch (c.peekByte()) {
+    while (true) switch (c.peekChar()) {
         '>' => {
-            c.skipByte();
+            c.skipChar();
             part.octave += 1.0;
         },
         '<' => {
-            c.skipByte();
+            c.skipChar();
             part.octave -= 1.0;
         },
         '}' => {
             if (state != .after_to) try c.report(.expected_note);
-            c.skipByte();
+            c.skipChar();
             break;
         },
         'a'...'g' => switch (state) {
@@ -519,13 +523,11 @@ fn compilePortamento(c: *Compiler, part: *Part) !void {
                 state = .after_to;
             },
             .after_to => {
-                try c.reportUnexpectedCharacter();
-                c.skipByte();
+                try c.skipUnexpectedCharacter();
             },
         },
         else => {
-            try c.reportUnexpectedCharacter();
-            c.skipByte();
+            try c.skipUnexpectedCharacter();
         },
     };
     const length = try c.takeNoteLength(part);
@@ -544,9 +546,9 @@ fn compilePortamento(c: *Compiler, part: *Part) !void {
 }
 
 fn compileLfoCommand(c: *Compiler, part: *Part) !void {
-    switch (c.peekByte()) {
+    switch (c.peekChar()) {
         'T' => {
-            c.skipByte();
+            c.skipChar();
 
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (!c.takeComma()) return c.report(.expected_param);
@@ -555,7 +557,7 @@ fn compileLfoCommand(c: *Compiler, part: *Part) !void {
             try c.addSetLfoTargetCommand(part, .user(lfo), target);
         },
         'S' => {
-            c.skipByte();
+            c.skipChar();
 
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (!c.takeComma()) return c.report(.expected_param);
@@ -566,7 +568,7 @@ fn compileLfoCommand(c: *Compiler, part: *Part) !void {
             try c.addSetLfoSizeCommand(part, .user(lfo), .{ .scale = scale, .offset = offset });
         },
         'W' => {
-            c.skipByte();
+            c.skipChar();
 
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (!c.takeComma()) return c.report(.expected_param);
@@ -588,7 +590,7 @@ fn compileLfoCommand(c: *Compiler, part: *Part) !void {
             try c.addSetLfoWaveCommand(part, .user(lfo), wave);
         },
         'O' => {
-            c.skipByte();
+            c.skipChar();
 
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (!c.takeComma()) return c.report(.expected_param);
@@ -597,7 +599,7 @@ fn compileLfoCommand(c: *Compiler, part: *Part) !void {
             try c.addSetLfoTriggerCommand(part, .user(lfo), trigger);
         },
         'A' => {
-            c.skipByte();
+            c.skipChar();
 
             const lfo = try c.takeNumber(Lfo.Index.User) orelse return c.report(.expected_param);
             if (!c.takeComma()) return c.report(.expected_param);
@@ -606,25 +608,24 @@ fn compileLfoCommand(c: *Compiler, part: *Part) !void {
             try c.addSetLfoAdjustCommand(part, .user(lfo), adjust == .on);
         },
         else => {
-            c.skipByte();
+            c.skipChar();
             try c.reportSpan(.invalid_command, c.current_start, c.pos);
         },
     }
 }
 
 fn compileKeyChange(c: *Compiler, part: *Part) !void {
-    while (true) switch (c.peekByte()) {
+    while (true) switch (c.peekChar()) {
         '+', '-', '=' => {
             const accidentals = c.takeAccidentals().?;
             while (c.takeNoteName()) |note| part.default_accidentals.set(note, accidentals);
         },
         '}' => {
-            c.skipByte();
+            c.skipChar();
             break;
         },
         else => {
-            try c.reportUnexpectedCharacter();
-            c.skipByte();
+            try c.skipUnexpectedCharacter();
         },
     };
 }
@@ -675,33 +676,44 @@ fn addSetLfoAdjustCommand(c: *Compiler, part: *Part, index: Lfo.Index, adjust: b
     } });
 }
 
-fn sourceByte(c: *const Compiler, index: SourceIndex) u8 {
-    return c.source[@backingInt(index)];
+fn sourceChar(c: *const Compiler, index: SourceIndex) u21 {
+    const pos = @backingInt(index);
+    const b = c.source[pos];
+    return switch (std.unicode.utf8ByteSequenceLength(b) catch unreachable) {
+        1 => b,
+        2 => std.unicode.utf8Decode2(c.source[pos..][0..2].*) catch unreachable,
+        3 => std.unicode.utf8Decode3(c.source[pos..][0..3].*) catch unreachable,
+        4 => std.unicode.utf8Decode4(c.source[pos..][0..4].*) catch unreachable,
+        else => unreachable,
+    };
 }
 
 fn sourceSlice(c: *const Compiler, start: SourceIndex, end: SourceIndex) []const u8 {
     return c.source[@backingInt(start)..@backingInt(end)];
 }
 
-fn peekByte(c: *const Compiler) u8 {
-    return c.source[@backingInt(c.pos)];
+fn peekChar(c: *const Compiler) u21 {
+    return c.sourceChar(c.pos);
 }
 
-fn skipByte(c: *Compiler) void {
-    if (@backingInt(c.pos) < c.source.len) c.pos = c.pos.next();
+fn skipChar(c: *Compiler) void {
+    if (@backingInt(c.pos) < c.source.len) {
+        const b = c.source[@backingInt(c.pos)];
+        c.pos = c.pos.plusBytes(std.unicode.utf8ByteSequenceLength(b) catch unreachable);
+    }
 }
 
-fn expectByte(c: *Compiler, b: u8) !void {
-    if (c.peekByte() != b) {
-        try c.reportData(.expected_char, .{ .char = b });
+fn expectChar(c: *Compiler, ch: u8) !void {
+    if (c.peekChar() != ch) {
+        try c.reportData(.expected_char, .{ .char = ch });
         return;
     }
-    c.skipByte();
+    c.skipChar();
 }
 
 fn expectSpace(c: *Compiler) !void {
-    switch (c.peekByte()) {
-        ' ', '\t' => c.skipByte(),
+    switch (c.peekChar()) {
+        ' ', '\t' => c.skipChar(),
         '\r', '\n' => {},
         else => try c.report(.expected_space),
     }
@@ -721,7 +733,7 @@ fn skipLineAndContinuation(c: *Compiler) void {
         c.skipLine();
         // After skipping the line, if the character we're looking at isn't a
         // space (or comment), it means we've exhausted the continuation.
-        switch (c.peekByte()) {
+        switch (c.peekChar()) {
             ' ', '\t', '\r', '\n', ';' => {},
             else => return,
         }
@@ -730,18 +742,18 @@ fn skipLineAndContinuation(c: *Compiler) void {
 
 fn continueLine(c: *Compiler) bool {
     var indented = true;
-    while (true) switch (c.peekByte()) {
+    while (true) switch (c.peekChar()) {
         eof => return false,
         ';' => {
             c.skipLine();
             indented = false;
         },
         ' ', '\t' => {
-            c.skipByte();
+            c.skipChar();
             indented = true;
         },
         '\r', '\n' => {
-            c.skipByte();
+            c.skipChar();
             indented = false;
         },
         else => return indented,
@@ -756,14 +768,14 @@ fn canContinueLine(c: *Compiler) bool {
 
 fn endLineAndContinuation(c: *Compiler) !void {
     if (c.continueLine()) {
-        try c.reportUnexpectedCharacter();
+        try c.skipUnexpectedCharacter();
         c.skipLineAndContinuation();
     }
 }
 
 fn takeComma(c: *Compiler) bool {
-    if (c.peekByte() == ',') {
-        c.skipByte();
+    if (c.peekChar() == ',') {
+        c.skipChar();
         return true;
     } else {
         return false;
@@ -781,7 +793,7 @@ fn takeText(c: *Compiler) !StringPool.Index {
             if (c.strings.writingIndex() != start) try c.strings.bytes.append(c.gpa, ' ');
             try c.strings.bytes.appendSlice(c.gpa, line);
         }
-        switch (c.peekByte()) {
+        switch (c.peekChar()) {
             ' ', '\t', '\r', '\n' => {}, // continuation line
             else => break,
         }
@@ -789,12 +801,12 @@ fn takeText(c: *Compiler) !StringPool.Index {
     return try c.strings.finishWriting(c.gpa, start);
 }
 
-fn skipMatching(c: *Compiler, pred: fn (u8) bool) void {
-    while (pred(c.peekByte())) c.skipByte();
+fn skipMatching(c: *Compiler, pred: fn (u21) bool) void {
+    while (pred(c.peekChar())) c.skipChar();
 }
 
-fn isNameByte(b: u8) bool {
-    return switch (b) {
+fn isNameChar(ch: u21) bool {
+    return switch (ch) {
         'A'...'Z', 'a'...'z', '0'...'9', '-', '_' => true,
         else => false,
     };
@@ -802,7 +814,7 @@ fn isNameByte(b: u8) bool {
 
 fn takeName(c: *Compiler) ?[]const u8 {
     const start = c.pos;
-    c.skipMatching(isNameByte);
+    c.skipMatching(isNameChar);
     return if (c.pos != start) c.sourceSlice(start, c.pos) else null;
 }
 
@@ -815,22 +827,22 @@ fn takeEnum(c: *Compiler, T: type) !?T {
     };
 }
 
-fn isUnsignedIntByte(b: u8) bool {
-    return switch (b) {
+fn isUnsignedIntChar(ch: u21) bool {
+    return switch (ch) {
         '0'...'9' => true,
         else => false,
     };
 }
 
-fn isSignedIntByte(b: u8) bool {
-    return switch (b) {
+fn isSignedIntChar(ch: u21) bool {
+    return switch (ch) {
         '+', '-', '0'...'9' => true,
         else => false,
     };
 }
 
-fn isFloatByte(b: u8) bool {
-    return switch (b) {
+fn isFloatChar(ch: u21) bool {
+    return switch (ch) {
         '+', '-', '0'...'9', '.' => true,
         else => false,
     };
@@ -853,16 +865,16 @@ fn takeNoteLength(c: *Compiler, part: *const Part) !Ticks {
     var curr_op: Op = .plus;
     var curr_start = c.pos;
     var curr_len = try c.takeNoteLengthValue() orelse part.default_length;
-    while (true) switch (c.peekByte()) {
+    while (true) switch (c.peekChar()) {
         '.' => {
-            c.skipByte();
+            c.skipChar();
             curr_len = curr_len.dot() catch {
                 try c.reportSpan(.last_command_not_note, curr_start, c.pos);
                 continue;
             };
         },
         '+', '-' => |op| {
-            c.skipByte();
+            c.skipChar();
             total_len = curr_op.apply(total_len, curr_len);
             curr_op = switch (op) {
                 '+' => .plus,
@@ -883,8 +895,8 @@ fn takeNoteLength(c: *Compiler, part: *const Part) !Ticks {
 
 fn takeNoteLengthValue(c: *Compiler) !?Ticks {
     const start = c.pos;
-    if (c.peekByte() == '%') {
-        c.skipByte();
+    if (c.peekChar() == '%') {
+        c.skipChar();
         return try c.takeNumber(Ticks) orelse {
             try c.report(.expected_param);
             return null;
@@ -912,7 +924,7 @@ fn takeNumber(c: *Compiler, T: type) !?T {
         },
         .int => |int| switch (int.signedness) {
             .unsigned => {
-                c.skipMatching(isUnsignedIntByte);
+                c.skipMatching(isUnsignedIntChar);
                 if (c.pos == start) return null;
                 return std.fmt.parseUnsigned(T, c.sourceSlice(start, c.pos), 10) catch {
                     try c.reportDataPos(.invalid_int, .{ .int = int }, start);
@@ -920,7 +932,7 @@ fn takeNumber(c: *Compiler, T: type) !?T {
                 };
             },
             .signed => {
-                c.skipMatching(isSignedIntByte);
+                c.skipMatching(isSignedIntChar);
                 if (c.pos == start) return null;
                 return std.fmt.parseInt(T, c.sourceSlice(start, c.pos), 10) catch {
                     try c.reportDataPos(.invalid_int, .{ .int = int }, start);
@@ -929,7 +941,7 @@ fn takeNumber(c: *Compiler, T: type) !?T {
             },
         },
         .float => {
-            c.skipMatching(isFloatByte);
+            c.skipMatching(isFloatChar);
             if (c.pos == start) return null;
             return std.fmt.parseFloat(T, c.sourceSlice(start, c.pos)) catch {
                 try c.reportPos(.invalid_float, start);
@@ -940,8 +952,8 @@ fn takeNumber(c: *Compiler, T: type) !?T {
     }
 }
 
-fn isPartName(b: u8) bool {
-    return switch (b) {
+fn isPartNameChar(ch: u21) bool {
+    return switch (ch) {
         'A'...'Z', 'a'...'z' => true,
         else => false,
     };
@@ -950,12 +962,13 @@ fn isPartName(b: u8) bool {
 fn takePartNames(c: *Compiler) ![]const u8 {
     const start = c.pos;
     while (true) {
-        c.skipMatching(isPartName);
-        switch (c.peekByte()) {
+        c.skipMatching(isPartNameChar);
+        switch (c.peekChar()) {
             eof, ' ', '\t', '\r', '\n' => break,
             else => {
-                try c.reportSpan(.invalid_part_name, c.pos, c.pos.next());
-                c.skipByte();
+                const part_start = c.pos;
+                c.skipChar();
+                try c.reportSpan(.invalid_part_name, part_start, c.pos);
             },
         }
     }
@@ -969,25 +982,34 @@ fn takeNote(c: *Compiler, part: *const Part) ?f32 {
 }
 
 fn takeNoteName(c: *Compiler) ?Note {
-    const note = std.meta.stringToEnum(Note, &.{c.peekByte()}) orelse return null;
-    c.skipByte();
+    const note: Note = switch (c.peekChar()) {
+        'c' => .c,
+        'd' => .d,
+        'e' => .e,
+        'f' => .f,
+        'g' => .g,
+        'a' => .a,
+        'b' => .b,
+        else => return null,
+    };
+    c.skipChar();
     return note;
 }
 
 fn takeAccidentals(c: *Compiler) ?f32 {
     var res: ?f32 = null;
-    while (true) switch (c.peekByte()) {
+    while (true) switch (c.peekChar()) {
         '=' => {
             res = 0.0;
-            c.skipByte();
+            c.skipChar();
         },
         '+' => {
             res = (res orelse 0.0) + 1.0;
-            c.skipByte();
+            c.skipChar();
         },
         '-' => {
             res = (res orelse 0.0) - 1.0;
-            c.skipByte();
+            c.skipChar();
         },
         else => break,
     };
@@ -1023,9 +1045,10 @@ fn reportDataSpan(c: *Compiler, tag: Error.Tag, data: Error.Data, start: SourceI
     });
 }
 
-fn reportUnexpectedCharacter(c: *Compiler) !void {
-    // TODO: this (and other places) need to be audited to ensure we properly skip entire codepoints, not bytes
-    try c.reportSpan(.unexpected_character, c.pos, c.pos.next());
+fn skipUnexpectedCharacter(c: *Compiler) !void {
+    const start = c.pos;
+    c.skipChar();
+    try c.reportSpan(.unexpected_character, start, c.pos);
 }
 
 const Note = enum { c, d, e, f, g, a, b };
@@ -1161,7 +1184,7 @@ pub const Error = struct {
 
     pub const Data = union {
         none: void,
-        char: u8,
+        char: u21,
         int: std.lang.Type.Int,
     };
 
@@ -1172,7 +1195,7 @@ pub const Error = struct {
             .expected_name => try w.print("expected name", .{}),
             .expected_param => try w.print("expected parameter", .{}),
             .expected_note => try w.print("expected note", .{}),
-            .expected_char => try w.print("expected '{c}'", .{err.data.char}),
+            .expected_char => try w.print("expected '{u}'", .{err.data.char}),
             .expected_space => try w.print("expected space or tab", .{}),
             .invalid_part_name => try w.print("invalid part name", .{}),
             .invalid_command => try w.print("invalid command", .{}),
