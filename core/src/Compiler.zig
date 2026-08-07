@@ -376,29 +376,24 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
         },
         'l' => {
             c.skipByte();
-            part.default_length = try c.takeNoteLength() orelse return c.report(.expected_param);
+            try c.compileLengthModifier(part);
         },
-        '-', '+' => |op| {
-            c.skipByte();
-            const length = try c.takeNoteLength() orelse return c.report(.expected_param);
-            const commands = part.commands.slice();
-            const tags = commands.items(.tag);
-            const datas = commands.items(.data);
-            const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
-            datas[rest].ticks = switch (op) {
-                '+' => @fromBackingInt(@backingInt(datas[rest].ticks) +| @backingInt(length)),
-                '-' => @fromBackingInt(@backingInt(datas[rest].ticks) -| @backingInt(length)),
-                else => unreachable,
-            };
+        '-', '+' => {
+            try c.compileLengthModifier(part);
         },
         '&' => {
-            // TODO: also support &n to extend note by length n
             c.skipByte();
-            const tags = part.commands.items(.tag);
-            if (tags.len < 1 or tags[tags.len - 1] != .key_off) {
-                return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
+
+            if (try c.takeNoteLength()) |len| {
+                const rest = part.previousRest() orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
+                rest.* = @fromBackingInt(@backingInt(rest.*) +| @backingInt(len));
+            } else {
+                const tags = part.commands.items(.tag);
+                if (tags.len < 1 or tags[tags.len - 1] != .key_off) {
+                    return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
+                }
+                part.commands.len -= 1;
             }
-            part.commands.len -= 1;
         },
         'o' => {
             c.skipByte();
@@ -511,6 +506,18 @@ fn previousRestIndex(tags: []const Command.Tag) ?usize {
     if (tags.len >= 1 and tags[tags.len - 1] == .rest) return tags.len - 1;
     if (tags.len >= 2 and tags[tags.len - 1] == .key_off and tags[tags.len - 2] == .rest) return tags.len - 2;
     return null;
+}
+
+fn compileLengthModifier(c: *Compiler, part: *Part) !void {
+    const op = c.peekByte();
+    c.skipByte();
+    const length = try c.takeNoteLength() orelse return c.report(.expected_param);
+    const rest = part.previousRest() orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
+    rest.* = switch (op) {
+        '+' => @fromBackingInt(@backingInt(rest.*) +| @backingInt(length)),
+        '-' => @fromBackingInt(@backingInt(rest.*) -| @backingInt(length)),
+        else => unreachable,
+    };
 }
 
 fn compilePortamento(c: *Compiler, part: *Part) !void {
@@ -859,8 +866,16 @@ fn isFloatByte(b: u8) bool {
 }
 
 fn takeNoteLength(c: *Compiler) !?Ticks {
-    // TODO: raw tick length (%)
     const start = c.pos;
+
+    if (c.peekByte() == '%') {
+        c.skipByte();
+        return try c.takeNumber(Ticks) orelse none: {
+            try c.reportPos(.expected_param, start);
+            break :none null;
+        };
+    }
+
     const divisor = try c.takeNumber(u32) orelse return null;
     return Ticks.zenlen.fraction(divisor) catch {
         try c.reportPos(.indivisible_note_length, start);
@@ -1048,6 +1063,14 @@ const Part = struct {
         const accidentals = explicit_accidentals orelse part.default_accidentals.get(note);
         const midi = midi_base + accidentals;
         return 440.0 * std.math.pow(f32, 2.0, (midi - 69.0) / 12.0);
+    }
+
+    fn previousRest(part: *Part) ?*Ticks {
+        const commands = part.commands.slice();
+        const tags = commands.items(.tag);
+        const datas = commands.items(.data);
+        const rest = previousRestIndex(tags) orelse return null;
+        return &datas[rest].ticks;
     }
 
     const Loop = struct {
