@@ -7,4 +7,8 @@
 
 !a c !b f
 !b de
-A @test p-1 !a p1 !a p0 a%32b%32c%32l+%2 d2&4&8
+
+AB @test
+A c1d1-8
+;A o3 c1        c1            d1        d1
+;B o3 r8g1-8    r8g1-8        r8f1-8    r8f1-8

@@ -356,44 +356,28 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
     switch (c.peekByte()) {
         'a'...'g' => {
             const note = c.takeNote(part).?;
-            const length = try c.takeNoteLength() orelse part.default_length;
+            const length = try c.takeNoteLength(part);
             try part.addCommand(c, .key_on, .{ .freq = note });
             try part.addCommand(c, .rest, .{ .ticks = length });
             try part.addCommand(c, .key_off, .{ .none = {} });
         },
         'r' => {
             c.skipByte();
-            const length = try c.takeNoteLength() orelse part.default_length;
+            const length = try c.takeNoteLength(part);
             try part.addCommand(c, .rest, .{ .ticks = length });
-        },
-        '.' => {
-            c.skipByte();
-            const commands = part.commands.slice();
-            const tags = commands.items(.tag);
-            const datas = commands.items(.data);
-            const rest = previousRestIndex(tags) orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
-            datas[rest].ticks = datas[rest].ticks.dot() catch return c.reportSpan(.cannot_dot, c.current_start, c.pos);
         },
         'l' => {
             c.skipByte();
-            try c.compileLengthModifier(part);
-        },
-        '-', '+' => {
-            try c.compileLengthModifier(part);
+            part.default_length = try c.takeNoteLength(part);
         },
         '&' => {
             c.skipByte();
 
-            if (try c.takeNoteLength()) |len| {
-                const rest = part.previousRest() orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
-                rest.* = @fromBackingInt(@backingInt(rest.*) +| @backingInt(len));
-            } else {
-                const tags = part.commands.items(.tag);
-                if (tags.len < 1 or tags[tags.len - 1] != .key_off) {
-                    return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
-                }
-                part.commands.len -= 1;
+            const tags = part.commands.items(.tag);
+            if (tags.len < 1 or tags[tags.len - 1] != .key_off) {
+                return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
             }
+            part.commands.len -= 1;
         },
         'o' => {
             c.skipByte();
@@ -507,24 +491,6 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
     }
 }
 
-fn previousRestIndex(tags: []const Command.Tag) ?usize {
-    if (tags.len >= 1 and tags[tags.len - 1] == .rest) return tags.len - 1;
-    if (tags.len >= 2 and tags[tags.len - 1] == .key_off and tags[tags.len - 2] == .rest) return tags.len - 2;
-    return null;
-}
-
-fn compileLengthModifier(c: *Compiler, part: *Part) !void {
-    const op = c.peekByte();
-    c.skipByte();
-    const length = try c.takeNoteLength() orelse return c.report(.expected_param);
-    const rest = part.previousRest() orelse return c.reportSpan(.last_command_not_note, c.current_start, c.pos);
-    rest.* = switch (op) {
-        '+' => @fromBackingInt(@backingInt(rest.*) +| @backingInt(length)),
-        '-' => @fromBackingInt(@backingInt(rest.*) -| @backingInt(length)),
-        else => unreachable,
-    };
-}
-
 fn compilePortamento(c: *Compiler, part: *Part) !void {
     var from: f32 = 0.0;
     var to: f32 = 0.0;
@@ -562,7 +528,7 @@ fn compilePortamento(c: *Compiler, part: *Part) !void {
             c.skipByte();
         },
     };
-    const length = try c.takeNoteLength() orelse part.default_length;
+    const length = try c.takeNoteLength(part);
 
     try c.addSetLfoTargetCommand(part, .porta, .freq);
     try c.addSetLfoSizeCommand(part, .porta, .{ .scale = from, .offset = -from });
@@ -870,22 +836,66 @@ fn isFloatByte(b: u8) bool {
     };
 }
 
-fn takeNoteLength(c: *Compiler) !?Ticks {
-    const start = c.pos;
+fn takeNoteLength(c: *Compiler, part: *const Part) !Ticks {
+    const Op = enum {
+        plus,
+        minus,
 
+        fn apply(op: @This(), v1: Ticks, v2: Ticks) Ticks {
+            return switch (op) {
+                .plus => v1.plus(v2),
+                .minus => v1.minus(v2),
+            };
+        }
+    };
+
+    var total_len: Ticks = .zero;
+    var curr_op: Op = .plus;
+    var curr_start = c.pos;
+    var curr_len = try c.takeNoteLengthValue() orelse part.default_length;
+    while (true) switch (c.peekByte()) {
+        '.' => {
+            c.skipByte();
+            curr_len = curr_len.dot() catch {
+                try c.reportSpan(.last_command_not_note, curr_start, c.pos);
+                continue;
+            };
+        },
+        '+', '-' => |op| {
+            c.skipByte();
+            total_len = curr_op.apply(total_len, curr_len);
+            curr_op = switch (op) {
+                '+' => .plus,
+                '-' => .minus,
+                else => unreachable,
+            };
+            curr_start = c.pos;
+            curr_len = try c.takeNoteLengthValue() orelse none: {
+                // It is mandatory to specify a length explicitly after +/-.
+                try c.report(.expected_param);
+                break :none part.default_length;
+            };
+        },
+        else => break,
+    };
+    return curr_op.apply(total_len, curr_len);
+}
+
+fn takeNoteLengthValue(c: *Compiler) !?Ticks {
+    const start = c.pos;
     if (c.peekByte() == '%') {
         c.skipByte();
-        return try c.takeNumber(Ticks) orelse none: {
-            try c.reportPos(.expected_param, start);
-            break :none null;
+        return try c.takeNumber(Ticks) orelse {
+            try c.report(.expected_param);
+            return null;
+        };
+    } else {
+        const divisor = try c.takeNumber(u32) orelse return null;
+        return Ticks.zenlen.fraction(divisor) catch {
+            try c.reportPos(.indivisible_note_length, start);
+            return null;
         };
     }
-
-    const divisor = try c.takeNumber(u32) orelse return null;
-    return Ticks.zenlen.fraction(divisor) catch {
-        try c.reportPos(.indivisible_note_length, start);
-        return null;
-    };
 }
 
 fn takeNumber(c: *Compiler, T: type) !?T {
@@ -1068,14 +1078,6 @@ const Part = struct {
         const accidentals = explicit_accidentals orelse part.default_accidentals.get(note);
         const midi = midi_base + accidentals;
         return 440.0 * std.math.pow(f32, 2.0, (midi - 69.0) / 12.0);
-    }
-
-    fn previousRest(part: *Part) ?*Ticks {
-        const commands = part.commands.slice();
-        const tags = commands.items(.tag);
-        const datas = commands.items(.data);
-        const rest = previousRestIndex(tags) orelse return null;
-        return &datas[rest].ticks;
     }
 
     const Loop = struct {

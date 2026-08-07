@@ -280,8 +280,12 @@ pub const Ticks = enum(u32) {
         return @fromBackingInt(@backingInt(ticks) - 1);
     }
 
-    pub fn plus(ticks: Ticks, more: Ticks) Ticks {
-        return @fromBackingInt(@backingInt(ticks) + @backingInt(more));
+    pub fn plus(ticks: Ticks, amount: Ticks) Ticks {
+        return @fromBackingInt(@backingInt(ticks) +| @backingInt(amount));
+    }
+
+    pub fn minus(ticks: Ticks, amount: Ticks) Ticks {
+        return @fromBackingInt(@backingInt(ticks) -| @backingInt(amount));
     }
 
     pub fn fraction(ticks: Ticks, divisor: u32) error{NotDivisible}!Ticks {
@@ -291,7 +295,7 @@ pub const Ticks = enum(u32) {
 
     pub fn dot(ticks: Ticks) error{NotDivisible}!Ticks {
         if (@backingInt(ticks) % 2 != 0) return error.NotDivisible;
-        return @fromBackingInt(@divExact(@backingInt(ticks), 2) * 3);
+        return @fromBackingInt(@divExact(@backingInt(ticks), 2) *| 3);
     }
 };
 
