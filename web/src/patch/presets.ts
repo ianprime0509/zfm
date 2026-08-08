@@ -5,9 +5,9 @@ import { N_SLOTS, SLOT_WAVE_DEFAULT, defaultLfoStates, emptyConnections } from "
 
 // --- Default patch: electric-piano from patches/patches.zfm ---
 // @electric-piano 0 1, 2 3.
-//   sine 0.7 11 3 0.00001 0 0 0 0.00001
+//   sine 0.1 11 0.5 0.00001 0 0 0 0.00001
 //   sine 0.3 12 0 0.00001 0.5 0 0 0.00001
-//   sine 0.7 1 0 0.00001 2 0.2 0 2
+//   sine 0.1 1 0 0.00001 2 0.2 0 2
 //   sine 1 1 0 0.00001 4 0 0 1
 
 const electricPianoConnections: Connections = {
@@ -26,9 +26,9 @@ const electricPianoConnections: Connections = {
 const electricPianoWaves: SlotWave[] = Array.from({ length: N_SLOTS }, () => SLOT_WAVE_DEFAULT);
 
 const electricPianoSlots: SlotParams[] = [
-  { tl: 0.7, ml: 11, fb: 3, ws: 0 },
+  { tl: 0.1, ml: 11, fb: 0.5, ws: 0 },
   { tl: 0.3, ml: 12, fb: 0, ws: 0 },
-  { tl: 0.7, ml: 1, fb: 0, ws: 0 },
+  { tl: 0.1, ml: 1, fb: 0, ws: 0 },
   { tl: 1, ml: 1, fb: 0, ws: 0 },
   { tl: 0, ml: 0, fb: 0, ws: 0 },
   { tl: 0, ml: 0, fb: 0, ws: 0 },

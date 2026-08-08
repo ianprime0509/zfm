@@ -131,9 +131,12 @@ fn convertPmdBank(gpa: Allocator, io: Io, input_path: []const u8, output_path: [
         for (pmd_patch.slots, 0..) |slot, i| {
             const carrier = pmd_patch.isCarrier(@intCast(i));
             // Detune and amplitude modulation have no synth equivalent.
-            const tl = Opn.tlLinear(slot.tl) * (if (carrier) 1.0 else Opn.pm_scale);
+            // The synth's per-sample phase is in cycles (multiplied by tau
+            // only inside the oscillator), so the modulator's radian phase
+            // deviation and the feedback term are divided by tau.
+            const tl = Opn.tlLinear(slot.tl) * (if (carrier) 1.0 else Opn.pm_scale / std.math.tau);
             const ml = Opn.multiple(slot.multi);
-            const fb = if (i == 0) Opn.feedback(pmd_patch.fb, carrier) else 0.0;
+            const fb = if (i == 0) Opn.feedback(pmd_patch.fb, carrier) / std.math.tau else 0.0;
             const env = Opn.envelope(slot);
             try writer.interface.print("  sine {d} {d} {d} {d} {d} {d} {d} {d}\n", .{
                 tl,

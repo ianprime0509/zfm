@@ -252,24 +252,25 @@ pub const Slot = struct {
         pub fn sample(s: *State, freq: f32, phase: f32, ws: f32) f32 {
             switch (s.*) {
                 .sine => |*t| {
-                    const v = @sin(freq * t.* * std.math.tau + phase);
+                    const x = freq * t.* + phase;
+                    const v = @sin(x * std.math.tau);
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .square => |*t| {
-                    const x = freq * t.* + phase / std.math.tau;
+                    const x = freq * t.* + phase;
                     const v = 1.0 - 2.0 * @floor(x + 1.0 - ws) + 2.0 * @floor(x);
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .triangle => |*t| {
-                    const x = freq * t.* + phase / std.math.tau;
+                    const x = freq * t.* + phase;
                     const v = 2.0 * @abs(2.0 * (x - @floor(x + 0.5))) - 1.0;
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
                 .saw => |*t| {
-                    const x = freq * t.* + phase / std.math.tau;
+                    const x = freq * t.* + phase;
                     const v = 2.0 * (x - @floor(x + 0.5));
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;

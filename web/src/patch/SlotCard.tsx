@@ -143,7 +143,7 @@ export function SlotCard({ slot, patch, onChange }: SlotCardProps) {
             value={sp.fb}
             onChange={(v) => setSlotParam("fb", v)}
             min={0}
-            max={8}
+            max={1}
             step={0.1}
             accent={color.accent}
             title="Feedback (self-modulation amount)"

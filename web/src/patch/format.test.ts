@@ -8,23 +8,23 @@ describe("formatPatch", () => {
     expect(formatPatch(ELECTRIC_PIANO)).toBe(
       [
         "@electric-piano 0 1, 2 3.",
-        "  sine 0.7 11 3 0.00001 0 0 0 0.00001",
+        "  sine 0.1 11 0.5 0.00001 0 0 0 0.00001",
         "  sine 0.3 12 0 0.00001 0.5 0 0 0.00001",
-        "  sine 0.7 1 0 0.00001 2 0.2 0 2",
+        "  sine 0.1 1 0 0.00001 2 0.2 0 2",
         "  sine 1 1 0 0.00001 4 0 0 1",
       ].join("\n"),
     );
   });
 
   it("cleans compiler-emitted f32 expansions to shortest round-trip", () => {
-    // The compiler returns 0.7f32 as the exact f64 expansion 0.699999988079071.
+    // The compiler returns 0.1f32 as the exact f64 expansion 0.10000000149011612.
     const p = {
       ...ELECTRIC_PIANO,
       slotParams: ELECTRIC_PIANO.slotParams.map((s, i) =>
-        i === 0 ? { ...s, tl: 0.699999988079071 } : s,
+        i === 0 ? { ...s, tl: 0.10000000149011612 } : s,
       ),
     };
-    expect(formatPatch(p).split("\n")[1]).toBe("  sine 0.7 11 3 0.00001 0 0 0 0.00001");
+    expect(formatPatch(p).split("\n")[1]).toBe("  sine 0.1 11 0.5 0.00001 0 0 0 0.00001");
   });
 
   it("emits empty routing as `@name .`", () => {
