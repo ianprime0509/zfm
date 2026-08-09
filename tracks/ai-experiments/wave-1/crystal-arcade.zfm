@@ -1,0 +1,101 @@
+; Crystal Arcade - an original synthwave-style track for ZFM
+;
+; Structure (28 bars at 4/4):
+;   bars 1-4:   intro (pads + arpeggios)
+;   bars 5-12:  groove (bass + drums join)
+;   bars 13-20: lead melody, phrase A + B
+;   bars 21-28: lead melody variation, resolves home
+;
+; Chord progression throughout: Am | F | C | G
+;
+; Parts:
+;   A: electric piano arpeggios    B: synth bass
+;   C: bell lead melody            D/E: string pads (root + fifth)
+;   K: kick  S: snare  H: hats
+#title Crystal Arcade
+#composer Qwen 3.8 Max
+#tempo 120
+
+; ---------------- patches (from patches/patches.zfm) ----------------
+
+@electric-piano 0 1, 2 3.
+  sine 0.1 11 0.5 0.00001 0 0 0 0.00001
+  sine 0.3 12 0 0.00001 0.5 0 0 0.00001
+  sine 0.1 1 0 0.00001 2 0.2 0 2
+  sine 1 1 0 0.00001 4 0 0 1
+
+@strings 0 1, 2 3.
+  sine 0.1 3 0.2 0.1 0 0 0 0.2
+  sine 0.9 1 0 0.1 0 0 0 0.2
+  sine 0.2 5 0 0.1 4 0 0 0.4
+  sine 1 1 0 0.1 0 0 0 0.2
+
+@synth-bass 0 1.
+  sine 0.8 0.5 0 0.00001 0.05 0 0 0.00001
+  sine 1 1 0.3 0.00001 1 0 0 0.00001
+
+@synth-bell 0 1.
+  sine 0.2 5 0 0.00001 0 0 0 0
+  sine 1 1 0 0.00001 2 0 0 2
+
+@bass-drum .
+  sine 1 0.25 0.6 0.02 0.5 0 0 0.1
+  noise 0.5 0.1 0 0.5 0.08 2 0 0 1
+  sine 1 0.25 0 0.00001 1 0 0 0.1
+
+@snare-drum .
+  sine 1 50 3 0.00001 1 0 0 0.00001
+  sine 0.3 1 0 0.00001 0.1 0 0 0.1
+  noise 0.1 1 0 0.5 0.08 2 0 0 1
+
+@rim .
+  sine 1 2 3 0.00001 0.1 0 0 0.1
+  noise 0.2 1 0 1 0.00001 0.2 0 0 0.2
+
+; ---------------- macros ----------------
+
+; One-bar 16th-note arpeggios, one per chord (octave-net-zero).
+!arp-am [a16c16e16>c16<]4
+!arp-f [f16a16>c16<a16]4
+!arp-c [c16e16g16e16]4
+!arp-g [g16b16>d16<b16]4
+
+; Four-bar chord cycle: Am | F | C | G
+!chords !arp-am!arp-f!arp-c!arp-g
+
+; Four-bar pad cycles (roots and fifths).
+!pad-1 a1f1c1g1
+!pad-2 e1c1g1d1
+
+; Four-bar bass cycle: 8th notes with octave pops.
+!bass [a8>a8<]4[f8>f8<]4[c8>c8<]4[g8>g8<]4
+
+; Lead melody phrases (4 bars each).
+!mel-a1 e4g8a8>c4<a8g8 e4d8c8d2 d4.e8d4c4 a1
+!mel-a2 a4c8d8e4g8e8 d4.c8<a2> g4.a8g4e8d8 e2r2
+!mel-b1 e4g8a8>c4<a8g8 e4d8c8d2 d4.e8>c4<a8g8 a1
+!mel-b2 a4c8d8e4g8e8 d4.c8<a2> g4.a8g4e8d8 a1
+
+; ---------------- parts ----------------
+
+A @electric-piano o4 p-0.3 v1.1
+  [!chords]7
+
+B @synth-bass o2 v1.3
+  [r1]4 [!bass]6
+
+C @synth-bell o4 p0.3 v1.3 MT0,freq MS0,4,0 MW0,sine,5 MO0,key_on MA0,on *0
+  [r1]12 !mel-a1 !mel-a2 !mel-b1 !mel-b2
+
+D @strings o4 p-0.2 v0.7 MT0,freq MS0,5,0 MW0,sine,5 MO0,key_on MA0,on *0
+  [!pad-1]7
+
+E @strings o4 p0.2 v0.6
+  [r1]4 [!pad-2]6
+
+K @bass-drum o3 v2
+  [r1]4 [c4r4c4r4]23 c4r4c4c8c8
+S @snare-drum o4 v1.5
+  [r1]4 [r4c4r4c4]23 r4c4c8c8c8c8
+H @rim o4 p0.3 v0.7
+  [r1]4 [[c8]8]24
