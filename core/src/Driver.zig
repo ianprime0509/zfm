@@ -69,7 +69,7 @@ fn execute(
     voice: Voice.Index,
     command: Command.Index,
 ) Command.Index {
-    switch (driver.mod.tag(command)) {
+    switch (driver.mod.commandTag(command)) {
         .end => {
             if (part.global_loop == command) {
                 // No global loop.
@@ -81,11 +81,11 @@ fn execute(
             }
         },
         .rest => {
-            part.delay = driver.mod.data(command).ticks;
+            part.delay = driver.mod.commandData(command).ticks;
             return command.next();
         },
         .key_on => {
-            part.keyOn(driver.mod.data(command).freq);
+            part.keyOn(driver.mod.commandData(command).freq);
             driver.synth.keyOn(voice);
             return command.next();
         },
@@ -94,7 +94,7 @@ fn execute(
             return command.next();
         },
         .set_patch => {
-            const patch, _ = driver.mod.extra.decode(Patch, driver.mod.data(command).extra);
+            const patch, _ = driver.mod.extra.decode(Patch, driver.mod.commandData(command).extra);
             driver.synth.voicePtr(voice).reconnect(patch.connections) catch unreachable;
             for (patch.slot_waves, 0..) |wave, slot| {
                 driver.synth.voiceSlotPtr(voice, @intCast(slot)).state = .init(wave);
@@ -104,68 +104,68 @@ fn execute(
             return command.next();
         },
         .set_volume => {
-            part.synth_params.voice.vol = driver.mod.data(command).amount;
+            part.synth_params.voice.vol = driver.mod.commandData(command).amount;
             return command.next();
         },
         .add_volume => {
-            part.synth_params.voice.vol += driver.mod.data(command).amount;
+            part.synth_params.voice.vol += driver.mod.commandData(command).amount;
             return command.next();
         },
         .set_tempo => {
-            driver.tempo.bpm = driver.mod.data(command).amount;
+            driver.tempo.bpm = driver.mod.commandData(command).amount;
             return command.next();
         },
         .add_tempo => {
-            driver.tempo.bpm += driver.mod.data(command).amount;
+            driver.tempo.bpm += driver.mod.commandData(command).amount;
             return command.next();
         },
         .set_pan => {
-            part.synth_params.voice.pan = driver.mod.data(command).amount;
+            part.synth_params.voice.pan = driver.mod.commandData(command).amount;
             return command.next();
         },
         .toggle_lfo => {
-            const index = driver.mod.data(command).lfo;
+            const index = driver.mod.commandData(command).lfo;
             const lfo = part.lfoPtr(index);
             lfo.enabled = !lfo.enabled;
             lfo.t = 0.0;
             return command.next();
         },
         .set_lfo_enabled => {
-            const lfo_enabled = driver.mod.data(command).lfo_enabled;
+            const lfo_enabled = driver.mod.commandData(command).lfo_enabled;
             const lfo = part.lfoPtr(lfo_enabled.index);
             lfo.enabled = lfo_enabled.enabled;
             lfo.t = 0.0;
             return command.next();
         },
         .set_lfo_target => {
-            const lfo_target = driver.mod.data(command).lfo_target;
+            const lfo_target = driver.mod.commandData(command).lfo_target;
             part.lfoPtr(lfo_target.index).params.target = lfo_target.target;
             return command.next();
         },
         .set_lfo_size => {
-            const lfo_data = driver.mod.data(command).lfo_data;
+            const lfo_data = driver.mod.commandData(command).lfo_data;
             const lfo = part.lfoPtr(lfo_data.index);
             lfo.params.size, _ = driver.mod.extra.decode(Lfo.Size, lfo_data.data);
             return command.next();
         },
         .set_lfo_wave => {
-            const lfo_data = driver.mod.data(command).lfo_data;
+            const lfo_data = driver.mod.commandData(command).lfo_data;
             const lfo = part.lfoPtr(lfo_data.index);
             lfo.params.wave, _ = driver.mod.extra.decode(Lfo.Wave, lfo_data.data);
             return command.next();
         },
         .set_lfo_trigger => {
-            const lfo_trigger = driver.mod.data(command).lfo_trigger;
+            const lfo_trigger = driver.mod.commandData(command).lfo_trigger;
             part.lfoPtr(lfo_trigger.index).params.trigger = lfo_trigger.trigger;
             return command.next();
         },
         .set_lfo_adjust => {
-            const lfo_adjust = driver.mod.data(command).lfo_adjust;
+            const lfo_adjust = driver.mod.commandData(command).lfo_adjust;
             part.lfoPtr(lfo_adjust.index).params.adjust = lfo_adjust.adjust;
             return command.next();
         },
         .loop => {
-            const loop = driver.mod.data(command).loop;
+            const loop = driver.mod.commandData(command).loop;
             if (part.loops.shouldLoop(command, loop.count)) {
                 return command.offset(loop.branch);
             } else {
@@ -262,9 +262,9 @@ pub const Part = struct {
             loops: [max_loop_depth]Loop,
             len: std.math.IntFittingRange(0, max_loop_depth),
 
-            const empty: Stack = .{ .loops = undefined, .len = 0 };
+            pub const empty: Stack = .{ .loops = undefined, .len = 0 };
 
-            fn shouldLoop(s: *Stack, command: Command.Index, count: LoopCount) bool {
+            pub fn shouldLoop(s: *Stack, command: Command.Index, count: LoopCount) bool {
                 if (s.len == 0 or s.loops[s.len - 1].command != command) {
                     s.loops[s.len] = .{ .command = command, .iteration = 0 };
                     s.len += 1;

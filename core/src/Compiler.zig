@@ -101,7 +101,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
     const parts = try c.gpa.alloc(Module.Part, c.parts.count());
     errdefer c.gpa.free(parts);
 
-    for (c.parts.values(), parts) |part, *mod_part| {
+    for (c.parts.keys(), c.parts.values(), parts) |name, part, *mod_part| {
         const start: Command.Index = @fromBackingInt(@intCast(commands.len));
         try commands.ensureUnusedCapacity(c.gpa, part.commands.len + 1);
         const slice = part.commands.slice();
@@ -115,6 +115,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
 
         const global_loop = part.global_loop orelse part.nextCommandIndex();
         mod_part.* = .{
+            .name = name,
             .start = start,
             .global_loop = start.offset(.between(@fromBackingInt(0), global_loop)),
         };

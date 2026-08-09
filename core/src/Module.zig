@@ -31,16 +31,57 @@ pub fn deinit(mod: *Module, gpa: Allocator) void {
     mod.* = undefined;
 }
 
-pub fn tag(mod: *const Module, command: Command.Index) Command.Tag {
+pub fn commandTag(mod: *const Module, command: Command.Index) Command.Tag {
     return mod.commands.items(.tag)[@backingInt(command)];
 }
 
-pub fn data(mod: *const Module, command: Command.Index) Command.Data {
+pub fn commandData(mod: *const Module, command: Command.Index) Command.Data {
     return mod.commands.items(.data)[@backingInt(command)];
 }
 
-pub fn span(mod: *const Module, command: Command.Index) SourceIndex.Span {
+pub fn commandSpan(mod: *const Module, command: Command.Index) SourceIndex.Span {
     return mod.commands.items(.span)[@backingInt(command)];
+}
+
+pub const PartLength = struct {
+    total: Ticks,
+    loop: ?Ticks,
+};
+
+/// Calculates the length of part `voice` in ticks. Returns null if there is an
+/// infinite loop in the part.
+pub fn calculatePartLength(mod: *const Module, voice: Voice.Index) ?PartLength {
+    var ticks: Ticks = .zero;
+    var loop_start_ticks: ?Ticks = null;
+    const part = mod.parts[@intFromEnum(voice)];
+    var command = part.start;
+    var loops: Driver.Part.Loop.Stack = .empty;
+    while (true) {
+        const tag = mod.commandTag(command);
+        if (tag == .end) break;
+        if (command == part.global_loop and loop_start_ticks == null) loop_start_ticks = ticks;
+        switch (tag) {
+            .end => unreachable,
+            .rest => {
+                ticks = ticks.plus(mod.commandData(command).ticks);
+                command = command.next();
+            },
+            .loop => {
+                const loop = mod.commandData(command).loop;
+                if (loop.count == .infinite) return null;
+                if (loops.shouldLoop(command, loop.count)) {
+                    command = command.offset(loop.branch);
+                } else {
+                    command = command.next();
+                }
+            },
+            else => command = command.next(),
+        }
+    }
+    return .{
+        .total = ticks,
+        .loop = if (loop_start_ticks) |start| ticks.minus(start) else null,
+    };
 }
 
 // The approach taken for dump/save is exactly the same as what Zig does
@@ -92,8 +133,8 @@ pub fn dump(mod: *const Module, gpa: Allocator, w: *Writer) (Writer.Error || All
         undefined;
     defer if (data_has_safety_tag) gpa.free(safety_buffer);
     if (data_has_safety_tag) {
-        for (safety_buffer, mod.commands.items(.data)) |*data_bytes, *cmd_data| {
-            const as_hack: *const HackDataLayout = @ptrCast(cmd_data);
+        for (safety_buffer, mod.commands.items(.data)) |*data_bytes, *data| {
+            const as_hack: *const HackDataLayout = @ptrCast(data);
             data_bytes.* = as_hack.data;
         }
     }
@@ -163,11 +204,11 @@ pub fn load(gpa: Allocator, r: *Reader) (Reader.Error || Allocator.Error)!Module
     try r.readVecAll(&vecs);
 
     if (data_has_safety_tag) {
-        for (mod.commands.items(.data), mod.commands.items(.tag), safety_buffer) |*cmd_data, cmd_tag, data_bytes| {
-            const as_hack: *HackDataLayout = @ptrCast(cmd_data);
+        for (mod.commands.items(.data), mod.commands.items(.tag), safety_buffer) |*data, tag, data_bytes| {
+            const as_hack: *HackDataLayout = @ptrCast(data);
             as_hack.* = .{
                 .data = data_bytes,
-                .safety_tag = @backingInt(Command.Tag.data_tags[@backingInt(cmd_tag)]),
+                .safety_tag = @backingInt(Command.Tag.data_tags[@backingInt(tag)]),
             };
         }
     }
@@ -184,22 +225,22 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
 
     try out.objectField("commands");
     try out.beginArray();
-    for (mod.commands.items(.tag), mod.commands.items(.data), mod.commands.items(.span)) |cmd_tag, cmd_data, cmd_span| {
+    for (mod.commands.items(.tag), mod.commands.items(.data), mod.commands.items(.span)) |tag, data, span| {
         try out.beginObject();
-        try out.objectField(@tagName(cmd_tag));
-        switch (Command.Tag.data_tags[@backingInt(cmd_tag)]) {
+        try out.objectField(@tagName(tag));
+        switch (Command.Tag.data_tags[@backingInt(tag)]) {
             inline else => |data_tag| {
                 if (data_tag == .none) {
                     try out.beginObject();
                     try out.endObject();
                 } else {
-                    try out.write(@field(cmd_data, @tagName(data_tag)));
+                    try out.write(@field(data, @tagName(data_tag)));
                 }
             },
         }
-        if (cmd_tag != .end) {
+        if (tag != .end) {
             try out.objectField("span");
-            try out.write(cmd_span);
+            try out.write(span);
         }
         try out.endObject();
     }
@@ -328,6 +369,7 @@ pub const Tempo = struct {
 };
 
 pub const Part = struct {
+    name: u8,
     start: Command.Index,
     global_loop: Command.Index,
 };
@@ -689,4 +731,5 @@ const Synth = zfm.Synth;
 const Voice = Synth.Voice;
 const Slot = Synth.Slot;
 const Envelope = Synth.Envelope;
+const Driver = zfm.Driver;
 const StringPool = @import("./StringPool.zig");

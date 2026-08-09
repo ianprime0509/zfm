@@ -46,7 +46,7 @@ fn emptyModule(n_voices: usize) Allocator.Error!Module {
 
     const mod_parts = try gpa.alloc(Module.Part, n_voices);
     errdefer gpa.free(mod_parts);
-    @memset(mod_parts, .{ .start = end, .global_loop = end });
+    @memset(mod_parts, .{ .name = 0, .start = end, .global_loop = end });
 
     return .{
         .commands = mod_commands.toOwnedSlice(),
@@ -178,12 +178,12 @@ fn transferCurrentCommandSpansInner() (Allocator.Error || Writer.Error)!void {
     try out.beginArray();
     for (driver.parts) |*part| {
         const command = part.executing_command;
-        if (driver.mod.tag(command) == .end) {
+        if (driver.mod.commandTag(command) == .end) {
             // `end` marks the end of the part's commands; it has no source
             // span to highlight, so signal that no command is executing.
             try out.write(null);
         } else {
-            const span = driver.mod.span(command);
+            const span = driver.mod.commandSpan(command);
             try out.beginArray();
             try out.write(@backingInt(span.start));
             try out.write(@backingInt(span.end));

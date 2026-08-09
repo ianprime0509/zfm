@@ -63,6 +63,8 @@ pub fn main(init: std.process.Init) !void {
     var mod = try readInput(gpa, io, input_path);
     defer mod.deinit(gpa);
 
+    try printPartLengths(gpa, &mod);
+
     const voices = try gpa.alloc(Synth.Voice, mod.parts.len);
     defer gpa.free(voices);
     const slots = try gpa.alloc(Synth.Slot, mod.parts.len * Synth.Voice.n_slots);
@@ -511,6 +513,37 @@ const Player = struct {
     }
 };
 
+fn printPartLengths(gpa: Allocator, mod: *const Module) !void {
+    const PartLength = struct {
+        name: u8,
+        len: ?Module.PartLength,
+    };
+
+    const parts = try gpa.alloc(PartLength, mod.parts.len);
+    defer gpa.free(parts);
+    for (parts, mod.parts, 0..) |*part, mod_part, i| {
+        part.name = mod_part.name;
+        part.len = mod.calculatePartLength(@fromBackingInt(@intCast(i)));
+    }
+    std.sort.heap(PartLength, parts, {}, struct {
+        fn lessThan(_: void, p1: PartLength, p2: PartLength) bool {
+            return p1.name < p2.name;
+        }
+    }.lessThan);
+
+    for (parts) |part| {
+        if (part.len) |len| {
+            if (len.loop) |loop_len| {
+                log.info("Part {c}: {} ticks (loop: {} ticks)", .{ part.name, @backingInt(len.total), @backingInt(loop_len) });
+            } else {
+                log.info("Part {c}: {} ticks", .{ part.name, @backingInt(len.total) });
+            }
+        } else {
+            log.info("Part {c}: infinite loop", .{part.name});
+        }
+    }
+}
+
 fn mainPlay(io: Io, player: *Player) !void {
     var ctx: AudioContext = .init(player, io);
 
@@ -774,5 +807,6 @@ const Frame = zfm.Frame;
 const Driver = zfm.Driver;
 const Synth = zfm.Synth;
 const Module = zfm.Module;
+const Ticks = Module.Ticks;
 const Compiler = zfm.Compiler;
 const c = @import("c");
