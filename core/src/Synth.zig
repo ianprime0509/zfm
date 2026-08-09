@@ -259,7 +259,8 @@ pub const Slot = struct {
                 },
                 .square => |*t| {
                     const x = freq * t.* + phase;
-                    const v = 1.0 - 2.0 * @floor(x + 1.0 - ws) + 2.0 * @floor(x);
+                    const duty_cycle = std.math.clamp(ws, 0.0001, 0.9999);
+                    const v = 1.0 - 2.0 * @floor(x + 1.0 - duty_cycle) + 2.0 * @floor(x);
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },

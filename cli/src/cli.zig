@@ -539,6 +539,7 @@ fn mainPlay(io: Io, player: *Player) !void {
 }
 
 fn mainSave(gpa: Allocator, io: Io, player: *Player, path: [:0]const u8) !void {
+    // TODO: make sure we don't go into an infinite loop
     if (std.mem.endsWith(u8, path, ".wav")) {
         try saveWav(io, player, path);
     } else if (debug_features and std.mem.endsWith(u8, path, ".mod")) {

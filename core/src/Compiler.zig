@@ -285,6 +285,7 @@ fn compilePatch(c: *Compiler) !void {
 }
 
 fn takeConnections(c: *Compiler) !?Voice.Connections {
+    // TODO: validate that the connections don't create a cycle.
     var res: Voice.Connections = .none;
     var last: ?Voice.SlotIndex = null;
     while (true) {
