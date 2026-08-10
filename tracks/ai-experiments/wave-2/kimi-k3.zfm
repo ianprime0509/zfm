@@ -1,0 +1,168 @@
+#title Bullet Hell Stage Theme
+#composer kimi-k3
+#tempo 165
+
+; ============================================================
+; Patches (from patches/patches.zfm and patches/effec.zfm)
+; ============================================================
+
+; Lead: bright octave piano
+@OctPian 0 1, 2 3.
+  sine 0.12647566 12 0.07957747 0.0062100003 2.359296 0.5011872 62.914562 5.89824
+  sine 1 4 0 0.0021060002 0.147456 0.5011872 31.457281 1.47456
+  sine 0.19476321 6 0 0.0062100003 2.359296 0.5011872 62.914562 5.89824
+  sine 1 2 0 0.0021060002 0.147456 0.5011872 31.457281 1.47456
+
+; Harmony stabs
+@brass 0 1.
+  sine 0.2 1 0.3 0.04 0 0 0 0.00001
+  sine 1 1 0.2 0.04 0 0 0 0.00001
+
+; Bass (play around o3; ML 0.25 gives a deep sub with growl)
+@edm-bass 0 1.
+  sine 0.8 0.25 0 0.00001 1 0 0 0.00001
+  sine 1 0.25 0.3 0.00001 2 0 0 0.00001
+
+; Kick: use with LFO preset MT0,freq MS0,220,-440 MW0,exp,-20 MO0,key_on MA0,on
+@edm-kick .
+  sine 1 1 0.2 0.00001 10 0 0 0.00001
+
+@snare-drum .
+  sine 1 50 3 0.00001 1 0 0 0.00001
+  sine 0.3 1 0 0.00001 0.1 0 0 0.1
+  noise 0.1 1 0 0.5 0.08 2 0 0 1
+
+; Closed hi-hat (metallic)
+@HiHatCl 0 1 2 3.
+  sine 3.9995115 15 0.07957747 0.000020833333 0 0.25118864 0 7.8643203
+  sine 3.9995115 8 0 0.000020833333 0 0.25118864 0 7.8643203
+  sine 3.9995115 8 0 0.000020833333 0 0.25118864 0 7.8643203
+  sine 1 8 0 0.000020833333 0.00086400006 0.3548134 0.030720001 0.00576
+
+; Sparkle arpeggios
+@synth-bell 0 1.
+  sine 0.2 5 0 0.00001 0 0 0 0
+  sine 1 1 0 0.00001 2 0 0 2
+
+; ============================================================
+; Macros
+; ============================================================
+
+; Pumping 8th-note bass with octave pops (one bar each)
+!bassE e8 e8 e8 >e8< e8 e8 >e8< e8
+!bassC c8 c8 c8 >c8< c8 c8 >c8< c8
+!bassD d8 d8 d8 >d8< d8 d8 >d8< d8
+
+; Off-beat brass stabs (one bar each)
+!sEm r8 g8 r8 g8 r8 b8 r8 g8
+!sC  r8 e8 r8 e8 r8 g8 r8 e8
+!sD  r8 f8 r8 f8 r8 a8 r8 f8
+
+; Drums
+!k4  c4 c4 c4 c4
+!sn2 r4 c4 r4 c4
+!hat c8 c16 c16 c8 c16 c16
+
+; 16th-note bell arpeggios (one bar each)
+!arpE [e16 g16 b16 >e16<]4
+!arpC [c16 e16 g16 >c16<]4
+!arpD [d16 f16 a16 >d16<]4
+
+; ============================================================
+; Part A: lead melody
+; ============================================================
+
+A @OctPian v1.5 p-0.1 _{+f} o5
+A MT0,freq MS0,6,0 MW0,sine,5 MO0,key_on MA0,on *0,on
+; Intro: silent
+A r1 r1 r1 r1
+A L
+; --- Main theme A ---
+A g8 a8 b4 b8 a8 g8 a8
+A b8 >c8 d8 e8 d8 c8< b8 a8
+A g4. e8 g8 a8 g8 e8
+A f8 a8 a8 g8 f8 g8 a4
+A b8 g8 b8 >e8 d8 c8< b8 a8
+A g8 a8 b8 >c8< b8 a8 g8 f8
+A e8 g8 g8 a8 g8 e8 d8 e8
+A a8 g8 f8 g8 a8 b8 >c8 d8<
+; --- Main theme B (busier) ---
+A e8 g8 b8 g8 b8 >e8 d8 c8<
+A b16 >c16 d16 e16 d16 c16< b16 a16 g8 a8 b4
+A c16 d16 e16 f16 g8 e8 g8 a8 g8 e8
+A f16 g16 a16 b16 a8 f8 a8 b8 a8 f8
+A b8 >e8 d8 c8 d8 c8< b8 a8
+A f8 e8 f8 g8 a8 g8 f8 e8
+A g8 e8 g8 >c8< b8 a8 g8 e8
+A a8 f8 a8 >d8 c8< b8 a8 g8
+; --- Bridge ---
+A e4. d8 e2
+A g4. f8 e2
+A f4. g8 a2
+A b2 b8 a8 g8 a8
+
+; ============================================================
+; Part B: brass stabs / pads
+; ============================================================
+
+B @brass v1 p0.4 _{+f} o4
+B r1 r1 r1 r1
+B L
+B !sEm !sEm !sC !sD !sEm !sEm !sC !sD
+B !sEm !sEm !sC !sD !sEm !sEm !sC !sD
+; Bridge: sustained chord tones
+B e1 g1 a1 b1
+
+; ============================================================
+; Part C: bass
+; ============================================================
+
+C @edm-bass v1.6 p0 _{+f} o3
+C r1 r1 !bassE !bassE
+C L
+C !bassE !bassE !bassC !bassD !bassE !bassE !bassC !bassD
+C !bassE !bassE !bassC !bassD !bassE !bassE !bassC !bassD
+C !bassC !bassC !bassD !bassE
+
+; ============================================================
+; Part D: kick (four on the floor, pitch-drop LFO)
+; ============================================================
+
+D @edm-kick v1.6 p0 o2
+D MT0,freq MS0,220,-440 MW0,exp,-20 MO0,key_on MA0,on *0,on
+D !k4 !k4 !k4 !k4
+D L
+D [!k4]16
+; Bridge, last bar builds with 8ths
+D !k4 !k4 !k4 c4 c8 c8 c8 c8 c8 c8
+
+; ============================================================
+; Part E: snare
+; ============================================================
+
+E @snare-drum v1 p-0.15 o3
+E r1 r1 !sn2 !sn2
+E L
+E [!sn2]16
+; Bridge, last bar rolls into the loop
+E !sn2 !sn2 !sn2 r4 c8 c8 c4 c16 c16 c16 c16
+
+; ============================================================
+; Part F: hi-hats
+; ============================================================
+
+F @HiHatCl v0.6 p0.25 o5
+F [!hat !hat]4
+F L
+F [!hat !hat]20
+
+; ============================================================
+; Part G: bell arpeggios
+; ============================================================
+
+G @synth-bell v0.7 p-0.4 _{+f} o5
+G !arpE !arpE !arpE !arpE
+G L
+G !arpE !arpE !arpC !arpD !arpE !arpE !arpC !arpD
+G !arpE !arpE !arpC !arpD !arpE !arpE !arpC !arpD
+G !arpC !arpC !arpD !arpE

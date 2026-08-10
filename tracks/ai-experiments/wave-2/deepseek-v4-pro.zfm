@@ -1,0 +1,589 @@
+#title Starfall Convergence
+#composer deepseek-v4-pro
+#tempo 170
+
+; ============================================================
+; PATCHES
+; ============================================================
+
+; Synth brass lead - powerful and cutting
+@Lead 0 1, 2 3.
+  sine 0.42364976 8 0.07957747 0.0021060002 0.294912 0.70794576 0 1.47456
+  sine 1 8 0 0.00048600003 0.294912 0.70794576 0 0.36864
+  sine 0.5035086 8 0 0.0021060002 0.294912 0.70794576 0 1.47456
+  sine 1 8 0 0.00048600003 0.294912 0.70794576 0 0.36864
+
+; Electric bass - punchy and driving
+@Bass 0 1 2 3.
+  sine 0.19476321 10 0.039788734 0.0016200001 0.020736 0.3548134 7.8643203 0.49152002
+  sine 0.12647566 1 0 0.000020833333 0.11059201 0.3548134 47.18592 2.94912
+  sine 0.46185634 0.5 0 0.000020833333 0.22118402 0.3548134 31.457281 1.9660801
+  sine 1 1 0 0.000020833333 0.036864 0.5011872 23.59296 0.98304003
+
+; Bell arpeggio - bright sparkle
+@Arp 0 1, 2 3.
+  sine 0.3564568 3 0.07957747 0.000020833333 0.589824 0.5011872 0 2.94912
+  sine 1 4 0 0.000020833333 0.589824 0.5011872 0 0.73728
+  sine 0.29992107 6 0 0.000020833333 0.589824 0.5011872 0 2.94912
+  sine 1 4 0 0.000020833333 0.589824 0.5011872 0 0.73728
+
+; Synth strings pad
+@Pad 0 1, 2 3.
+  sine 0.3564568 4 0.07957747 0.000020833333 0 1 0 2.94912
+  sine 1 8 0 0.016632 0 1 0 0.36864
+  sine 0.5489173 4 0 0.000020833333 0 1 0 2.94912
+  sine 1 8 0 0.016632 0 1 0 0.36864
+
+; Kick drum
+@Kick 0 1, 2 3.
+  sine 3.9995115 2 0.07957747 0.000020833333 0.005616 0.011220184 0 0.122880004
+  sine 1 2 0 0.000020833333 0.013824 0.5011872 0.73728 0.030720001
+  sine 3.9995115 4 0 0.000020833333 0.026784 0.000022387205 0.00576 0.122880004
+  sine 1 2 0 0.000020833333 0.013824 0.5011872 0.73728 0.030720001
+
+; Snare
+@Snare 0 1, 2 3.
+  sine 3.9995115 15 0.07957747 0.000020833333 0 1 0 31.457281
+  sine 1 0.5 0 0.000020833333 0.000432 0.70794576 0.49152002 0.122880004
+  sine 3.9995115 4 0 0.000020833333 0.053568 0.000022387205 0 31.457281
+  sine 1 2 0 0.000020833333 0.036864 0.70794576 0.18432 0.122880004
+
+; Closed hi-hat
+@HH 0 1 2 3.
+  sine 3.9995115 15 0.07957747 0.000020833333 0 0.25118864 0 7.8643203
+  sine 3.9995115 8 0 0.000020833333 0 0.25118864 0 7.8643203
+  sine 3.9995115 8 0 0.000020833333 0 0.25118864 0 7.8643203
+  sine 1 8 0 0.000020833333 0.00086400006 0.3548134 0.030720001 0.00576
+
+; Open hi-hat
+@HHOpen 0 1 2 3.
+  sine 3.6686559 8 0.07957747 0.00075600005 1.179648 0.25118864 0.49152002 0.030720001
+  sine 3.6686559 8 0 0.000020833333 1.179648 0.25118864 0.49152002 0.030720001
+  sine 3.6686559 8 0 0.000020833333 1.179648 0.25118864 0.49152002 0.030720001
+  sine 1 8 0 0.000020833333 0.001728 0.5011872 0.24576001 0.00576
+
+; ============================================================
+; MACROS - each is exactly 1 bar (96 ticks)
+; All parts use l8 so 8 commands = 1 bar
+; ============================================================
+
+; --- Drum macros (1 bar each) ---
+; Kick: four-on-the-floor variant
+!K1 e8 r8 e8 e16 r16 e8 r8 e8 e8
+; Snare: backbeat
+!S1 r8 e8 r8 e8
+; Snare fill
+!SF e16 e16 e16 e16 e16 e16 e16 e16
+; Closed HH 8ths
+!H1 e8 e8 e8 e8 e8 e8 e8 e8
+; Open HH 8ths
+!HO e8 e8 e8 e8 e8 e8 e8 e8
+
+; --- Bass macros (1 bar each, o3, l8) ---
+!BEm e8 e16 e16 e8 e16 e16 e8 e16 e16 e8 e8
+!BC  c8 c16 c16 c8 c16 c16 c8 c16 c16 c8 c8
+!BD  d8 d16 d16 d8 d16 d16 d8 d16 d16 d8 d8
+!BAm a8 a16 a16 a8 a16 a16 a8 a16 a16 a8 a8
+!BG  g8 g16 g16 g8 g16 g16 g8 g16 g16 g8 g8
+!BB  b8 b16 b16 b8 b16 b16 b8 b16 b16 b8 b8
+
+; --- Arpeggio macros (1 bar each, 16th notes) ---
+!AEm e16 g16 b16 > e16 < b16 g16 e16 > e16 < b16 g16 e16 < b16 g16
+!AC  c16 e16 g16 > c16 < g16 e16 c16 > c16 < g16 e16 c16 < g16 e16
+!AD  d16 f16 a16 > d16 < a16 f16 d16 > d16 < a16 f16 d16 < a16 f16
+!AAm a16 > c16 e16 a16 e16 c16 < a16 > a16 e16 c16 < a16 e16 c16
+!AG  g16 b16 > d16 g16 < d16 b16 g16 > g16 < d16 b16 g16 d16 b16
+!AB  b16 > d+16 f16 b16 < f16 d+16 b16 > b16 < f16 d+16 b16 f16 d+16
+
+; ============================================================
+; KEY SIGNATURE: E minor (F# = sharp)
+; ============================================================
+ABCDEFGH _{+f}
+
+; ============================================================
+; PART SETUP
+; ============================================================
+; A: Lead  B: Bass  C: Arp  D: Pad root
+; E: Kick  F: Snare  G: Hi-hat  H: Pad fifth
+A @Lead v0 p0
+B @Bass v0 p0
+C @Arp v0 p0
+D @Pad v0 p-0.4
+E @Kick v0 p0
+F @Snare v0 p0
+G @HH v0 p0
+H @Pad v0 p0.4
+
+; All parts use eighth note as default for easy bar alignment
+ABCDEFGH l8
+
+; ============================================================
+; INTRO (4 bars)
+; ============================================================
+; Bars 1-2: HH count-in only
+G v0.2 p0.2 [e8 e8 e8 e8 e8 e8 e8 e8]2
+; Bars 3-4: Drums enter, bass pulse
+E !K1 !K1
+F r16 r16 r16 r16 r16 r16 r16 r16 r8 e8 r8 e8 r8 e8 r8 e8
+G !H1 !H1
+B o3 v0.5 e4 r4 e4 r4
+C o5 v0.1 r8 r8 r8 r8 r8 r8 r8 r8 r8 r8 r8 r8 e8 g8 b8 > e8
+D o4 v0.1 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 e4
+H o4 v0.1 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 r16 b4
+
+; ============================================================
+; SECTION A (8 bars) - Main theme enters
+; ============================================================
+A v0.7
+B v0.8
+C v0.3
+D v0.2
+H v0.2
+
+; Bar 5: Em
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BEm
+C o5 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 6: Em (melody begins)
+A o5 e8 f8 g8 e8 f8 g8 a8 f8
+B o3 !BEm
+C o5 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 7: C
+A o5 g8 a8 b8 > c8 < b8 a8 g8 e8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E !K1
+F !S1
+G !H1
+
+; Bar 8: C
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E !K1
+F !S1
+G !H1
+
+; Bar 9: D
+A o5 d+8 e8 f8 d+8 e8 f8 g8 e8
+B o3 !BD
+C o5 !AD
+D o4 d1
+H o4 a1
+E !K1
+F !S1
+G !H1
+
+; Bar 10: D
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BD
+C o5 !AD
+D o4 d1
+H o4 a1
+E !K1
+F !S1
+G !H1
+
+; Bar 11: Em
+A o5 d+8 e8 f8 e8 d8 e8 < b8 a8
+B o3 !BEm
+C o5 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 12: Em
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BEm
+C o5 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; ============================================================
+; SECTION A' (8 bars) - Variation, more intense
+; ============================================================
+A v0.8
+C v0.35
+
+; Bar 13: Em (melody up an octave)
+A o5 > e8 f8 g8 a8 b8 > c8 < b8 a8
+B o3 !BEm
+C o6 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 14: Em
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BEm
+C o6 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 15: Am
+A o5 g8 a8 b8 > c8 d8 e8 < b8 g8
+B o3 !BAm
+C o5 !AAm
+D o4 a1
+H o4 > e4
+E !K1
+F !S1
+G !H1
+
+; Bar 16: Am
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BAm
+C o5 !AAm
+D o4 a1
+H o4 > e4
+E !K1
+F !S1
+G !H1
+
+; Bar 17: G
+A o5 a8 b8 > c8 d8 e8 d8 c8 < b8
+B o3 !BG
+C o5 !AG
+D o4 g1
+H o4 > d4
+E !K1
+F !S1
+G !H1
+
+; Bar 18: G
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BG
+C o5 !AG
+D o4 g1
+H o4 > d4
+E !K1
+F !S1
+G !H1
+
+; Bar 19: B
+A o5 a8 b8 g8 f8 d+8 e8 f8 d+8
+B o3 !BB
+C o5 !AB
+D o4 b1
+H o4 f1
+E !K1
+F !S1
+G !H1
+
+; Bar 20: B (drum fill)
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BB
+C o5 !AB
+D o4 b1
+H o4 f1
+E !K1
+F !SF
+G !H1
+
+; ============================================================
+; SECTION B - Bridge (8 bars), half-time feel
+; ============================================================
+G @HHOpen v0.18
+A v0.55
+B v0.65
+C v0.25
+D v0.25
+H v0.25
+
+; Bar 21: C
+G @HHOpen v0.18
+A o5 e8 r8 e8 f8 g8 r8 g8 a8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E e8 r8 r8 e8 r8 r8 e8 r8
+F r8 r8 e8 r8 r8 e8 r8 r8
+G !HO
+
+; Bar 22: C
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E e8 r8 r8 e8 r8 r8 e8 r8
+F r8 r8 e8 r8 r8 e8 r8 r8
+G !HO
+
+; Bar 23: G
+A o5 g8 r8 g8 a8 b8 > c8 r8 d8
+B o3 !BG
+C o5 !AG
+D o4 g1
+H o4 > d4
+E e8 r8 r8 e8 r8 r8 e8 r8
+F r8 r8 e8 r8 r8 e8 r8 r8
+G !HO
+
+; Bar 24: G
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BG
+C o5 !AG
+D o4 g1
+H o4 > d4
+E e8 r8 r8 e8 r8 r8 e8 r8
+F r8 r8 e8 r8 r8 e8 r8 r8
+G !HO
+
+; Bar 25: Am
+A o5 a8 r8 a8 b8 > c8 d8 r8 e8
+B o3 !BAm
+C o5 !AAm
+D o4 a1
+H o4 > e4
+E e8 r8 r8 e8 r8 r8 e8 r8
+F r8 r8 e8 r8 r8 e8 r8 r8
+G !HO
+
+; Bar 26: Am
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BAm
+C o5 !AAm
+D o4 a1
+H o4 > e4
+E e8 r8 r8 e8 r8 r8 e8 r8
+F r8 r8 e8 r8 r8 e8 r8 r8
+G !HO
+
+; Bar 27: B (building tension)
+G @HH v0.25
+A o5 f8 d+8 e8 f8 d+8 e8 f8 d+8
+B o3 !BB
+C o5 !AB
+D o4 b1
+H o4 f1
+E e8 r8 e8 e16 r16 e8 e8 r8 e8
+F !S1
+G !H1
+
+; Bar 28: B (drum build)
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BB
+C o5 !AB
+D o4 b1
+H o4 f1
+E !K1
+F !SF
+G !H1
+
+; ============================================================
+; SECTION A RETURN (8 bars) - Full power
+; ============================================================
+A v0.85
+B v0.85
+C v0.38
+D v0.3
+H v0.3
+
+; Bar 29: Em
+A o5 > e8 f8 g8 a8 b8 > c8 d+8 e8
+B o3 !BEm
+C o6 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 30: Em
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BEm
+C o6 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 31: C
+A o5 f8 e8 d+8 e8 f8 e8 d8 c8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E !K1
+F !S1
+G !H1
+
+; Bar 32: C
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E !K1
+F !S1
+G !H1
+
+; Bar 33: D
+A o5 < b8 > c8 d+8 e8 f8 e8 d+8 e8
+B o3 !BD
+C o5 !AD
+D o4 d1
+H o4 a1
+E !K1
+F !S1
+G !H1
+
+; Bar 34: D
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BD
+C o5 !AD
+D o4 d1
+H o4 a1
+E !K1
+F !S1
+G !H1
+
+; Bar 35: Em (triumphant)
+A o5 > e8 d+8 e8 f8 g8 a8 b8 > c8
+B o3 !BEm
+C o6 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; Bar 36: Em
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BEm
+C o6 !AEm
+D o4 e1
+H o4 b1
+E !K1
+F !S1
+G !H1
+
+; ============================================================
+; CLIMAX (4 bars) - Rapid chord changes
+; ============================================================
+A v0.9
+B v0.9
+C v0.4
+D v0.35
+H v0.35
+
+; Bar 37: C→D
+A o5 d+8 e8 f8 e8 d+8 e8 d+8 e8
+B o3 c8 c8 c16 c16 c16 c16 d8 d8 d16 d16 d16 d16
+C o5 c16 e16 g16 e16 d16 f16 a16 f16 e16 g16 b16 g16 e16 g16 b16 g16
+D o4 c2 d2
+H o4 g2 a2
+E !K1
+F !S1
+G !H1
+
+; Bar 38: Em
+A o5 > e2 r2
+B o3 !BEm
+C o5 !AEm
+D o4 e2
+H o4 b2
+E !K1
+F !S1
+G !H1
+
+; Bar 39: Em (final)
+A o5 > e4. f16 e16 d+8 e8 r8 r8
+B o3 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16 e16
+C o6 !AEm
+D o4 e2
+H o4 b2
+E !K1
+F !S1
+G !H1
+
+; Bar 40: Em (drum fill)
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 e8 r8 e8 r8 e8 r8 e8 r8
+C o6 !AEm
+D o4 e2
+H o4 b2
+E e8 r8 e8 e8 e16 e16 e16 e16 e8 e8
+F r8 e8 r8 e8 r4 e16 e16 e16 e16
+G !H1
+
+; ============================================================
+; OUTRO / LOOP TRANSITION (4 bars)
+; ============================================================
+A v0.45
+B v0.55
+C v0.18
+D v0.15
+H v0.15
+
+; Bar 41: Em
+A o5 e8 f8 g8 e8 r8 r8 r8 r8
+B o3 !BEm
+C o5 !AEm
+D o4 e1
+H o4 b1
+E e8 r8 e8 r8 e8 r8 e8 e8
+F !S1
+G !H1
+
+; Bar 42: Em
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 !BEm
+C o5 !AEm
+D o4 e1
+H o4 b1
+E e8 r8 e8 r8 e8 r8 e8 e8
+F !S1
+G !H1
+
+; Bar 43: C
+A o5 g8 a8 b8 > c8 < b8 a8 g8 e8
+B o3 !BC
+C o5 !AC
+D o4 c1
+H o4 g1
+E e8 r8 e8 r8 e8 r8 e8 e8
+F !S1
+G !H1
+
+; Bar 44: C→D (loop transition)
+A o5 r8 r8 r8 r8 r8 r8 r8 r8
+B o3 c8 c8 d8 d8
+C o5 !AC
+D o4 c2 d2
+H o4 g2 a2
+E e8 r8 e8 r8 e8 r8 e8 e8
+F !S1
+G !H1
+
+; Loop point for game stage music
+L
