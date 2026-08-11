@@ -279,7 +279,6 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
     try out.write(mod.initial_tempo.bpm);
 
     try out.endObject();
-    try w.flush();
 }
 
 pub const SourceIndex = enum(u32) {

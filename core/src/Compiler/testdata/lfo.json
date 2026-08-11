@@ -1,0 +1,137 @@
+{
+  "commands": [
+    {
+      "toggle_lfo": "user_0",
+      "span": {
+        "start": 2,
+        "end": 4
+      }
+    },
+    {
+      "set_lfo_target": {
+        "index": "user_0",
+        "target": "freq"
+      },
+      "span": {
+        "start": 5,
+        "end": 13
+      }
+    },
+    {
+      "set_lfo_size": {
+        "index": "user_0",
+        "data": 0
+      },
+      "span": {
+        "start": 14,
+        "end": 21
+      }
+    },
+    {
+      "set_lfo_wave": {
+        "index": "user_0",
+        "data": 2
+      },
+      "span": {
+        "start": 22,
+        "end": 32
+      }
+    },
+    {
+      "set_lfo_trigger": {
+        "index": "user_0",
+        "trigger": "key_on"
+      },
+      "span": {
+        "start": 33,
+        "end": 43
+      }
+    },
+    {
+      "set_lfo_adjust": {
+        "index": "user_0",
+        "adjust": true
+      },
+      "span": {
+        "start": 44,
+        "end": 50
+      }
+    },
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 53,
+        "end": 54
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 53,
+        "end": 54
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 53,
+        "end": 54
+      }
+    },
+    {
+      "set_lfo_enabled": {
+        "index": "user_1",
+        "enabled": false
+      },
+      "span": {
+        "start": 55,
+        "end": 61
+      }
+    },
+    {
+      "key_on": 293.6647644042969,
+      "span": {
+        "start": 62,
+        "end": 63
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 62,
+        "end": 63
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 62,
+        "end": 63
+      }
+    },
+    {
+      "end": {}
+    }
+  ],
+  "parts": [
+    {
+      "name": 65,
+      "start": 0,
+      "global_loop": 13
+    }
+  ],
+  "patches": [],
+  "extra": [
+    1073741824,
+    1065353216,
+    1,
+    1084227584
+  ],
+  "strings": [
+    ""
+  ],
+  "title": 0,
+  "composer": 0,
+  "arranger": 0,
+  "initial_tempo": 120
+}

@@ -1,0 +1,36 @@
+2:8-2:10: part A: not in a loop
+3:35-3:36: part A: loop nesting too deep
+3:36-3:37: part A: loop nesting too deep
+3:37-3:38: part A: loop nesting too deep
+3:3-3:3: part A: incomplete loop at end of part
+3:4-3:4: part A: incomplete loop at end of part
+3:5-3:5: part A: incomplete loop at end of part
+3:6-3:6: part A: incomplete loop at end of part
+3:7-3:7: part A: incomplete loop at end of part
+3:8-3:8: part A: incomplete loop at end of part
+3:9-3:9: part A: incomplete loop at end of part
+3:10-3:10: part A: incomplete loop at end of part
+3:11-3:11: part A: incomplete loop at end of part
+3:12-3:12: part A: incomplete loop at end of part
+3:13-3:13: part A: incomplete loop at end of part
+3:14-3:14: part A: incomplete loop at end of part
+3:15-3:15: part A: incomplete loop at end of part
+3:16-3:16: part A: incomplete loop at end of part
+3:17-3:17: part A: incomplete loop at end of part
+3:18-3:18: part A: incomplete loop at end of part
+3:19-3:19: part A: incomplete loop at end of part
+3:20-3:20: part A: incomplete loop at end of part
+3:21-3:21: part A: incomplete loop at end of part
+3:22-3:22: part A: incomplete loop at end of part
+3:23-3:23: part A: incomplete loop at end of part
+3:24-3:24: part A: incomplete loop at end of part
+3:25-3:25: part A: incomplete loop at end of part
+3:26-3:26: part A: incomplete loop at end of part
+3:27-3:27: part A: incomplete loop at end of part
+3:28-3:28: part A: incomplete loop at end of part
+3:29-3:29: part A: incomplete loop at end of part
+3:30-3:30: part A: incomplete loop at end of part
+3:31-3:31: part A: incomplete loop at end of part
+3:32-3:32: part A: incomplete loop at end of part
+3:33-3:33: part A: incomplete loop at end of part
+3:34-3:34: part A: incomplete loop at end of part

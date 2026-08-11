@@ -7,3 +7,10 @@ pub const Synth = @import("./Synth.zig");
 pub const Driver = @import("./Driver.zig");
 pub const Module = @import("./Module.zig");
 pub const Compiler = @import("./Compiler.zig");
+
+test {
+    _ = Synth;
+    _ = Driver;
+    _ = Module;
+    _ = Compiler;
+}

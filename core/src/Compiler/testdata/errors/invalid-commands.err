@@ -1,0 +1,13 @@
+1:3-1:4: part A: invalid command
+2:4-2:4: part A: expected parameter
+3:4-3:4: part A: expected parameter
+4:4-4:4: part A: invalid float
+4:9-4:9: part A: expected parameter
+5:4-5:4: part A: expected parameter
+6:4-6:4: part A: invalid integer for type u4
+6:6-6:6: part A: expected parameter
+7:4-7:4: part A: expected name
+8:3-8:5: part A: invalid command
+9:6-9:6: part A: invalid enum value
+9:7-9:7: part A: expected parameter
+10:3-10:5: part A: invalid command

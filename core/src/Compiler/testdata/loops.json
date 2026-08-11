@@ -1,0 +1,190 @@
+{
+  "commands": [
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 4,
+        "end": 5
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 4,
+        "end": 5
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 4,
+        "end": 5
+      }
+    },
+    {
+      "key_on": 293.6647644042969,
+      "span": {
+        "start": 6,
+        "end": 7
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 6,
+        "end": 7
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 6,
+        "end": 7
+      }
+    },
+    {
+      "key_on": 329.6275634765625,
+      "span": {
+        "start": 10,
+        "end": 11
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 10,
+        "end": 11
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 10,
+        "end": 11
+      }
+    },
+    {
+      "key_on": 349.2282409667969,
+      "span": {
+        "start": 12,
+        "end": 13
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 12,
+        "end": 13
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 12,
+        "end": 13
+      }
+    },
+    {
+      "loop": {
+        "branch": 4294967290,
+        "count": 3
+      },
+      "span": {
+        "start": 14,
+        "end": 16
+      }
+    },
+    {
+      "loop": {
+        "branch": 4294967283,
+        "count": 2
+      },
+      "span": {
+        "start": 17,
+        "end": 19
+      }
+    },
+    {
+      "key_on": 391.99542236328125,
+      "span": {
+        "start": 20,
+        "end": 21
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 20,
+        "end": 21
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 20,
+        "end": 21
+      }
+    },
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 24,
+        "end": 25
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 24,
+        "end": 25
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 24,
+        "end": 25
+      }
+    },
+    {
+      "key_on": 293.6647644042969,
+      "span": {
+        "start": 28,
+        "end": 29
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 28,
+        "end": 29
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 28,
+        "end": 29
+      }
+    },
+    {
+      "end": {}
+    }
+  ],
+  "parts": [
+    {
+      "name": 65,
+      "start": 0,
+      "global_loop": 20
+    }
+  ],
+  "patches": [],
+  "extra": [],
+  "strings": [
+    ""
+  ],
+  "title": 0,
+  "composer": 0,
+  "arranger": 0,
+  "initial_tempo": 120
+}

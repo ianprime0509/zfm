@@ -1,0 +1,128 @@
+{
+  "commands": [
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 2,
+        "end": 13
+      }
+    },
+    {
+      "rest": 192,
+      "span": {
+        "start": 2,
+        "end": 13
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 2,
+        "end": 13
+      }
+    },
+    {
+      "key_on": 415.3046569824219,
+      "span": {
+        "start": 42,
+        "end": 51
+      }
+    },
+    {
+      "rest": 72,
+      "span": {
+        "start": 42,
+        "end": 51
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 42,
+        "end": 51
+      }
+    },
+    {
+      "key_on": 440,
+      "span": {
+        "start": 82,
+        "end": 87
+      }
+    },
+    {
+      "rest": 57,
+      "span": {
+        "start": 82,
+        "end": 87
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 82,
+        "end": 87
+      }
+    },
+    {
+      "key_on": 466.1637878417969,
+      "span": {
+        "start": 122,
+        "end": 138
+      }
+    },
+    {
+      "rest": 39,
+      "span": {
+        "start": 122,
+        "end": 138
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 122,
+        "end": 138
+      }
+    },
+    {
+      "key_on": 493.88330078125,
+      "span": {
+        "start": 162,
+        "end": 169
+      }
+    },
+    {
+      "rest": 66,
+      "span": {
+        "start": 162,
+        "end": 169
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 162,
+        "end": 169
+      }
+    },
+    {
+      "end": {}
+    }
+  ],
+  "parts": [
+    {
+      "name": 65,
+      "start": 0,
+      "global_loop": 15
+    }
+  ],
+  "patches": [],
+  "extra": [],
+  "strings": [
+    ""
+  ],
+  "title": 0,
+  "composer": 0,
+  "arranger": 0,
+  "initial_tempo": 120
+}

@@ -1,0 +1,149 @@
+{
+  "commands": [
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 5,
+        "end": 6
+      }
+    },
+    {
+      "rest": 12,
+      "span": {
+        "start": 5,
+        "end": 6
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 5,
+        "end": 6
+      }
+    },
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 7,
+        "end": 8
+      }
+    },
+    {
+      "rest": 12,
+      "span": {
+        "start": 7,
+        "end": 8
+      }
+    },
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 10,
+        "end": 11
+      }
+    },
+    {
+      "rest": 12,
+      "span": {
+        "start": 10,
+        "end": 11
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 10,
+        "end": 11
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 12,
+        "end": 14
+      }
+    },
+    {
+      "rest": 12,
+      "span": {
+        "start": 15,
+        "end": 16
+      }
+    },
+    {
+      "key_on": 293.6647644042969,
+      "span": {
+        "start": 22,
+        "end": 23
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 22,
+        "end": 23
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 22,
+        "end": 23
+      }
+    },
+    {
+      "key_on": 293.6647644042969,
+      "span": {
+        "start": 24,
+        "end": 25
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 24,
+        "end": 25
+      }
+    },
+    {
+      "key_on": 293.6647644042969,
+      "span": {
+        "start": 27,
+        "end": 29
+      }
+    },
+    {
+      "rest": 12,
+      "span": {
+        "start": 27,
+        "end": 29
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 27,
+        "end": 29
+      }
+    },
+    {
+      "end": {}
+    }
+  ],
+  "parts": [
+    {
+      "name": 65,
+      "start": 0,
+      "global_loop": 18
+    }
+  ],
+  "patches": [],
+  "extra": [],
+  "strings": [
+    ""
+  ],
+  "title": 0,
+  "composer": 0,
+  "arranger": 0,
+  "initial_tempo": 120
+}

@@ -871,7 +871,7 @@ fn takeNoteLength(c: *Compiler, part: *const Part) !Ticks {
         '.' => {
             c.skipChar();
             curr_len = curr_len.dot() catch {
-                try c.reportSpan(.last_command_not_note, curr_start, c.pos);
+                try c.reportSpan(.indivisible_note_length, curr_start, c.pos);
                 continue;
             };
         },
@@ -1178,7 +1178,6 @@ pub const Error = struct {
         macro_too_deep,
         indivisible_note_length,
         last_command_not_note,
-        cannot_dot,
         not_in_loop,
         loop_too_deep,
         incomplete_loop,
@@ -1213,13 +1212,146 @@ pub const Error = struct {
             .macro_too_deep => try w.print("macro call stack too deep", .{}),
             .indivisible_note_length => try w.print("note length cannot be represented as ticks", .{}),
             .last_command_not_note => try w.print("last command was not a note", .{}),
-            .cannot_dot => try w.print("note length cannot be dotted", .{}),
             .not_in_loop => try w.print("not in a loop", .{}),
             .loop_too_deep => try w.print("loop nesting too deep", .{}),
             .incomplete_loop => try w.print("incomplete loop at end of part", .{}),
         }
     }
 };
+
+test "simple C major scale" {
+    try runTest("c-major");
+}
+
+test "complex notes" {
+    try runTest("complex-notes");
+}
+
+test "directives" {
+    try runTest("directives");
+}
+
+test "macros" {
+    try runTest("macros");
+}
+
+test "octave changes" {
+    try runTest("octaves");
+}
+
+test "rests and ties" {
+    try runTest("rests-ties");
+}
+
+test "volume tempo and pan" {
+    try runTest("params");
+}
+
+test "loops" {
+    try runTest("loops");
+}
+
+test "patches" {
+    try runTest("patches");
+}
+
+test "lfo" {
+    try runTest("lfo");
+}
+
+test "portamento" {
+    try runTest("portamento");
+}
+
+test "key change" {
+    try runTest("key-change");
+}
+
+test "multiple parts" {
+    try runTest("multiple-parts");
+}
+
+fn runTest(comptime name: []const u8) !void {
+    const gpa = std.testing.allocator;
+
+    const source = @embedFile("./Compiler/testdata/" ++ name ++ ".zfm");
+    const expected_json = @embedFile("./Compiler/testdata/" ++ name ++ ".json");
+
+    var compiler: Compiler = .init(gpa, source);
+    defer compiler.deinit();
+    try compiler.compile();
+    try std.testing.expect(compiler.errors.items.len == 0);
+    var mod: Module = try compiler.toModule();
+    defer mod.deinit(gpa);
+    var actual_json: Writer.Allocating = .init(gpa);
+    defer actual_json.deinit();
+    try mod.dumpJson(&actual_json.writer);
+
+    try std.testing.expectEqualStrings(expected_json, actual_json.written());
+}
+
+test "invalid note lengths" {
+    try runErrorTest("invalid-note-lengths");
+}
+
+test "invalid patches" {
+    try runErrorTest("invalid-patches");
+}
+
+test "invalid directives" {
+    try runErrorTest("invalid-directives");
+}
+
+test "invalid commands" {
+    try runErrorTest("invalid-commands");
+}
+
+test "invalid part names" {
+    try runErrorTest("invalid-part-names");
+}
+
+test "invalid portamento" {
+    try runErrorTest("invalid-portamento");
+}
+
+test "loop errors" {
+    try runErrorTest("loop-errors");
+}
+
+test "undefined symbols" {
+    try runErrorTest("undefined-symbols");
+}
+
+test "macro depth" {
+    try runErrorTest("macro-depth");
+}
+
+test "tie errors" {
+    try runErrorTest("tie-errors");
+}
+
+fn runErrorTest(comptime name: []const u8) !void {
+    const gpa = std.testing.allocator;
+
+    const source = @embedFile("./Compiler/testdata/errors/" ++ name ++ ".zfm");
+    const expected_errors = @embedFile("./Compiler/testdata/errors/" ++ name ++ ".err");
+
+    var compiler: Compiler = .init(gpa, source);
+    defer compiler.deinit();
+    try compiler.compile();
+    var actual_errors: Writer.Allocating = .init(gpa);
+    defer actual_errors.deinit();
+    for (compiler.errors.items) |err| {
+        const loc = compiler.sourceLocation(err.span);
+        if (err.part) |part| {
+            try actual_errors.writer.print("{}:{}-{}:{}: part {c}: {f}\n", .{ loc.start.line, loc.start.column, loc.end.line, loc.end.column, part, err });
+        } else {
+            try actual_errors.writer.print("{}:{}-{}:{}: {f}\n", .{ loc.start.line, loc.start.column, loc.end.line, loc.end.column, err });
+        }
+    }
+
+    try std.testing.expectEqualStrings(expected_errors, actual_errors.written());
+}
 
 const Compiler = @This();
 

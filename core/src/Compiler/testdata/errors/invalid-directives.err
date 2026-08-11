@@ -1,0 +1,4 @@
+3:1-3:1: expected parameter
+3:8-3:8: expected parameter
+4:2-4:10: invalid directive
+5:2-5:2: expected name

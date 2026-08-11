@@ -1,0 +1,6 @@
+#title C major scale
+
+@sine-wave .
+  sine 1 1 0 0.00001 0 0 0 0.00001
+
+A @sine-wave cdefgab>c

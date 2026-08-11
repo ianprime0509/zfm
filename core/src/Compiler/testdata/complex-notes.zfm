@@ -1,0 +1,5 @@
+A c1+1+1-2.-4      ; C# 262Hz 192 ticks
+  g+++--3..        ; G# 415Hz  72 ticks
+  a=%57            ; A  440Hz  57 ticks
+  a-+=+%12+%13+%14 ; A# 466Hz  39 ticks
+  b%12.+2          ; B  494Hz  66 ticks

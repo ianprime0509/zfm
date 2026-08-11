@@ -1,0 +1,7 @@
+@truncated 0.
+  sine 1 1
+A c
+
+@noconnections
+  sine 1 1 0 0 0 0 0 0
+A d

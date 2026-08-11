@@ -452,8 +452,12 @@ fn readInputZfm(gpa: Allocator, io: Io, path: []const u8) !Module {
     try compiler.compile();
     if (compiler.errors.items.len > 0) {
         for (compiler.errors.items) |err| {
-            const loc = compiler.sourceLocation(err.span).start;
-            log.err("{}:{}: part {?c}: {f}", .{ loc.line, loc.column, err.part, err });
+            const loc = compiler.sourceLocation(err.span);
+            if (err.part) |part| {
+                log.err("{}:{}-{}:{}: part {c}: {f}", .{ loc.start.line, loc.start.column, loc.end.line, loc.end.column, part, err });
+            } else {
+                log.err("{}:{}-{}:{}: {f}", .{ loc.start.line, loc.start.column, loc.end.line, loc.end.column, err });
+            }
         }
         return error.CompileError;
     }

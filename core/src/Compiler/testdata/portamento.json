@@ -1,0 +1,121 @@
+{
+  "commands": [
+    {
+      "set_lfo_target": {
+        "index": "porta",
+        "target": "freq"
+      },
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "set_lfo_size": {
+        "index": "porta",
+        "data": 0
+      },
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "set_lfo_wave": {
+        "index": "porta",
+        "data": 2
+      },
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "toggle_lfo": "porta",
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "key_on": 261.62554931640625,
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "toggle_lfo": "porta",
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "key_on": 587.3295288085938,
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 2,
+        "end": 8
+      }
+    },
+    {
+      "key_on": 659.255126953125,
+      "span": {
+        "start": 9,
+        "end": 10
+      }
+    },
+    {
+      "rest": 24,
+      "span": {
+        "start": 9,
+        "end": 10
+      }
+    },
+    {
+      "key_off": {},
+      "span": {
+        "start": 9,
+        "end": 10
+      }
+    },
+    {
+      "end": {}
+    }
+  ],
+  "parts": [
+    {
+      "name": 65,
+      "start": 0,
+      "global_loop": 12
+    }
+  ],
+  "patches": [],
+  "extra": [
+    1132646418,
+    3280130066,
+    2,
+    1028070517
+  ],
+  "strings": [
+    ""
+  ],
+  "title": 0,
+  "composer": 0,
+  "arranger": 0,
+  "initial_tempo": 120
+}
