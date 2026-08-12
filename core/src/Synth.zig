@@ -73,12 +73,10 @@ pub const Voice = struct {
         }
 
         pub fn fromPacked(p: Packed) Connections {
-            // TODO: make this endian-independent
             return .{ .deps = @bitCast(p) };
         }
 
         pub fn toPacked(conns: Connections) Packed {
-            // TODO: make this endian-independent
             return @bitCast(conns.deps);
         }
 
