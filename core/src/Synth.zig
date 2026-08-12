@@ -83,6 +83,60 @@ pub const Voice = struct {
         pub fn connect(conns: *Connections, from: SlotIndex, to: SlotIndex) void {
             conns.deps[to].set(from);
         }
+
+        pub const Computed = struct {
+            deps: SlotDeps,
+            slot_order: [n_slots]SlotIndex,
+        };
+
+        pub fn compute(conns: Connections) error{Cycle}!Computed {
+            var deps: SlotDeps = .full;
+
+            // We use Kahn's algorithm for topological sort to determine slot_order.
+            var in_degrees: [n_slots]usize = undefined;
+            for (conns.deps, &in_degrees) |slot_deps, *in_degree| {
+                // deps is going to be all the slots which don't feed into another slot.
+                deps = deps.differenceWith(slot_deps);
+                in_degree.* = slot_deps.count();
+            }
+
+            // Queue of slots with in-degree 0:
+            var queue: [n_slots]SlotIndex = undefined;
+            var q_head: u8 = 0;
+            var q_tail: u8 = 0;
+            for (0..n_slots) |i| {
+                if (in_degrees[i] == 0) {
+                    queue[q_tail] = @intCast(i);
+                    q_tail += 1;
+                }
+            }
+
+            var slot_order: [n_slots]SlotIndex = undefined;
+            var order_idx: u8 = 0;
+            while (q_head < q_tail) {
+                const slot = queue[q_head];
+                q_head += 1;
+                slot_order[order_idx] = slot;
+                order_idx += 1;
+
+                // Find all slots that `slot` feeds into:
+                for (0..n_slots) |to| {
+                    if (conns.deps[to].isSet(slot)) {
+                        in_degrees[to] -= 1;
+                        if (in_degrees[to] == 0) {
+                            queue[q_tail] = @intCast(to);
+                            q_tail += 1;
+                        }
+                    }
+                }
+            }
+
+            if (order_idx != n_slots) {
+                return error.Cycle;
+            }
+
+            return .{ .deps = deps, .slot_order = slot_order };
+        }
     };
 
     pub const Params = struct {
@@ -106,55 +160,12 @@ pub const Voice = struct {
         };
     }
 
-    pub fn reconnect(voice: *Voice, connections: Connections) error{Cycle}!void {
-        var deps: SlotDeps = .full;
+    pub fn reconnect(voice: *Voice, conns: Connections) error{Cycle}!void {
+        const computed = try conns.compute();
 
-        // We use Kahn's algorithm for topological sort to determine slot_order.
-        var in_degrees: [n_slots]usize = undefined;
-        for (connections.deps, &in_degrees) |slot_deps, *in_degree| {
-            // deps is going to be all the slots which don't feed into another slot.
-            deps = deps.differenceWith(slot_deps);
-            in_degree.* = slot_deps.count();
-        }
-
-        // Queue of slots with in-degree 0:
-        var queue: [n_slots]SlotIndex = undefined;
-        var q_head: u8 = 0;
-        var q_tail: u8 = 0;
-        for (0..n_slots) |i| {
-            if (in_degrees[i] == 0) {
-                queue[q_tail] = @intCast(i);
-                q_tail += 1;
-            }
-        }
-
-        var slot_order: [n_slots]SlotIndex = undefined;
-        var order_idx: u8 = 0;
-        while (q_head < q_tail) {
-            const slot = queue[q_head];
-            q_head += 1;
-            slot_order[order_idx] = slot;
-            order_idx += 1;
-
-            // Find all slots that `slot` feeds into:
-            for (0..n_slots) |to| {
-                if (connections.deps[to].isSet(slot)) {
-                    in_degrees[to] -= 1;
-                    if (in_degrees[to] == 0) {
-                        queue[q_tail] = @intCast(to);
-                        q_tail += 1;
-                    }
-                }
-            }
-        }
-
-        if (order_idx != n_slots) {
-            return error.Cycle;
-        }
-
-        voice.deps = deps;
-        voice.connections = connections;
-        voice.slot_order = slot_order;
+        voice.deps = computed.deps;
+        voice.connections = conns;
+        voice.slot_order = computed.slot_order;
     }
 
     pub fn sample(voice: *Voice, slots: *[n_slots]Slot) Frame {

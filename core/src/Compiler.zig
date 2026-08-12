@@ -286,7 +286,7 @@ fn compilePatch(c: *Compiler) !void {
 }
 
 fn takeConnections(c: *Compiler) !?Voice.Connections {
-    // TODO: validate that the connections don't create a cycle.
+    const start = c.pos;
     var res: Voice.Connections = .none;
     var last: ?Voice.SlotIndex = null;
     while (true) {
@@ -298,7 +298,7 @@ fn takeConnections(c: *Compiler) !?Voice.Connections {
             },
             '.' => {
                 c.skipChar();
-                return res;
+                break;
             },
             else => {
                 const to = try c.takeNumber(Voice.SlotIndex) orelse {
@@ -310,6 +310,8 @@ fn takeConnections(c: *Compiler) !?Voice.Connections {
             },
         }
     }
+    _ = res.compute() catch try c.reportSpan(.patch_slots_cycle, start, c.pos);
+    return res;
 }
 
 fn compileMacro(c: *Compiler) !void {
@@ -1162,6 +1164,7 @@ pub const Error = struct {
     pub const Tag = enum {
         unexpected_character,
         unexpected_end_of_patch,
+        patch_slots_cycle,
         expected_name,
         expected_param,
         expected_note,
@@ -1193,6 +1196,7 @@ pub const Error = struct {
         switch (err.tag) {
             .unexpected_character => try w.print("unexpected character", .{}),
             .unexpected_end_of_patch => try w.print("unexpected end of patch", .{}),
+            .patch_slots_cycle => try w.print("patch slots create a cycle", .{}),
             .expected_name => try w.print("expected name", .{}),
             .expected_param => try w.print("expected parameter", .{}),
             .expected_note => try w.print("expected note", .{}),

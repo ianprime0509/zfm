@@ -1,2 +1,3 @@
 3:1-3:1: unexpected end of patch
 7:1-7:1: unexpected end of patch
+9:7-9:17: patch slots create a cycle
