@@ -192,11 +192,11 @@ pub fn setSlotWave(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, w
     driver.synth.voiceSlotPtr(voice, slot).state = .init(wave);
 }
 
-pub fn setSlotParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Slot.Params) void {
+pub fn setSlotParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Slot.UserParams) void {
     driver.partPtr(voice).synth_params.slot[slot] = params;
 }
 
-pub fn setSlotEnvParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Envelope.TimeParams) void {
+pub fn setSlotEnvParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Envelope.UserParams) void {
     driver.partPtr(voice).synth_params.slot_env[slot] = params;
 }
 
@@ -297,9 +297,9 @@ pub const Part = struct {
             if (!lfo.enabled) return;
             const v = lfo.sample(elapsed_samples, tempo, sp.voice.freq);
             switch (lfo.params.target) {
-                .freq => sp.voice.freq = std.math.clamp(sp.voice.freq + v, 0.0, 22_000.0),
-                .pan => sp.voice.pan = std.math.clamp(sp.voice.pan + v, -1.0, 1.0),
-                .vol => sp.voice.vol = std.math.clamp(sp.voice.vol + v, 0.0, 1.0),
+                .freq => sp.voice.freq += v,
+                .pan => sp.voice.pan += v,
+                .vol => sp.voice.vol += v,
             }
         }
 
@@ -330,9 +330,9 @@ pub const Part = struct {
     };
 
     pub const SynthParams = struct {
-        voice: Voice.Params,
-        slot: [Voice.n_slots]Slot.Params,
-        slot_env: [Voice.n_slots]Envelope.TimeParams,
+        voice: Voice.UserParams,
+        slot: [Voice.n_slots]Slot.UserParams,
+        slot_env: [Voice.n_slots]Envelope.UserParams,
 
         pub const init: SynthParams = .{
             .voice = .init,
@@ -341,10 +341,10 @@ pub const Part = struct {
         };
 
         fn applyTo(sp: SynthParams, synth: *Synth, voice: Voice.Index) void {
-            synth.voicePtr(voice).params = sp.voice;
+            synth.voicePtr(voice).params = .fromUser(sp.voice.clamp());
             for (synth.voiceSlots(voice), sp.slot, sp.slot_env) |*slot, slot_params, env_params| {
-                slot.params = slot_params;
-                slot.env.params = .fromSeconds(env_params);
+                slot.params = .fromUser(slot_params.clamp(slot.state));
+                slot.env.params = .fromUser(env_params.clamp());
             }
         }
     };

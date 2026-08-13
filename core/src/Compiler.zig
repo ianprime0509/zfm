@@ -237,13 +237,13 @@ fn compilePatch(c: *Compiler) !void {
     };
 
     var slot_waves: [Voice.n_slots]Slot.Wave = @splat(.sine);
-    var slot_params: [Voice.n_slots]Slot.Params = @splat(.zero);
-    var slot_env_params: [Voice.n_slots]Envelope.TimeParams = @splat(.zero);
+    var slot_params: [Voice.n_slots]Slot.UserParams = @splat(.zero);
+    var slot_env_params: [Voice.n_slots]Envelope.UserParams = @splat(.zero);
     for (&slot_waves, &slot_params, &slot_env_params) |*wave, *params, *env_params| {
         if (!c.canContinueLine()) break;
         assert(c.continueLine());
         wave.* = try c.takeEnum(Slot.Wave) orelse return c.report(.unexpected_end_of_patch);
-        inline for (@typeInfo(Slot.Params).@"struct".field_names) |field| {
+        inline for (@typeInfo(Slot.UserParams).@"struct".field_names) |field| {
             if (!c.continueLine()) return c.report(.unexpected_end_of_patch);
             const is_ws = comptime std.mem.eql(u8, field, "ws");
             const uses_param = !is_ws or wave.usesWs();
@@ -257,7 +257,7 @@ fn compilePatch(c: *Compiler) !void {
                 @field(params, field) = 0.0;
             }
         }
-        inline for (@typeInfo(Envelope.TimeParams).@"struct".field_names) |field| {
+        inline for (@typeInfo(Envelope.UserParams).@"struct".field_names) |field| {
             if (!c.continueLine()) return c.report(.unexpected_end_of_patch);
             @field(env_params, field) = try c.takeNumber(f32) orelse {
                 try c.report(.unexpected_end_of_patch);

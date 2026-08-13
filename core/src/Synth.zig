@@ -141,14 +141,40 @@ pub const Voice = struct {
 
     pub const Params = struct {
         freq: f32,
+        pan_left_scale: f32,
+        pan_right_scale: f32,
+        vol: f32,
+
+        pub const init: Params = .fromUser(.init);
+
+        pub fn fromUser(params: UserParams) Params {
+            return .{
+                .freq = params.freq,
+                .pan_left_scale = @cos((params.pan + 1.0) * std.math.tau / 8.0),
+                .pan_right_scale = @sin((params.pan + 1.0) * std.math.tau / 8.0),
+                .vol = params.vol,
+            };
+        }
+    };
+
+    pub const UserParams = struct {
+        freq: f32,
         pan: f32,
         vol: f32,
 
-        pub const init: Params = .{
+        pub const init: UserParams = .{
             .freq = 0.0,
             .pan = 0.0,
             .vol = 1.0,
         };
+
+        pub fn clamp(params: UserParams) UserParams {
+            return .{
+                .freq = @max(params.freq, 0.0),
+                .pan = std.math.clamp(params.pan, -1.0, 1.0),
+                .vol = @max(params.vol, 0.0),
+            };
+        }
     };
 
     pub fn init(params: Params) Voice {
@@ -183,11 +209,9 @@ pub const Voice = struct {
             tl += slots[dep].params.tl;
         }
         raw = if (tl != 0.0) raw / tl else 0.0;
-        const pan_left = @cos((voice.params.pan + 1.0) * std.math.tau / 8.0);
-        const pan_right = @sin((voice.params.pan + 1.0) * std.math.tau / 8.0);
         return .{
-            voice.params.vol * raw * pan_left,
-            voice.params.vol * raw * pan_right,
+            voice.params.vol * raw * voice.params.pan_left_scale,
+            voice.params.vol * raw * voice.params.pan_right_scale,
         };
     }
 };
@@ -206,12 +230,43 @@ pub const Slot = struct {
         fb: f32,
         ws: f32,
 
-        pub const zero: Params = .{
+        pub const zero: Params = .fromUser(.zero);
+
+        pub fn fromUser(params: UserParams) Params {
+            return .{
+                .tl = params.tl,
+                .ml = params.ml,
+                .fb = params.fb,
+                .ws = params.ws,
+            };
+        }
+    };
+
+    pub const UserParams = struct {
+        tl: f32,
+        ml: f32,
+        fb: f32,
+        ws: f32,
+
+        pub const zero: UserParams = .{
             .tl = 0.0,
             .ml = 0.0,
             .fb = 0.0,
             .ws = 0.0,
         };
+
+        pub fn clamp(params: UserParams, wave: Wave) UserParams {
+            return .{
+                .tl = @max(params.tl, 0.0),
+                .ml = @max(params.ml, 0.0),
+                .fb = @max(params.fb, 0.0),
+                .ws = switch (wave) {
+                    .square => std.math.clamp(params.ws, 0.01, 0.99),
+                    .noise => @max(params.ws, 0.1),
+                    else => 0.0,
+                },
+            };
+        }
     };
 
     pub const Wave = enum(u32) {
@@ -224,7 +279,7 @@ pub const Slot = struct {
         pub fn usesWs(wave: Wave) bool {
             return switch (wave) {
                 .square, .noise => true,
-                .sine, .triangle, .saw => false,
+                else => false,
             };
         }
     };
@@ -287,9 +342,12 @@ pub const Slot = struct {
                 },
                 .noise => |*noise| {
                     const x0 = 2.0 * noise.rng.random().float(f32) - 1.0;
+                    // We put a stricter constraint on the frequency here than
+                    // what is enforced in `clamp` to avoid very large numbers
+                    // in these calculations.
                     const freq_adj = @max(freq, 20.0);
                     // Bi-quad band pass algorithm
-                    const q = @max(ws, 0.1);
+                    const q = ws;
                     const omega = std.math.tau * freq_adj / sample_rate;
                     const alpha = @sin(omega) / (2.0 * q);
                     const norm = 1.0 + alpha;
@@ -331,7 +389,7 @@ pub const Slot = struct {
         const effective_freq = freq * slot.params.ml;
         const effective_phase = phase + slot.params.fb * slot.v;
         const effective_tl = slot.params.tl * slot.env.v;
-        if (effective_freq > 0.0) {
+        if (effective_freq > 0.0 and effective_tl > 0.0) {
             slot.v = effective_tl * slot.state.sample(effective_freq, effective_phase, slot.params.ws);
         } else {
             slot.v = 0.0;
@@ -357,7 +415,7 @@ pub const Envelope = struct {
     /// Raw envelope parameters in sample-rate-dependent units, as executed
     /// by `update`: `ar` is a per-sample level delta (linear attack), while
     /// `dr`, `sr` and `rr` are per-sample level multipliers (exponential
-    /// decays). Convert from user-facing time units with `fromSeconds`.
+    /// decays).
     pub const Params = struct {
         ar: f32,
         dr: f32,
@@ -365,21 +423,15 @@ pub const Envelope = struct {
         sr: f32,
         rr: f32,
 
-        pub const zero: Params = .{
-            .ar = 0.0,
-            .dr = 0.0,
-            .sl = 0.0,
-            .sr = 0.0,
-            .rr = 0.0,
-        };
+        pub const zero: Params = .fromUser(.zero);
 
-        pub fn fromSeconds(tp: TimeParams) Params {
+        pub fn fromUser(params: UserParams) Params {
             return .{
-                .ar = if (tp.ar > 0) @min(1 / (tp.ar * sample_rate), 1) else 0,
-                .dr = mulTo(tp.sl, tp.dr),
-                .sl = tp.sl,
-                .sr = mulTo(silence, tp.sr),
-                .rr = mulTo(silence, tp.rr),
+                .ar = if (params.ar > 0) @min(1 / (params.ar * sample_rate), 1) else 0,
+                .dr = mulTo(params.sl, params.dr),
+                .sl = params.sl,
+                .sr = mulTo(silence, params.sr),
+                .rr = mulTo(silence, params.rr),
             };
         }
 
@@ -403,20 +455,30 @@ pub const Envelope = struct {
     ///
     /// A rate of 0 means the phase never advances: the envelope holds at
     /// the phase's starting level until key-off. `sl` is a level in [0, 1].
-    pub const TimeParams = struct {
+    pub const UserParams = struct {
         ar: f32,
         dr: f32,
         sl: f32,
         sr: f32,
         rr: f32,
 
-        pub const zero: TimeParams = .{
+        pub const zero: UserParams = .{
             .ar = 0.0,
             .dr = 0.0,
             .sl = 0.0,
             .sr = 0.0,
             .rr = 0.0,
         };
+
+        pub fn clamp(params: UserParams) UserParams {
+            return .{
+                .ar = @max(params.ar, 0.0),
+                .dr = @max(params.dr, 0.0),
+                .sl = std.math.clamp(params.sl, 0.0, 1.0),
+                .sr = @max(params.sr, 0.0),
+                .rr = @max(params.rr, 0.0),
+            };
+        }
     };
 
     pub fn init(params: Params) Envelope {

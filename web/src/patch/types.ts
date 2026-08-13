@@ -61,7 +61,7 @@ export function normalizeWs(wave: SlotWave, ws: number): number {
   return Math.min(Math.max(ws, min), max);
 }
 
-/** Oscillator parameters for a single slot (core Synth.Slot.Params). */
+/** Oscillator parameters for a single slot (core Synth.Slot.UserParams). */
 export interface SlotParams {
   /** Total level (output amplitude). >= 0. */
   tl: number;
@@ -69,14 +69,14 @@ export interface SlotParams {
   ml: number;
   /** Feedback (self-modulation amount). >= 0. */
   fb: number;
-  /** Wave-specific parameter (core `Synth.Slot.Params.ws`). Only
+  /** Wave-specific parameter (core `Synth.Slot.UserParams.ws`). Only
    *  meaningful for waveforms that use it (see `usesWs`): duty cycle for
    *  `square` ([0.01, 0.99]) and band-pass filter quality factor (Q) for
    *  `noise` ([1, 50]). Ignored for `sine`, `triangle`, and `saw`. */
   ws: number;
 }
 
-/** Envelope parameters for a single slot (core Synth.Envelope.TimeParams).
+/** Envelope parameters for a single slot (core Synth.Envelope.UserParams).
  *  ar/dr/sr/rr are times in seconds: how long the phase takes to reach the
  *  next envelope state (ar: linear rise 0 -> 1; dr: exponential fall
  *  1 -> sl; sr/rr: exponential fall by 80 dB). A time of 0 means the phase

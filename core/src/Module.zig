@@ -581,8 +581,8 @@ pub const Extra = struct {
 pub const Patch = struct {
     connections: Voice.Connections,
     slot_waves: [Voice.n_slots]Slot.Wave,
-    slot_params: [Voice.n_slots]Slot.Params,
-    slot_env_params: [Voice.n_slots]Envelope.TimeParams,
+    slot_params: [Voice.n_slots]Slot.UserParams,
+    slot_env_params: [Voice.n_slots]Envelope.UserParams,
 
     pub const Entry = struct {
         name: StringPool.Index,
@@ -600,10 +600,10 @@ pub const Patch = struct {
             slot_wave.*, current_index = extra.decode(Slot.Wave, current_index);
         }
         for (&res.slot_params) |*slot_params| {
-            slot_params.*, current_index = extra.decode(Slot.Params, current_index);
+            slot_params.*, current_index = extra.decode(Slot.UserParams, current_index);
         }
         for (&res.slot_env_params) |*slot_env_params| {
-            slot_env_params.*, current_index = extra.decode(Envelope.TimeParams, current_index);
+            slot_env_params.*, current_index = extra.decode(Envelope.UserParams, current_index);
         }
 
         return .{ res, current_index };

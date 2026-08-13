@@ -2,7 +2,7 @@ import type { EnvParams } from "./types.ts";
 import classes from "./EnvelopeGraph.module.css";
 
 // A small, read-only SVG depiction of an ADSR envelope derived from the
-// Synth.Envelope.TimeParams (ar/dr/sr/rr are times in seconds; sl is a level
+// Synth.Envelope.UserParams (ar/dr/sr/rr are times in seconds; sl is a level
 // in [0,1]). The graph is schematic: the four phases are sized
 // proportionally to their *durations* on a log scale so that both very fast
 // and very slow phases stay visible, while the vertical levels (peak 1,
