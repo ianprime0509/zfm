@@ -101,6 +101,7 @@ fn execute(
             }
             part.synth_params.slot = patch.slot_params;
             part.synth_params.slot_env = patch.slot_env_params;
+            part.synth_params.applyTo(driver.synth, voice);
             return command.next();
         },
         .set_volume => {
@@ -193,11 +194,15 @@ pub fn setSlotWave(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, w
 }
 
 pub fn setSlotParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Slot.UserParams) void {
-    driver.partPtr(voice).synth_params.slot[slot] = params;
+    const part = driver.partPtr(voice);
+    part.synth_params.slot[slot] = params;
+    part.synth_params.applyTo(driver.synth, voice);
 }
 
 pub fn setSlotEnvParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Envelope.UserParams) void {
-    driver.partPtr(voice).synth_params.slot_env[slot] = params;
+    const part = driver.partPtr(voice);
+    part.synth_params.slot_env[slot] = params;
+    part.synth_params.applyTo(driver.synth, voice);
 }
 
 pub fn enableLfo(driver: *Driver, voice: Voice.Index, index: Lfo.Index) void {
