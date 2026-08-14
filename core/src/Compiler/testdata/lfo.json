@@ -34,7 +34,7 @@
       },
       "span": {
         "start": 22,
-        "end": 32
+        "end": 31
       }
     },
     {
@@ -43,8 +43,8 @@
         "trigger": "key_on"
       },
       "span": {
-        "start": 33,
-        "end": 43
+        "start": 32,
+        "end": 42
       }
     },
     {
@@ -53,29 +53,29 @@
         "adjust": true
       },
       "span": {
-        "start": 44,
-        "end": 50
+        "start": 43,
+        "end": 49
       }
     },
     {
       "key_on": 261.62554931640625,
       "span": {
-        "start": 53,
-        "end": 54
+        "start": 52,
+        "end": 53
       }
     },
     {
       "rest": 24,
       "span": {
-        "start": 53,
-        "end": 54
+        "start": 52,
+        "end": 53
       }
     },
     {
       "key_off": {},
       "span": {
-        "start": 53,
-        "end": 54
+        "start": 52,
+        "end": 53
       }
     },
     {
@@ -84,29 +84,29 @@
         "enabled": false
       },
       "span": {
-        "start": 55,
-        "end": 61
+        "start": 54,
+        "end": 60
       }
     },
     {
       "key_on": 293.6647644042969,
       "span": {
-        "start": 62,
-        "end": 63
+        "start": 61,
+        "end": 62
       }
     },
     {
       "rest": 24,
       "span": {
-        "start": 62,
-        "end": 63
+        "start": 61,
+        "end": 62
       }
     },
     {
       "key_off": {},
       "span": {
-        "start": 62,
-        "end": 63
+        "start": 61,
+        "end": 62
       }
     },
     {

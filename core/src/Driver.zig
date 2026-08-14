@@ -270,7 +270,7 @@ pub const Part = struct {
             .params = .{
                 .target = .freq,
                 .size = .zero,
-                .wave = .constant,
+                .wave = .con,
             },
             .t = 0.0,
         };
@@ -291,8 +291,8 @@ pub const Part = struct {
                 .ticks => @as(f32, @floatFromInt(@backingInt(elapsed_samples))) / @as(f32, @floatFromInt(@backingInt(tempo.samplesPerTick()))),
             };
             const base = base: switch (lfo.params.wave) {
-                .constant => 1.0,
-                .sine => |params| {
+                .con => 1.0,
+                .sin => |params| {
                     const v = @sin(params.freq * lfo.t * std.math.tau);
                     lfo.t = @mod(lfo.t + elapsed_time, 1 / params.freq);
                     break :base v;

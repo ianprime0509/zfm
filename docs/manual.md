@@ -53,12 +53,12 @@ Each slot is controlled by the following parameters:
 
 - WS (wave-specific): has a different meaning depending on the wave.
 
-  For sine, triangle, and saw waves: unused.
+  For sin, tri, and saw waves: unused.
 
-  For square waves: duty cycle (between 0 and 1, exclusive). Controls the
+  For squ waves: duty cycle (between 0 and 1, exclusive). Controls the
   fraction of time per cycle the wave is high.
 
-  For noise waves: noise quality factor (at least 0.1). Lower values produce
+  For noi waves: noise quality factor (at least 0.1). Lower values produce
   closer to white noise, while higher values produce a clearer pitch.
 
 The slot's envelope controls the "shape" of its output level over time. When a
@@ -118,10 +118,10 @@ Here is an example of an MML track that plays a C major scale:
 #composer Your Name
 
 @electric-piano 0 1, 2 3.
-  sine 0.1 11 0.5 0.00001 0 0 0 0.00001
-  sine 0.3 12 0 0.00001 0.5 0 0 0.00001
-  sine 0.1 1 0 0.00001 2 0.2 0 2
-  sine 1 1 0 0.00001 4 0 0 1
+  sin 0.1 11 0.5 0.00001 0 0 0 0.00001
+  sin 0.3 12 0 0.00001 0.5 0 0 0.00001
+  sin 0.1 1 0 0.00001 2 0.2 0 2
+  sin 1 1 0 0.00001 4 0 0 1
 
 ; A C major scale played on an electric piano.
 A @electric-piano cdefgab>c
@@ -217,11 +217,11 @@ Here are some examples:
 
 After the slot connections, the slot parameters are defined in order for each slot:
 
-1. Wave (`sine`, `square`, `triangle`, `saw`, `noise`)
+1. Wave (`sin`, `squ`, `tri`, `saw`, `noi`)
 2. TL
 3. ML
 4. FB
-5. WS (only for `square` and `noise` waves, must be omitted for others)
+5. WS (only for `squ` and `noi` waves, must be omitted for others)
 6. AR
 7. DR
 8. SL
@@ -236,14 +236,14 @@ Here is an example of a patch definition illustrating several of these points:
 
 ```zfm
 @breathy-flute 0 1.
-  sine 0.2 2 0 0.04 0 0 0 0.00001
-  sine 1 2 0 0.04 0.1 0.8 0 0.00001
-  noise 0.3 4 0 30 0.04 0.5 0 0 0.00001
+  sin 0.2 2 0 0.04 0 0 0 0.00001
+  sin 1 2 0 0.04 0.1 0.8 0 0.00001
+  noi 0.3 4 0 30 0.04 0.5 0 0 0.00001
 ```
 
 The patch name is `breathy-flute`. The slot connections are defined such that
 slot 0 modulates slot 1, and all other slots are carriers. Slots 0 and 1 are
-defined as sine waves, and slot 2 is defined as noise (note the WS parameter is
+defined as sin waves, and slot 2 is defined as noi (note the WS parameter is
 present for slot 2 but not slots 0 and 1). The remaining slots are zero and
 unused.
 
@@ -540,8 +540,8 @@ Subcommands:
   - `MTn,vol`: targets volume
 - `MSn,scale,offset`: sets the LFO scale and offset
 - `MWn,wave,params`: sets the LFO wave and any associated parameters
-  - `MWn,constant`: sets a constant wave (no change over time)
-  - `MWn,sine,freq`: sets a sine wave with the given frequency
+  - `MWn,con`: sets a constant wave (no change over time)
+  - `MWn,sin,freq`: sets a sine wave with the given frequency
   - `MWn,exp,mul`: sets an exponential shape with the given multiplier
 - `MOn,trigger`: sets the LFO trigger
   - `MOn,none`: never retriggers the LFO (constant effect)
@@ -551,7 +551,7 @@ Subcommands:
 
 Examples:
 
-- `MT0,freq MS0,3,0 MW0,sine,5 MO0,key_on MA0,on`: configures LFO 0 for a
+- `MT0,freq MS0,3,0 MW0,sin,5 MO0,key_on MA0,on`: configures LFO 0 for a
   vibrato effect. The pitch oscillates at a rate of 5 Hz, with a variation of
   +/- 3 Hz at a 440 Hz reference pitch and adjusted proportionally (so playing
   A5, at 880 Hz, uses a variation of +/- 6 Hz instead).

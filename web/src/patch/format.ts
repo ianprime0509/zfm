@@ -8,8 +8,8 @@
 //     ...one continuation line per slot...
 //
 // The wave-specific (WS) parameter is emitted only for waveforms that use
-// it (`square`, `noise`), matching how core Compiler.zig parses slots: WS
-// is skipped entirely for `sine`, `triangle`, and `saw`.
+// it (`squ`, `noi`), matching how core Compiler.zig parses slots: WS
+// is skipped entirely for `sin`, `tri`, and `saw`.
 //
 // The connections part is a whitespace-separated list of slot-index chains
 // (`0 1 2` connects 0->1->2), with `,` starting a fresh chain and `.` ending
@@ -106,7 +106,7 @@ function lastRelevantSlot(patch: Patch): number {
       ep.sl !== 0 ||
       ep.sr !== 0 ||
       ep.rr !== 0 ||
-      wave !== "sine"
+      wave !== "sin"
     ) {
       last = i;
     }
@@ -123,7 +123,7 @@ function lastRelevantSlot(patch: Patch): number {
 
 function formatSlotLine(wave: SlotWave, sp: SlotParams, ep: EnvParams): string {
   const parts: string[] = [wave, formatNumber(sp.tl), formatNumber(sp.ml), formatNumber(sp.fb)];
-  // WS is only emitted for waveforms that use it (square, noise), matching
+  // WS is only emitted for waveforms that use it (squ, noi), matching
   // the compiler, which parses WS only when `Wave.usesWs()` is true.
   if (usesWs(wave)) parts.push(formatNumber(sp.ws));
   parts.push(
@@ -140,8 +140,8 @@ function formatSlotLine(wave: SlotWave, sp: SlotParams, ep: EnvParams): string {
  *  (MT/MS/MW/MO/MA) that fully describe it, matching core
  *  Compiler.compileLfoCommand. */
 export function lfoToMml(index: number, p: LfoParams): string {
-  let wave = `MW${index},constant`;
-  if ("sine" in p.wave) wave = `MW${index},sine,${formatNumber(p.wave.sine.freq)}`;
+  let wave = `MW${index},con`;
+  if ("sin" in p.wave) wave = `MW${index},sin,${formatNumber(p.wave.sin.freq)}`;
   else if ("exp" in p.wave) wave = `MW${index},exp,${formatNumber(p.wave.exp.mul)}`;
 
   return [

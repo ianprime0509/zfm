@@ -21,8 +21,8 @@ function isPatchLike(v: unknown): v is Patch {
 }
 
 function cloneWave(w: LfoWave): LfoWave {
-  if ("constant" in w) return { constant: {} };
-  if ("sine" in w) return { sine: { freq: w.sine.freq } };
+  if ("con" in w) return { con: {} };
+  if ("sin" in w) return { sin: { freq: w.sin.freq } };
   return { exp: { mul: w.exp.mul } };
 }
 

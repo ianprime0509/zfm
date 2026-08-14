@@ -24,8 +24,8 @@ export interface LfoPanelProps {
 }
 
 const WAVE_DEFAULTS: Record<LfoWaveTag, () => LfoWave> = {
-  constant: () => ({ constant: {} }),
-  sine: () => ({ sine: { freq: 5 } }),
+  con: () => ({ con: {} }),
+  sin: () => ({ sin: { freq: 5 } }),
   exp: () => ({ exp: { mul: -1 } }),
 };
 
@@ -70,8 +70,8 @@ const OUTPUT_CFG: Record<
 };
 
 function waveTag(wave: LfoWave): LfoWaveTag {
-  if ("constant" in wave) return "constant";
-  if ("sine" in wave) return "sine";
+  if ("con" in wave) return "con";
+  if ("sin" in wave) return "sin";
   return "exp";
 }
 
@@ -116,16 +116,16 @@ function LfoCard({ index, lfo, onChange }: LfoCardProps) {
                 }))
               }
             >
-              <option value="constant">constant</option>
-              <option value="sine">sine</option>
+              <option value="con">con</option>
+              <option value="sin">sin</option>
               <option value="exp">exp</option>
             </select>
           </label>
-          {"sine" in lfo.params.wave && (
+          {"sin" in lfo.params.wave && (
             <ParamField
               label="freq"
-              value={lfo.params.wave.sine.freq}
-              onChange={(v) => setParams((p) => ({ ...p, wave: { sine: { freq: v } } }))}
+              value={lfo.params.wave.sin.freq}
+              onChange={(v) => setParams((p) => ({ ...p, wave: { sin: { freq: v } } }))}
               min={0.01}
               max={20}
               log

@@ -17,20 +17,28 @@ export interface SlotCardProps {
   onChange: Dispatch<StateUpdater<Patch>>;
 }
 
+const WAVE_LABELS: Record<SlotWave, string> = {
+  sin: "sine",
+  squ: "square",
+  tri: "triangle",
+  saw: "saw",
+  noi: "noise",
+};
+
 /** Glyph for each waveform: one cycle sketched left-to-right in a 40x18
  *  viewBox, drawn as a single `path` so it can be colored via `currentColor`. */
 const WAVE_PATHS: Record<SlotWave, string> = {
-  sine: "M0 9 Q5 -1 10 9 Q15 19 20 9 Q25 -1 30 9 Q35 19 40 9",
-  square: "M0 9 L0 15 L20 15 L20 3 L40 3 L40 9",
-  triangle: "M0 15 L20 3 L40 15",
+  sin: "M0 9 Q5 -1 10 9 Q15 19 20 9 Q25 -1 30 9 Q35 19 40 9",
+  squ: "M0 9 L0 15 L20 15 L20 3 L40 3 L40 9",
+  tri: "M0 15 L20 3 L40 15",
   saw: "M0 15 L40 3 L40 15",
-  noise: "M0 9 L4 6 L8 12 L12 4 L16 11 L20 7 L24 14 L28 5 L32 10 L36 8 L40 9",
+  noi: "M0 9 L4 6 L8 12 L12 4 L16 11 L20 7 L24 14 L28 5 L32 10 L36 8 L40 9",
 };
 
 function WaveGlyph({ wave }: { wave: SlotWave }) {
   return (
     <svg class={classes.waveGlyph} viewBox="0 0 40 18" aria-hidden="true">
-      <path d={WAVE_PATHS[wave]} style={{ strokeWidth: wave === "sine" ? 1.5 : 1.25 }} />
+      <path d={WAVE_PATHS[wave]} style={{ strokeWidth: wave === "sin" ? 1.5 : 1.25 }} />
     </svg>
   );
 }
@@ -57,10 +65,10 @@ function WaveSelect({
           style={w === value ? { borderColor: accent, color: accent } : undefined}
           onClick={() => onChange(w)}
           aria-pressed={w === value}
-          title={`${w} wave`}
+          title={`${WAVE_LABELS[w]} wave`}
         >
           <WaveGlyph wave={w} />
-          <span>{w}</span>
+          <span>{WAVE_LABELS[w]}</span>
         </button>
       ))}
     </div>
@@ -80,9 +88,9 @@ export function SlotCard({ slot, patch, onChange }: SlotCardProps) {
       slotWaves[slot] = w;
       const slotParams = [...p.slotParams];
       const cur = slotParams[slot]!;
-      // Bring WS into the new waveform's valid range. For `noise` this
+      // Bring WS into the new waveform's valid range. For `noi` this
       // clamps (the default 0 would otherwise divide by zero in the band-pass
-      // filter); for `square` an out-of-range value resets to 0.5.
+      // filter); for `squ` an out-of-range value resets to 0.5.
       if (usesWs(w)) {
         slotParams[slot] = { ...cur, ws: normalizeWs(w, cur.ws) };
       }
@@ -155,9 +163,9 @@ export function SlotCard({ slot, patch, onChange }: SlotCardProps) {
               onChange={(v) => setSlotParam("ws", v)}
               min={wsBounds.min}
               max={wsBounds.max}
-              step={wave === "noise" ? 1 : 0.01}
+              step={wave === "noi" ? 1 : 0.01}
               accent={color.accent}
-              title={wave === "square" ? "Duty cycle" : "Band-pass filter quality factor (Q)"}
+              title={wave === "squ" ? "Duty cycle" : "Band-pass filter quality factor (Q)"}
             />
           )}
         </div>

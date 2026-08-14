@@ -163,7 +163,7 @@ fn defaultLfoState() LfoState {
         .params = .{
             .target = .freq,
             .size = .{ .scale = 5.0, .offset = 0.0 },
-            .wave = .{ .sine = .{ .freq = 5.0 } },
+            .wave = .{ .sin = .{ .freq = 5.0 } },
             .trigger = .key_on,
             .time_unit = .seconds,
             .adjust = true,
@@ -215,11 +215,11 @@ fn parseLfoPreset(content: []const u8, states: *[n_user_lfos]LfoState) void {
             'W' => {
                 var arg_it = std.mem.splitScalar(u8, args, ',');
                 const wave_name = arg_it.next() orelse continue;
-                if (std.mem.eql(u8, wave_name, "constant")) {
-                    state.params.wave = .constant;
-                } else if (std.mem.eql(u8, wave_name, "sine")) {
+                if (std.mem.eql(u8, wave_name, "con")) {
+                    state.params.wave = .con;
+                } else if (std.mem.eql(u8, wave_name, "sin")) {
                     const freq = std.fmt.parseFloat(f32, arg_it.next() orelse continue) catch continue;
-                    state.params.wave = .{ .sine = .{ .freq = freq } };
+                    state.params.wave = .{ .sin = .{ .freq = freq } };
                 } else if (std.mem.eql(u8, wave_name, "exp")) {
                     const mul = std.fmt.parseFloat(f32, arg_it.next() orelse continue) catch continue;
                     state.params.wave = .{ .exp = .{ .mul = mul } };

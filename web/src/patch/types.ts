@@ -5,47 +5,38 @@ export type SlotIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 /** Waveform of a slot oscillator, mirroring core Synth.Slot.Wave.
  *  The string names match the Zig enum tags, which is how the wave is
  *  spelled in MML and how the compiler serializes it to JSON. */
-export type SlotWave = "sine" | "square" | "triangle" | "saw" | "noise";
+export type SlotWave = "sin" | "squ" | "tri" | "saw" | "noi";
 
-export const SLOT_WAVES: SlotWave[] = ["sine", "square", "triangle", "saw", "noise"];
-
-/** Abbreviated waveform name for compact display (e.g. in SlotOverview). */
-export const SLOT_WAVE_ABBR: Record<SlotWave, string> = {
-  sine: "sin",
-  square: "squ",
-  triangle: "tri",
-  saw: "saw",
-  noise: "noi",
-};
+export const SLOT_WAVES: SlotWave[] = ["sin", "squ", "tri", "saw", "noi"];
 
 /** Whether a waveform uses the wave-specific (WS) parameter. Mirrors core
- *  `Synth.Slot.Wave.usesWs`: `square` (duty cycle) and `noise` (band-pass Q)
- *  use it; `sine`, `triangle`, and `saw` do not. */
+ *  `Synth.Slot.Wave.usesWs`: `squ` (duty cycle) and `noi` (band-pass Q)
+ *  use it; `sin`, `tri`, and `saw` do not. */
 export function usesWs(wave: SlotWave): boolean {
-  return wave === "square" || wave === "noise";
+  return wave === "squ" || wave === "noi";
 }
 
-/** Valid slider range for the WS parameter on a given waveform. `square`:
+/** Valid slider range for the WS parameter on a given waveform. `squ`:
  *  duty cycle in [0.01, 0.99] — 0 and 1 produce a constant DC offset
- *  rather than a wave, so they are excluded. `noise`: band-pass filter
+ *  rather than a wave, so they are excluded. `noi`: band-pass filter
  *  quality factor (Q) in [1, 50] (Q must be > 0 to avoid division by zero
- *  in the bi-quad filter). The range for `sine`, `triangle`, and `saw` is
+ *  in the bi-quad filter). The range for `sin`, `tri`, and `saw` is
  *  unused (WS is not displayed). */
 export function wsRange(wave: SlotWave): { min: number; max: number } {
-  if (wave === "noise") return { min: 1, max: 50 };
+  if (wave === "noi") return { min: 1, max: 50 };
   return { min: 0.01, max: 0.99 };
 }
 
 /** Normalize a WS value to be valid for `wave`, used when a slot switches to
- *  a waveform that uses WS. Values already in range are kept. For `square`,
+ *  a waveform that uses WS. Values already in range are kept. For `squ`,
  *  an out-of-range value resets to 0.5 (a standard 50% duty cycle) rather
  *  than clamping to a bound, since clamping to [0.01, 0.99] would yield a
- *  near-degenerate duty cycle. For `noise`, out-of-range values clamp to
+ *  near-degenerate duty cycle. For `noi`, out-of-range values clamp to
  *  [1, 50]. */
 export function normalizeWs(wave: SlotWave, ws: number): number {
   const { min, max } = wsRange(wave);
   if (ws >= min && ws <= max) return ws;
-  if (wave === "square") return 0.5;
+  if (wave === "squ") return 0.5;
   return Math.min(Math.max(ws, min), max);
 }
 
@@ -59,8 +50,8 @@ export interface SlotParams {
   fb: number;
   /** Wave-specific parameter (core `Synth.Slot.UserParams.ws`). Only
    *  meaningful for waveforms that use it (see `usesWs`): duty cycle for
-   *  `square` ([0.01, 0.99]) and band-pass filter quality factor (Q) for
-   *  `noise` ([1, 50]). Ignored for `sine`, `triangle`, and `saw`. */
+   *  `squ` ([0.01, 0.99]) and band-pass filter quality factor (Q) for
+   *  `noi` ([1, 50]). Ignored for `sin`, `tri`, and `saw`. */
   ws: number;
 }
 
@@ -101,7 +92,7 @@ export interface Patch {
 
 export const SLOT_PARAMS_ZERO: SlotParams = { tl: 0, ml: 0, fb: 0, ws: 0 };
 export const ENV_PARAMS_ZERO: EnvParams = { ar: 0, dr: 0, sl: 0, sr: 0, rr: 0 };
-export const SLOT_WAVE_DEFAULT: SlotWave = "sine";
+export const SLOT_WAVE_DEFAULT: SlotWave = "sin";
 
 export function emptyConnections(): Connections {
   return { edges: Array.from({ length: N_SLOTS }, () => Array<boolean>(N_SLOTS).fill(false)) };
@@ -124,14 +115,14 @@ export function emptyPatch(): Patch {
 export const N_LFOS = 4;
 
 /** Wave shape of an LFO, mirroring core Module.Lfo.Wave (a tagged union).
- *  In JSON each variant is `{"<tag>": <payload>}`, e.g. `{"constant": {}}`
- *  or `{"sine": {"freq": 10}}`. */
+ *  In JSON each variant is `{"<tag>": <payload>}`, e.g. `{"con": {}}`
+ *  or `{"sin": {"freq": 10}}`. */
 export type LfoWave =
-  | { constant: Record<string, never> }
-  | { sine: { freq: number } }
+  | { con: Record<string, never> }
+  | { sin: { freq: number } }
   | { exp: { mul: number } };
 
-export type LfoWaveTag = "constant" | "sine" | "exp";
+export type LfoWaveTag = "con" | "sin" | "exp";
 
 /** What an LFO modulates. */
 export type LfoTarget = "freq" | "pan" | "vol";
@@ -161,7 +152,7 @@ export function defaultLfoStates(): LfoState[] {
     params: {
       target: "freq",
       size: { scale: 5, offset: 0 },
-      wave: { sine: { freq: 5 } },
+      wave: { sin: { freq: 5 } },
       trigger: "key_on",
       time_unit: "seconds",
       adjust: true,

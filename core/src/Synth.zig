@@ -7,7 +7,7 @@ pub const zero: Synth = .init(&.{}, &.{}, 0.0);
 pub fn init(voices: []Voice, slots: []Slot, volume: f32) Synth {
     assert(slots.len == voices.len * Voice.n_slots);
     @memset(voices, .init(.init));
-    @memset(slots, .init(.sine, .zero, .zero));
+    @memset(slots, .init(.sin, .zero, .zero));
     return .{
         .voices = voices,
         .slots = slots,
@@ -261,8 +261,8 @@ pub const Slot = struct {
                 .ml = @max(params.ml, 0.0),
                 .fb = @max(params.fb, 0.0),
                 .ws = switch (wave) {
-                    .square => std.math.clamp(params.ws, 0.01, 0.99),
-                    .noise => @max(params.ws, 0.1),
+                    .squ => std.math.clamp(params.ws, 0.01, 0.99),
+                    .noi => @max(params.ws, 0.1),
                     else => 0.0,
                 },
             };
@@ -270,26 +270,26 @@ pub const Slot = struct {
     };
 
     pub const Wave = enum(u32) {
-        sine,
-        square,
-        triangle,
+        sin,
+        squ,
+        tri,
         saw,
-        noise,
+        noi,
 
         pub fn usesWs(wave: Wave) bool {
             return switch (wave) {
-                .square, .noise => true,
+                .squ, .noi => true,
                 else => false,
             };
         }
     };
 
     pub const State = union(Wave) {
-        sine: f32,
-        square: f32,
-        triangle: f32,
+        sin: f32,
+        squ: f32,
+        tri: f32,
         saw: f32,
-        noise: struct {
+        noi: struct {
             rng: std.Random.Xoroshiro128,
             x1: f32,
             x2: f32,
@@ -299,11 +299,11 @@ pub const Slot = struct {
 
         pub fn init(wave: Wave) State {
             return switch (wave) {
-                .sine => .{ .sine = 0.0 },
-                .square => .{ .square = 0.0 },
-                .triangle => .{ .triangle = 0.0 },
+                .sin => .{ .sin = 0.0 },
+                .squ => .{ .squ = 0.0 },
+                .tri => .{ .tri = 0.0 },
                 .saw => .{ .saw = 0.0 },
-                .noise => .{ .noise = .{
+                .noi => .{ .noi = .{
                     .rng = .init(0),
                     .x1 = 0.0,
                     .x2 = 0.0,
@@ -315,20 +315,20 @@ pub const Slot = struct {
 
         pub fn sample(s: *State, freq: f32, phase: f32, ws: f32) f32 {
             switch (s.*) {
-                .sine => |*t| {
+                .sin => |*t| {
                     const x = freq * t.* + phase;
                     const v = @sin(x * std.math.tau);
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
-                .square => |*t| {
+                .squ => |*t| {
                     const x = freq * t.* + phase;
                     const duty_cycle = std.math.clamp(ws, 0.0001, 0.9999);
                     const v = 1.0 - 2.0 * @floor(x + 1.0 - duty_cycle) + 2.0 * @floor(x);
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
-                .triangle => |*t| {
+                .tri => |*t| {
                     const x = freq * t.* + phase;
                     const v = 2.0 * @abs(2.0 * (x - @floor(x + 0.5))) - 1.0;
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
@@ -340,7 +340,7 @@ pub const Slot = struct {
                     t.* = @mod(t.* + sample_time, 1.0 / freq);
                     return v;
                 },
-                .noise => |*noise| {
+                .noi => |*noise| {
                     const x0 = 2.0 * noise.rng.random().float(f32) - 1.0;
                     // We put a stricter constraint on the frequency here than
                     // what is enforced in `clamp` to avoid very large numbers

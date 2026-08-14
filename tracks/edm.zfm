@@ -2,12 +2,12 @@
 
 ; LFO preset: MT0,freq MS0,440,0 MW0,exp,-100 MO0,key_on MA0,on
 @heavy-edm-bass 0 1.
-  sine 0.8 0.5 0 0.00001 3 0 0 1
-  sine 1 0.25 0.2 0.00001 20 0 0 1
+  sin 0.8 0.5 0 0.00001 3 0 0 1
+  sin 1 0.25 0.2 0.00001 20 0 0 1
 
 ; LFO preset: MT0,freq MS0,220,-440 MW0,exp,-20 MO0,key_on MA0,on
 @edm-kick .
-  sine 1 1 0.2 0.00001 10 0 0 0.00001
+  sin 1 1 0.2 0.00001 10 0 0 0.00001
 
 A @heavy-edm-bass MT0,freq MS0,440,0 MW0,exp,-100 MO0,key_on MA0,on *0
 B @edm-kick MT0,freq MS0,440,-330 MW0,exp,-50 MO0,key_on MA0,on *0

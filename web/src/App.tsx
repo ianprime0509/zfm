@@ -36,8 +36,8 @@ const DEFAULT_TRACK = `#title Test
 #tempo 120
 
 @test 0 1.
-  sine 1 1 0 1 0 0 0 1
-  sine 1 1 0 1 0 0 0 1
+  sin 1 1 0 1 0 0 0 1
+  sin 1 1 0 1 0 0 0 1
 
 A @test cdefgab
 `;

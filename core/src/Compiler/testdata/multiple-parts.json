@@ -3,22 +3,22 @@
     {
       "key_on": 261.62554931640625,
       "span": {
-        "start": 47,
-        "end": 48
+        "start": 46,
+        "end": 47
       }
     },
     {
       "rest": 24,
       "span": {
-        "start": 47,
-        "end": 48
+        "start": 46,
+        "end": 47
       }
     },
     {
       "key_off": {},
       "span": {
-        "start": 47,
-        "end": 48
+        "start": 46,
+        "end": 47
       }
     },
     {
@@ -27,43 +27,43 @@
     {
       "key_on": 261.62554931640625,
       "span": {
-        "start": 47,
-        "end": 48
+        "start": 46,
+        "end": 47
       }
     },
     {
       "rest": 24,
       "span": {
-        "start": 47,
-        "end": 48
+        "start": 46,
+        "end": 47
       }
     },
     {
       "key_off": {},
       "span": {
-        "start": 47,
-        "end": 48
+        "start": 46,
+        "end": 47
       }
     },
     {
       "key_on": 293.6647644042969,
       "span": {
-        "start": 51,
-        "end": 52
+        "start": 50,
+        "end": 51
       }
     },
     {
       "rest": 24,
       "span": {
-        "start": 51,
-        "end": 52
+        "start": 50,
+        "end": 51
       }
     },
     {
       "key_off": {},
       "span": {
-        "start": 51,
-        "end": 52
+        "start": 50,
+        "end": 51
       }
     },
     {
@@ -72,22 +72,22 @@
     {
       "key_on": 329.6275634765625,
       "span": {
-        "start": 55,
-        "end": 56
+        "start": 54,
+        "end": 55
       }
     },
     {
       "rest": 24,
       "span": {
-        "start": 55,
-        "end": 56
+        "start": 54,
+        "end": 55
       }
     },
     {
       "key_off": {},
       "span": {
-        "start": 55,
-        "end": 56
+        "start": 54,
+        "end": 55
       }
     },
     {
@@ -116,7 +116,7 @@
       "name": 1,
       "span": {
         "start": "start",
-        "end": 44
+        "end": 43
       },
       "index": 0
     }

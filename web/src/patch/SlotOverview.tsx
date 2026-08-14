@@ -1,5 +1,4 @@
 import type { Patch, SlotIndex } from "./types.ts";
-import { SLOT_WAVE_ABBR } from "./types.ts";
 import { slotColor } from "./colors.ts";
 import { isCarrier } from "./connections.ts";
 import { EnvelopeGraph } from "./EnvelopeGraph.tsx";
@@ -47,7 +46,7 @@ export function SlotOverview({ slot, patch, active, onSelect }: SlotOverviewProp
       <div class={classes.head} style={{ color: color.text }}>
         <span class={classes.num}>{slot}</span>
         <span class={classes.headRight}>
-          <span class={classes.wave}>{SLOT_WAVE_ABBR[wave]}</span>
+          <span class={classes.wave}>{wave}</span>
           <span class={classes.role}>{role}</span>
         </span>
       </div>

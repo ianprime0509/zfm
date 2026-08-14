@@ -140,7 +140,7 @@ fn convertPmdBank(gpa: Allocator, io: Io, input_path: []const u8, output_path: [
             const ml = Opn.multiple(slot.multi);
             const fb = if (i == 0) Opn.feedback(pmd_patch.fb, carrier) / std.math.tau else 0.0;
             const env = Opn.envelope(slot);
-            try writer.interface.print("  sine {d} {d} {d} {d} {d} {d} {d} {d}\n", .{
+            try writer.interface.print("  sin {d} {d} {d} {d} {d} {d} {d} {d}\n", .{
                 tl,
                 ml,
                 fb,

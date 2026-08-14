@@ -6,43 +6,43 @@
 ; Patches adapted from patches/patches.zfm.
 
 @brass-lead 0 1.
-  sine 0.2 1 0.3 0.04 0 0 0 0.00001
-  sine 1 1 0.2 0.04 0 0 0 0.00001
+  sin 0.2 1 0.3 0.04 0 0 0 0.00001
+  sin 1 1 0.2 0.04 0 0 0 0.00001
 
 @synth-bell 0 1.
-  sine 0.2 5 0 0.00001 0 0 0 0
-  sine 1 1 0 0.00001 2 0 0 2
+  sin 0.2 5 0 0.00001 0 0 0 0
+  sin 1 1 0 0.00001 2 0 0 2
 
 @harp 0 1 2 3.
-  triangle 0.1 4 0.2 0.00001 4 0 0 4
-  triangle 0.1 1 0 0.00001 4 0 0 4
-  triangle 0.1 1 0 0.00001 4 0 0 4
-  sine 1 1 0 0.00001 4 0 0 4
+  tri 0.1 4 0.2 0.00001 4 0 0 4
+  tri 0.1 1 0 0.00001 4 0 0 4
+  tri 0.1 1 0 0.00001 4 0 0 4
+  sin 1 1 0 0.00001 4 0 0 4
 
 @edm-bass-2 0 1.
-  sine 0.8 0.5 0 0.00001 1 0 0 0.00001
-  sine 1 0.25 0.2 0.00001 2 0 0 0.00001
+  sin 0.8 0.5 0 0.00001 1 0 0 0.00001
+  sin 1 0.25 0.2 0.00001 2 0 0 0.00001
 
 @strings 0 1, 2 3.
-  sine 0.1 3 0.2 0.1 0 0 0 0.2
-  sine 0.9 1 0 0.1 0 0 0 0.2
-  sine 0.2 5 0 0.1 4 0 0 0.4
-  sine 1 1 0 0.1 0 0 0 0.2
+  sin 0.1 3 0.2 0.1 0 0 0 0.2
+  sin 0.9 1 0 0.1 0 0 0 0.2
+  sin 0.2 5 0 0.1 4 0 0 0.4
+  sin 1 1 0 0.1 0 0 0 0.2
 
 @edm-kick .
-  sine 1 1 0.2 0.00001 10 0 0 0.00001
+  sin 1 1 0.2 0.00001 10 0 0 0.00001
 
 @snare-drum .
-  sine 1 50 3 0.00001 1 0 0 0.00001
-  sine 0.3 1 0 0.00001 0.1 0 0 0.1
-  noise 0.1 1 0 0.5 0.08 2 0 0 1
+  sin 1 50 3 0.00001 1 0 0 0.00001
+  sin 0.3 1 0 0.00001 0.1 0 0 0.1
+  noi 0.1 1 0 0.5 0.08 2 0 0 1
 
 @air-hat .
-  noise 1 1 0 0.5 0.00001 0.07 0 0 0.025
+  noi 1 1 0 0.5 0.00001 0.07 0 0 0.025
 
 @crash .
-  noise 0.8 0.5 0 0.35 0.00001 0.7 0 0 0.6
-  sine 0.25 9 0.8 0.00001 0.25 0 0 0.4
+  noi 0.8 0.5 0 0.35 0.00001 0.7 0 0 0.6
+  sin 0.25 9 0.8 0.00001 0.25 0 0 0.4
 
 ; Harmonic arpeggios: one macro per bar (sixteenth-note drive).
 !arp-d o4 l16 d a d f a d f a >d< a f d a f d a
@@ -93,12 +93,12 @@
 !hat-open o6 l16 c r c c c r c c c r c c c c c c
 
 ; A: lead. Four-bar atmospheric opening, four-bar launch, then A/B/climax.
-A @brass-lead v0.34 p0 MT0,freq MS0,2.2,0 MW0,sine,5.8 MO0,key_on MA0,on *0,on
+A @brass-lead v0.34 p0 MT0,freq MS0,2.2,0 MW0,sin,5.8 MO0,key_on MA0,on *0,on
 A [r1]4 o5 l8 r2 a c+ d e d4 f a >d< a f e d c+4 e a >c+< a g e c+ d f a >d4< a4 f4
 A !lead-a !lead-a2 !lead-b !lead-b2 !lead-climax !lead-climax
 
 ; B: lower harmony enters only for the final barrage.
-B @brass-lead v0.22 p-0.16 MT0,freq MS0,1.7,0 MW0,sine,5.2 MO0,key_on MA0,on *0,on
+B @brass-lead v0.22 p-0.16 MT0,freq MS0,1.7,0 MW0,sin,5.2 MO0,key_on MA0,on *0,on
 B [r1]40 !lead-harmony !lead-harmony
 
 ; C: constant sparkling sixteenth-note arpeggio.

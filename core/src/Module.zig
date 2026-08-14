@@ -53,7 +53,7 @@ pub const PartLength = struct {
 pub fn calculatePartLength(mod: *const Module, voice: Voice.Index) ?PartLength {
     var ticks: Ticks = .zero;
     var loop_start_ticks: ?Ticks = null;
-    const part = mod.parts[@intFromEnum(voice)];
+    const part = mod.parts[@backingInt(voice)];
     var command = part.start;
     var loops: Driver.Part.Loop.Stack = .empty;
     while (true) {
@@ -659,8 +659,8 @@ pub const Lfo = struct {
     };
 
     pub const Wave = union(Tag) {
-        constant,
-        sine: struct {
+        con,
+        sin: struct {
             freq: f32,
         },
         exp: struct {
@@ -668,8 +668,8 @@ pub const Lfo = struct {
         },
 
         pub const Tag = enum(u32) {
-            constant,
-            sine,
+            con,
+            sin,
             exp,
         };
 

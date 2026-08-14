@@ -10,81 +10,81 @@
 
 ; Kick Drum (Punchy FM transient + low body thud)
 @kick 0 1.
-  sine 3.2 0.5 0 0.00001 0.018 0 0 0.00001
-  sine 1.0 0.5 0.35 0.00001 0.12 0 0 0.00001
+  sin 3.2 0.5 0 0.00001 0.018 0 0 0.00001
+  sin 1.0 0.5 0.35 0.00001 0.12 0 0 0.00001
 
 ; Snare Drum (Snappy FM body + crisp noise burst)
 @snare 0 1.
-  sine 2.8 4 0.25 0.00001 0.035 0 0 0.00001
-  sine 1.0 2 0.45 0.00001 0.09 0 0 0.00001
-  noise 0.95 1 0 0.8 0.00001 0.13 0 0 0.03
+  sin 2.8 4 0.25 0.00001 0.035 0 0 0.00001
+  sin 1.0 2 0.45 0.00001 0.09 0 0 0.00001
+  noi 0.95 1 0 0.8 0.00001 0.13 0 0 0.03
 
 ; Closed Hi-Hat (Crisp, metallic tick)
 @hh-cl .
-  noise 0.65 8 0 30 0.00001 0.025 0 0 0.01
-  sine 0.25 14 0.3 0.00001 0.015 0 0 0.01
+  noi 0.65 8 0 30 0.00001 0.025 0 0 0.01
+  sin 0.25 14 0.3 0.00001 0.015 0 0 0.01
 
 ; Open Hi-Hat (Sizzling splash)
 @hh-op .
-  noise 0.7 8 0 30 0.00001 0.18 0 0 0.06
-  sine 0.25 14 0.3 0.00001 0.12 0 0 0.04
+  noi 0.7 8 0 30 0.00001 0.18 0 0 0.06
+  sin 0.25 14 0.3 0.00001 0.12 0 0 0.04
 
 ; Crash Cymbal (Epic shimmering wash)
 @crash .
-  noise 0.85 4 0 16 0.00001 0.95 0 0 0.45
-  sine 0.35 7.2 1.0 0.00001 0.65 0 0 0.25
+  noi 0.85 4 0 16 0.00001 0.95 0 0 0.45
+  sin 0.35 7.2 1.0 0.00001 0.65 0 0 0.25
 
 ; FM Synth Tom (For fills and rolls)
 @tom 0 1.
-  sine 2.2 1 0.35 0.00001 0.03 0 0 0.00001
-  sine 1.0 1 0.4 0.00001 0.16 0 0 0.00001
+  sin 2.2 1 0.35 0.00001 0.03 0 0 0.00001
+  sin 1.0 1 0.4 0.00001 0.16 0 0 0.00001
 
 ; --- Bass & Harmony ---
 
 ; Slap / Synth Bass (Tight, growling 16th punch)
 @bass 0 1, 2 3.
-  sine 2.2 1 0.45 0.00001 0.04 0 0 0.00001
-  sine 1.0 0.5 0 0.00001 0.28 0.3 0.1 0.00001
-  sine 1.0 3 0.15 0.00001 0.02 0 0 0.00001
-  sine 0.7 0.5 0 0.00001 0.28 0.3 0.1 0.00001
+  sin 2.2 1 0.45 0.00001 0.04 0 0 0.00001
+  sin 1.0 0.5 0 0.00001 0.28 0.3 0.1 0.00001
+  sin 1.0 3 0.15 0.00001 0.02 0 0 0.00001
+  sin 0.7 0.5 0 0.00001 0.28 0.3 0.1 0.00001
 
 ; FM Poly Synth (Syncopated chord stabs)
 @poly-stab 0 1, 2 3.
-  sine 0.5 1 0.25 0.001 0.2 0.35 0.05 0.06
-  sine 1.0 1 0 0.001 0.25 0.45 0.05 0.06
-  sine 0.35 3 0 0.001 0.12 0.15 0 0.04
-  sine 0.5 1 0 0.001 0.25 0.45 0.05 0.06
+  sin 0.5 1 0.25 0.001 0.2 0.35 0.05 0.06
+  sin 1.0 1 0 0.001 0.25 0.45 0.05 0.06
+  sin 0.35 3 0 0.001 0.12 0.15 0 0.04
+  sin 0.5 1 0 0.001 0.25 0.45 0.05 0.06
 
 ; FM Strings Pad (Lush harmonic bed)
 @strings-pad 0 1, 2 3.
-  sine 0.15 3 0.2 0.08 0 0 0 0.2
-  sine 0.85 1 0 0.08 0 0 0 0.2
-  sine 0.2 5 0 0.08 4 0 0 0.3
-  sine 1.0 1 0 0.08 0 0 0 0.2
+  sin 0.15 3 0.2 0.08 0 0 0 0.2
+  sin 0.85 1 0 0.08 0 0 0 0.2
+  sin 0.2 5 0 0.08 4 0 0 0.3
+  sin 1.0 1 0 0.08 0 0 0 0.2
 
 ; --- Leads & Arpeggios ---
 
 ; FM Main Lead ("ZUNpet" / Soaring FM Brass Lead)
 @fm-lead 0 1, 2 3.
-  sine 0.9 1 0.35 0.004 0.08 0.7 0 0.04
-  sine 1.0 1 0 0.004 0 0 0 0.04
-  sine 0.45 2 0.15 0.008 0.12 0.55 0 0.04
+  sin 0.9 1 0.35 0.004 0.08 0.7 0 0.04
+  sin 1.0 1 0 0.004 0 0 0 0.04
+  sin 0.45 2 0.15 0.008 0.12 0.55 0 0.04
   saw 0.35 1 0 0.004 0 0 0 0.04
 
 ; FM Counter Lead (High Flute / Whistle)
 @flute-lead 0 1.
-  sine 0.3 2 0 0.02 0.04 0.85 0 0.03
-  sine 1.0 1 0 0.01 0 0 0 0.03
-  noise 0.08 4 0 25 0.02 0.08 0 0 0.01
+  sin 0.3 2 0 0.02 0.04 0.85 0 0.03
+  sin 1.0 1 0 0.01 0 0 0 0.03
+  noi 0.08 4 0 25 0.02 0.08 0 0 0.01
 
 ; FM Bell Arpeggio (Sparkling 16th chimes)
 @bell-arp 0 1.
-  sine 1.5 3.5 0.15 0.00001 0.07 0 0 0.03
-  sine 1.0 1 0 0.00001 0.2 0 0 0.03
+  sin 1.5 3.5 0.15 0.00001 0.07 0 0 0.03
+  sin 1.0 1 0 0.00001 0.2 0 0 0.03
 
 ; Chiptune Square / Solo Lead
 @chiptune-lead 0 1.
-  square 0.45 2 0.1 0.5 0.001 0.08 0.75 0 0.02
+  squ 0.45 2 0.1 0.5 0.001 0.08 0.75 0 0.02
   saw 1.0 1 0 0.001 0 0 0 0.02
 
 
@@ -241,7 +241,7 @@ E @bass o2 l16 v0.85 p0.0
   !b-gm  !b-am !b-bb  !b-a
 
 ; --- PART F: Lead 1 (Main Soaring FM Lead / "ZUNpet") ---
-F @fm-lead o4 l8 v0.88 p-0.15 MT0,freq MS0,3.5,0 MW0,sine,6.0 MO0,key_on MA0,on *0,on
+F @fm-lead o4 l8 v0.88 p-0.15 MT0,freq MS0,3.5,0 MW0,sin,6.0 MO0,key_on MA0,on *0,on
   ; Intro (8 bars)
   d4. f8 a4 > d4 <  a2. f8 e8  g4. a8 b-4 > d4 <  a1
   d4. f8 g4 a4  > c4 < a4 g4 f8 e8  f4. d8 f4 g4  a1
@@ -288,7 +288,7 @@ F @fm-lead o4 l8 v0.88 p-0.15 MT0,freq MS0,3.5,0 MW0,sine,6.0 MO0,key_on MA0,on 
   e8 f8 g8 a8 > b-4. > c8  d8 c+8 < b-8 a8 > e2
 
 ; --- PART G: Lead 2 (High Flute / Whistle / Harmonizer) ---
-G @flute-lead o5 l8 v0.78 p0.35 MT0,freq MS0,3.0,0 MW0,sine,5.5 MO0,key_on MA0,on *0,on
+G @flute-lead o5 l8 v0.78 p0.35 MT0,freq MS0,3.0,0 MW0,sin,5.5 MO0,key_on MA0,on *0,on
   ; Intro (8 bars)
   < d4. f8 a4 > d4 <  a2. f8 e8  g4. a8 b-4 > d4 <  a1
   r1 r1 r1 r1
@@ -535,7 +535,7 @@ M @strings-pad o4 l1 v0.50 p0.20
   g1  a1  < b-1  a1 >
 
 ; --- PART N: Chiptune Solo / Virtuosic Duel Lead ---
-N @chiptune-lead o4 l8 v0.65 p-0.40 MT0,freq MS0,2.5,0 MW0,sine,6.5 MO0,key_on MA0,on *0,on
+N @chiptune-lead o4 l8 v0.65 p-0.40 MT0,freq MS0,2.5,0 MW0,sin,6.5 MO0,key_on MA0,on *0,on
   ; Intro (8 bars)
   r1 r1 r1 r1
   d4. f8 g4 a4  > c4 < a4 g4 f8 e8  f4. d8 f4 g4  a1

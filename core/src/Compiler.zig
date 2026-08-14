@@ -236,7 +236,7 @@ fn compilePatch(c: *Compiler) !void {
         return;
     };
 
-    var slot_waves: [Voice.n_slots]Slot.Wave = @splat(.sine);
+    var slot_waves: [Voice.n_slots]Slot.Wave = @splat(.sin);
     var slot_params: [Voice.n_slots]Slot.UserParams = @splat(.zero);
     var slot_env_params: [Voice.n_slots]Envelope.UserParams = @splat(.zero);
     for (&slot_waves, &slot_params, &slot_env_params) |*wave, *params, *env_params| {
@@ -578,11 +578,11 @@ fn compileLfoCommand(c: *Compiler, part: *Part) !void {
             if (!c.takeComma()) return c.report(.expected_param);
             const wave_tag = try c.takeEnum(Lfo.Wave.Tag) orelse return c.report(.expected_param);
             const wave: Lfo.Wave = wave: switch (wave_tag) {
-                .constant => .constant,
-                .sine => {
+                .con => .con,
+                .sin => {
                     if (!c.takeComma()) return c.report(.expected_param);
                     const freq = try c.takeNumber(f32) orelse return c.report(.expected_param);
-                    break :wave .{ .sine = .{ .freq = freq } };
+                    break :wave .{ .sin = .{ .freq = freq } };
                 },
                 .exp => {
                     if (!c.takeComma()) return c.report(.expected_param);

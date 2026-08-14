@@ -8,10 +8,10 @@ describe("formatPatch", () => {
     expect(formatPatch(ELECTRIC_PIANO)).toBe(
       [
         "@electric-piano 0 1, 2 3.",
-        "  sine 0.1 11 0.5 0.00001 0 0 0 0.00001",
-        "  sine 0.3 12 0 0.00001 0.5 0 0 0.00001",
-        "  sine 0.1 1 0 0.00001 2 0.2 0 2",
-        "  sine 1 1 0 0.00001 4 0 0 1",
+        "  sin 0.1 11 0.5 0.00001 0 0 0 0.00001",
+        "  sin 0.3 12 0 0.00001 0.5 0 0 0.00001",
+        "  sin 0.1 1 0 0.00001 2 0.2 0 2",
+        "  sin 1 1 0 0.00001 4 0 0 1",
       ].join("\n"),
     );
   });
@@ -24,7 +24,7 @@ describe("formatPatch", () => {
         i === 0 ? { ...s, tl: 0.10000000149011612 } : s,
       ),
     };
-    expect(formatPatch(p).split("\n")[1]).toBe("  sine 0.1 11 0.5 0.00001 0 0 0 0.00001");
+    expect(formatPatch(p).split("\n")[1]).toBe("  sin 0.1 11 0.5 0.00001 0 0 0 0.00001");
   });
 
   it("emits empty routing as `@name .`", () => {
@@ -35,46 +35,46 @@ describe("formatPatch", () => {
     p.envParams[0]!.ar = 1;
     p.envParams[0]!.dr = 0.001;
     p.envParams[0]!.rr = 1;
-    expect(formatPatch(p)).toBe("@rim .\n  sine 1 50 10 1 0.001 0 0 1");
+    expect(formatPatch(p)).toBe("@rim .\n  sin 1 50 10 1 0.001 0 0 1");
   });
 
   it("emits slot lines for every slot a connection touches", () => {
     // All-zero patch with edge 0->1 should still emit two slot lines.
     const p = { ...emptyPatch(), name: "patch-3" };
     p.connections.edges[0][1] = true;
-    expect(formatPatch(p)).toBe("@patch-3 0 1.\n  sine 0 0 0 0 0 0 0 0\n  sine 0 0 0 0 0 0 0 0");
+    expect(formatPatch(p)).toBe("@patch-3 0 1.\n  sin 0 0 0 0 0 0 0 0\n  sin 0 0 0 0 0 0 0 0");
   });
 
-  it("emits WS after FB for square (duty cycle)", () => {
+  it("emits WS after FB for squ (duty cycle)", () => {
     const p = { ...emptyPatch(), name: "squ" };
-    p.slotWaves[0] = "square";
+    p.slotWaves[0] = "squ";
     p.slotParams[0] = { tl: 0.5, ml: 1, fb: 0, ws: 0.5 };
     p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
-    expect(formatPatch(p)).toBe("@squ .\n  square 0.5 1 0 0.5 1 0 0 0 1");
+    expect(formatPatch(p)).toBe("@squ .\n  squ 0.5 1 0 0.5 1 0 0 0 1");
   });
 
-  it("emits WS after FB for noise (band-pass Q)", () => {
+  it("emits WS after FB for noi (band-pass Q)", () => {
     const p = { ...emptyPatch(), name: "noi" };
-    p.slotWaves[0] = "noise";
+    p.slotWaves[0] = "noi";
     p.slotParams[0] = { tl: 0.5, ml: 1, fb: 0, ws: 5 };
     p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
-    expect(formatPatch(p)).toBe("@noi .\n  noise 0.5 1 0 5 1 0 0 0 1");
+    expect(formatPatch(p)).toBe("@noi .\n  noi 0.5 1 0 5 1 0 0 0 1");
   });
 
-  it("omits WS for sine even when ws is non-zero", () => {
-    // Sine does not use WS, so a stale non-zero value is not emitted.
+  it("omits WS for sin even when ws is non-zero", () => {
+    // Sin does not use WS, so a stale non-zero value is not emitted.
     const p = { ...emptyPatch(), name: "sin" };
     p.slotParams[0] = { tl: 0.5, ml: 1, fb: 0, ws: 9 };
     p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
-    expect(formatPatch(p)).toBe("@sin .\n  sine 0.5 1 0 1 0 0 0 1");
+    expect(formatPatch(p)).toBe("@sin .\n  sin 0.5 1 0 1 0 0 0 1");
   });
 
-  it("omits WS for triangle even when ws is non-zero", () => {
+  it("omits WS for tri even when ws is non-zero", () => {
     const p = { ...emptyPatch(), name: "tri" };
-    p.slotWaves[0] = "triangle";
+    p.slotWaves[0] = "tri";
     p.slotParams[0] = { tl: 0.5, ml: 1, fb: 0, ws: 9 };
     p.envParams[0] = { ar: 1, dr: 0, sl: 0, sr: 0, rr: 1 };
-    expect(formatPatch(p)).toBe("@tri .\n  triangle 0.5 1 0 1 0 0 0 1");
+    expect(formatPatch(p)).toBe("@tri .\n  tri 0.5 1 0 1 0 0 0 1");
   });
 
   it("omits WS for saw even when ws is non-zero", () => {
@@ -91,7 +91,7 @@ describe("formatPatch", () => {
     p.lfos[0]!.params = {
       target: "freq",
       size: { scale: 5, offset: 0 },
-      wave: { sine: { freq: 5 } },
+      wave: { sin: { freq: 5 } },
       trigger: "key_on",
       time_unit: "seconds",
       adjust: true,
@@ -106,7 +106,7 @@ describe("formatPatch", () => {
       adjust: false,
     };
     expect(formatPatch(p).split("\n").slice(0, 3)).toEqual([
-      "; LFO preset: MT0,freq MS0,5,0 MW0,sine,5 MO0,key_on MA0,on",
+      "; LFO preset: MT0,freq MS0,5,0 MW0,sin,5 MO0,key_on MA0,on",
       "; LFO preset: MT1,pan MS1,0.25,-0.5 MW1,exp,-2 MO1,none MA1,off",
       "@vib .",
     ]);
@@ -120,12 +120,12 @@ describe("formatPatch", () => {
 describe("insertPatch", () => {
   const before = [
     "@patch-1 0 1.",
-    "  sine 0 0 0 0 0 0 0 0",
-    "  sine 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
     "",
     "@patch-2 0 1.",
-    "  sine 0 0 0 0 0 0 0 0",
-    "  sine 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
     "",
     "A cdef ; <-- patch should be inserted before this line",
   ].join("\n");
@@ -135,16 +135,16 @@ describe("insertPatch", () => {
 
   const expected = [
     "@patch-1 0 1.",
-    "  sine 0 0 0 0 0 0 0 0",
-    "  sine 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
     "",
     "@patch-2 0 1.",
-    "  sine 0 0 0 0 0 0 0 0",
-    "  sine 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
     "",
     "@patch-3 0 1.",
-    "  sine 0 0 0 0 0 0 0 0",
-    "  sine 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
+    "  sin 0 0 0 0 0 0 0 0",
     "",
     "A cdef ; <-- patch should be inserted before this line",
   ].join("\n");
@@ -154,10 +154,10 @@ describe("insertPatch", () => {
   });
 
   it("appends at end when only continuation lines follow the last @ line", () => {
-    const src = "@a 0 1.\n  sine 1 1 0 1 0 0 0 1\n  sine 1 1 0 1 0 0 0 1";
+    const src = "@a 0 1.\n  sin 1 1 0 1 0 0 0 1\n  sin 1 1 0 1 0 0 0 1";
     const out = insertPatch(src, patch);
     expect(out).toBe(
-      "@a 0 1.\n  sine 1 1 0 1 0 0 0 1\n  sine 1 1 0 1 0 0 0 1\n@patch-3 0 1.\n  sine 0 0 0 0 0 0 0 0\n  sine 0 0 0 0 0 0 0 0\n\n",
+      "@a 0 1.\n  sin 1 1 0 1 0 0 0 1\n  sin 1 1 0 1 0 0 0 1\n@patch-3 0 1.\n  sin 0 0 0 0 0 0 0 0\n  sin 0 0 0 0 0 0 0 0\n\n",
     );
   });
 
@@ -165,7 +165,7 @@ describe("insertPatch", () => {
     const src = "#title Test\nA cdef";
     const out = insertPatch(src, patch);
     expect(out).toBe(
-      "#title Test\nA cdef\n@patch-3 0 1.\n  sine 0 0 0 0 0 0 0 0\n  sine 0 0 0 0 0 0 0 0\n\n",
+      "#title Test\nA cdef\n@patch-3 0 1.\n  sin 0 0 0 0 0 0 0 0\n  sin 0 0 0 0 0 0 0 0\n\n",
     );
   });
 });
