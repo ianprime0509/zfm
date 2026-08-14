@@ -120,16 +120,12 @@ fn execute(
         },
         .toggle_lfo => {
             const index = driver.mod.commandData(command).lfo;
-            const lfo = part.lfoPtr(index);
-            lfo.enabled = !lfo.enabled;
-            lfo.t = 0.0;
+            driver.setLfoEnabled(voice, index, !part.lfoPtr(index).enabled);
             return command.next();
         },
         .set_lfo_enabled => {
             const lfo_enabled = driver.mod.commandData(command).lfo_enabled;
-            const lfo = part.lfoPtr(lfo_enabled.index);
-            lfo.enabled = lfo_enabled.enabled;
-            lfo.t = 0.0;
+            driver.setLfoEnabled(voice, lfo_enabled.index, lfo_enabled.enabled);
             return command.next();
         },
         .set_lfo_target => {
@@ -190,16 +186,12 @@ pub fn setPatch(driver: *Driver, voice: Voice.Index, patch: Patch) void {
     part.synth_params.applyTo(driver.synth, voice);
 }
 
-pub fn enableLfo(driver: *Driver, voice: Voice.Index, index: Lfo.Index) void {
+pub fn setLfoEnabled(driver: *Driver, voice: Voice.Index, index: Lfo.Index, enabled: bool) void {
     const lfo = driver.partPtr(voice).lfoPtr(index);
-    lfo.enabled = true;
-    lfo.t = 0.0;
-}
-
-pub fn disableLfo(driver: *Driver, voice: Voice.Index, index: Lfo.Index) void {
-    const lfo = driver.partPtr(voice).lfoPtr(index);
-    lfo.enabled = false;
-    lfo.t = 0.0;
+    // The LFO time is only reset when the LFO state changes from off to on.
+    // This makes it so enabling an already enabled LFO is a no-op.
+    if (enabled and !lfo.enabled) lfo.t = 0.0;
+    lfo.enabled = enabled;
 }
 
 pub fn setLfoParams(driver: *Driver, voice: Voice.Index, index: Lfo.Index, params: Lfo) void {

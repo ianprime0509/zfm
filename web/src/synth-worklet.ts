@@ -12,8 +12,7 @@ interface WasmExports {
   keyOn(voice: number, freq: number): void;
   keyOff(voice: number): void;
   setPatch(voice: number): void;
-  enableLfo(voice: number, index: number): void;
-  disableLfo(voice: number, index: number): void;
+  setLfoEnabled(voice: number, index: number, enabled: number): void;
   setLfoParams(voice: number, index: number): void;
   ptrRenderBuf(): number;
   render(n: number): void;
@@ -132,11 +131,7 @@ export class SynthProcessor extends AudioWorkletProcessor {
   }
 
   setLfoEnabled({ voice, index, enabled }: SetLfoEnabledArgs) {
-    if (enabled) {
-      this.wasm.enableLfo(voice, index);
-    } else {
-      this.wasm.disableLfo(voice, index);
-    }
+    this.wasm.setLfoEnabled(voice, index, enabled ? 1 : 0);
   }
 
   setLfoParams({ voice, index, params }: SetLfoParamsArgs) {

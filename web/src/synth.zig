@@ -126,12 +126,8 @@ fn setPatchInner(voice: Voice.Index) !void {
     driver.setPatch(voice, wire.value.toPatch());
 }
 
-export fn enableLfo(voice: Voice.Index, index: Lfo.Index) void {
-    driver.enableLfo(voice, index);
-}
-
-export fn disableLfo(voice: Voice.Index, index: Lfo.Index) void {
-    driver.disableLfo(voice, index);
+export fn setLfoEnabled(voice: Voice.Index, index: Lfo.Index, enabled: bool) void {
+    driver.setLfoEnabled(voice, index, enabled);
 }
 
 export fn setLfoParams(voice: Voice.Index, index: Lfo.Index) void {

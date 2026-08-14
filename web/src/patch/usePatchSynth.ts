@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "preact/hooks";
 import type { Synth } from "../synth.ts";
-import type { LfoParams, LfoState, LfoWave, Patch } from "./types.ts";
+import type { LfoState, Patch } from "./types.ts";
 import { N_VOICES, midiToFreq } from "./keyboard.ts";
 import { VoiceAllocator } from "./voiceAllocator.ts";
 
@@ -24,8 +24,7 @@ import { VoiceAllocator } from "./voiceAllocator.ts";
 // gated behind the first gesture.
 //
 // LFO states (stored on the patch, edited via the LfoPanel) are synced the
-// same way: staged until audio is live, diffed on change, and re-applied in
-// full whenever the staged state is forced to re-apply.
+// same way: staged until audio is live, then re-applied in full.
 //
 // Ownership: the `synth` is shared with the rest of the app. While `disabled`
 // is true (the track editor is playing back a compiled module), this hook is
@@ -34,24 +33,6 @@ import { VoiceAllocator } from "./voiceAllocator.ts";
 // synth has just been `reset` by the player, so the staged patch is re-applied
 // in full.
 
-function lfoWaveEqual(a: LfoWave, b: LfoWave): boolean {
-  if ("constant" in a) return "constant" in b;
-  if ("sine" in a) return "sine" in b && a.sine.freq === b.sine.freq;
-  return "exp" in b && a.exp.mul === b.exp.mul;
-}
-
-function lfoParamsEqual(a: LfoParams, b: LfoParams): boolean {
-  return (
-    a.target === b.target &&
-    a.trigger === b.trigger &&
-    a.time_unit === b.time_unit &&
-    a.adjust === b.adjust &&
-    a.size.scale === b.size.scale &&
-    a.size.offset === b.size.offset &&
-    lfoWaveEqual(a.wave, b.wave)
-  );
-}
-
 /** Apply a full patch to every voice. Fire-and-forget: callers need not await. */
 function applyPatch(synth: Synth, patch: Patch): void {
   for (let v = 0; v < N_VOICES; v++) {
@@ -59,18 +40,13 @@ function applyPatch(synth: Synth, patch: Patch): void {
   }
 }
 
-/** Fire the minimal set of synth messages to move `prev` -> `next` for each
- *  LFO, on all voices. Fire-and-forget, like `applyPatch`. */
-function applyLfos(synth: Synth, prev: LfoState[] | undefined, next: LfoState[]): void {
-  for (let i = 0; i < next.length; i++) {
-    const n = next[i]!;
-    const p = prev?.[i];
-    const paramsChanged = !p || !lfoParamsEqual(p.params, n.params);
-    const enabledChanged = !p || p.enabled !== n.enabled;
-    if (!paramsChanged && !enabledChanged) continue;
+/** (Re)apply every LFO, on all voices. Fire-and-forget, like `applyPatch`. */
+function applyLfos(synth: Synth, lfos: LfoState[]): void {
+  for (let i = 0; i < lfos.length; i++) {
+    const lfo = lfos[i]!;
     for (let v = 0; v < N_VOICES; v++) {
-      if (paramsChanged) void synth.setLfoParams({ voice: v, index: i, params: n.params });
-      if (enabledChanged) void synth.setLfoEnabled({ voice: v, index: i, enabled: n.enabled });
+      void synth.setLfoEnabled({ voice: v, index: i, enabled: lfo.enabled });
+      void synth.setLfoParams({ voice: v, index: i, params: lfo.params });
     }
   }
 }
@@ -103,7 +79,6 @@ export function usePatchSynth(
   // on the first key press.
   const audioLiveRef = useRef(false);
   const stagedRef = useRef<Patch>(patch);
-  const lastAppliedLfosRef = useRef<LfoState[] | undefined>(undefined);
   const stagedLfosRef = useRef<LfoState[] | undefined>(patch.lfos);
 
   // `disabled` as a ref so the memoized note callbacks read the latest value
@@ -123,28 +98,18 @@ export function usePatchSynth(
   }, [synth]);
 
   // Stage every patch change and keep the synth in sync while we own it.
-  // While disabled we only stage (the player owns the synth). On the
-  // disabled -> enabled transition the synth was just `reset`, so clear the
-  // LFO diff baseline to force a full LFO re-apply.
+  // While disabled we only stage (the player owns the synth).
   const prevDisabledRef = useRef(disabled);
   useEffect(() => {
-    const justEnabled = prevDisabledRef.current && !disabled;
     prevDisabledRef.current = disabled;
 
     stagedRef.current = patch;
     stagedLfosRef.current = patch.lfos;
     if (disabled) return;
 
-    if (justEnabled) {
-      lastAppliedLfosRef.current = undefined;
-    }
-
     if (audioLiveRef.current) {
       applyPatch(synth, patch);
-      if (patch.lfos) {
-        applyLfos(synth, lastAppliedLfosRef.current, patch.lfos);
-        lastAppliedLfosRef.current = patch.lfos;
-      }
+      applyLfos(synth, patch.lfos);
     }
   }, [patch, synth, disabled]);
 
@@ -158,10 +123,7 @@ export function usePatchSynth(
       void ensureReady().then(() => {
         if (!audioLiveRef.current) {
           applyPatch(synth, stagedRef.current);
-          if (stagedLfosRef.current) {
-            applyLfos(synth, undefined, stagedLfosRef.current);
-            lastAppliedLfosRef.current = stagedLfosRef.current;
-          }
+          if (stagedLfosRef.current) applyLfos(synth, stagedLfosRef.current);
           audioLiveRef.current = true;
         }
         if (held) void synth.keyOff({ voice });
