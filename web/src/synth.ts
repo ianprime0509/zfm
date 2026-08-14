@@ -3,14 +3,11 @@ import type {
   SynthProcessor,
   KeyOffArgs,
   KeyOnArgs,
-  ReconnectArgs,
   ResetArgs,
   LoadArgs,
   SetLfoEnabledArgs,
   SetLfoParamsArgs,
-  SetSlotEnvParamsArgs,
-  SetSlotParamsArgs,
-  SetSlotWaveArgs,
+  SetPatchArgs,
 } from "./synth-worklet.ts";
 import synthWorkletUrl from "./synth-worklet.ts?url";
 import wasmUrl from "../zig-out/bin/audio.wasm?url";
@@ -59,20 +56,8 @@ export class Synth {
     await (await this.state()).port.keyOff({ voice });
   }
 
-  async reconnect({ voice, connections }: ReconnectArgs): Promise<boolean> {
-    return await (await this.state()).port.reconnect({ voice, connections });
-  }
-
-  async setSlotParams({ voice, slot, tl, ml, fb, ws }: SetSlotParamsArgs) {
-    await (await this.state()).port.setSlotParams({ voice, slot, tl, ml, fb, ws });
-  }
-
-  async setSlotWave({ voice, slot, wave }: SetSlotWaveArgs) {
-    await (await this.state()).port.setSlotWave({ voice, slot, wave });
-  }
-
-  async setSlotEnvParams({ voice, slot, ar, dr, sl, sr, rr }: SetSlotEnvParamsArgs) {
-    await (await this.state()).port.setSlotEnvParams({ voice, slot, ar, dr, sl, sr, rr });
+  async setPatch({ voice, patch }: SetPatchArgs) {
+    await (await this.state()).port.setPatch({ voice, patch });
   }
 
   async setLfoEnabled({ voice, index, enabled }: SetLfoEnabledArgs) {

@@ -113,35 +113,17 @@ export fn keyOff(voice: Voice.Index) void {
     driver.keyOff(voice);
 }
 
-export fn reconnect(voice: Voice.Index, connections: Voice.Connections.Packed) bool {
-    return if (driver.reconnect(voice, .fromPacked(connections)))
-        true
-    else |err| switch (err) {
-        error.Cycle => false,
+export fn setPatch(voice: Voice.Index) void {
+    setPatchInner(voice) catch |err| switch (err) {
+        error.OutOfMemory => @panic("OOM"),
+        else => log.err("invalid patch JSON: {t}", .{err}),
     };
 }
 
-export fn setSlotParams(voice: Voice.Index, slot: u8, tl: f32, ml: f32, fb: f32, ws: f32) void {
-    driver.setSlotParams(voice, @intCast(slot), .{
-        .tl = tl,
-        .ml = ml,
-        .fb = fb,
-        .ws = ws,
-    });
-}
-
-export fn setSlotWave(voice: Voice.Index, slot: u8, wave: Slot.Wave) void {
-    driver.setSlotWave(voice, @intCast(slot), wave);
-}
-
-export fn setSlotEnvParams(voice: Voice.Index, slot: u8, ar: f32, dr: f32, sl: f32, sr: f32, rr: f32) void {
-    driver.setSlotEnvParams(voice, @intCast(slot), .{
-        .ar = ar,
-        .dr = dr,
-        .sl = sl,
-        .sr = sr,
-        .rr = rr,
-    });
+fn setPatchInner(voice: Voice.Index) !void {
+    const wire = try std.json.parseFromSlice(WirePatch, gpa, transfer.items, .{});
+    defer wire.deinit();
+    driver.setPatch(voice, wire.value.toPatch());
 }
 
 export fn enableLfo(voice: Voice.Index, index: Lfo.Index) void {
@@ -193,6 +175,28 @@ fn transferCurrentCommandSpansInner() (Allocator.Error || Writer.Error)!void {
     try out.endArray();
 }
 
+const WirePatch = struct {
+    connections: [Voice.n_slots][Voice.n_slots]bool,
+    slot_waves: [Voice.n_slots]Slot.Wave,
+    slot_params: [Voice.n_slots]Slot.UserParams,
+    slot_env_params: [Voice.n_slots]Envelope.UserParams,
+
+    fn toPatch(wire: WirePatch) Patch {
+        var connections: Voice.Connections = .none;
+        for (wire.connections, 0..) |row, from| {
+            for (row, 0..) |edge, to| {
+                if (edge) connections.connect(@intCast(from), @intCast(to));
+            }
+        }
+        return .{
+            .connections = connections,
+            .slot_waves = wire.slot_waves,
+            .slot_params = wire.slot_params,
+            .slot_env_params = wire.slot_env_params,
+        };
+    }
+};
+
 var render_buf: [256]Frame = undefined;
 
 export fn ptrRenderBuf() *[256]Frame {
@@ -231,7 +235,9 @@ const Synth = zfm.Synth;
 const Frame = zfm.Frame;
 const Voice = Synth.Voice;
 const Slot = Synth.Slot;
+const Envelope = Synth.Envelope;
 const Module = zfm.Module;
 const Command = Module.Command;
+const Patch = Module.Patch;
 const Lfo = Module.Lfo;
 const Driver = zfm.Driver;

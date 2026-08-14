@@ -9,18 +9,6 @@ export type SlotWave = "sine" | "square" | "triangle" | "saw" | "noise";
 
 export const SLOT_WAVES: SlotWave[] = ["sine", "square", "triangle", "saw", "noise"];
 
-/** Numeric values of the core `Synth.Slot.Wave` enum, used when passing a
- *  waveform to the wasm layer (which accepts the raw enum discriminant).
- *  The integer for each tag is its declaration order in `Slot.Wave`, so this
- *  must be kept in sync with core/src/Synth.zig. */
-export const SLOT_WAVE_VALUES: Record<SlotWave, number> = {
-  sine: 0,
-  square: 1,
-  triangle: 2,
-  saw: 3,
-  noise: 4,
-};
-
 /** Abbreviated waveform name for compact display (e.g. in SlotOverview). */
 export const SLOT_WAVE_ABBR: Record<SlotWave, string> = {
   sine: "sin",

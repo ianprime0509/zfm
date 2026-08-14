@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef } from "preact/hooks";
 import type { Synth } from "../synth.ts";
-import type { EnvParams, LfoParams, LfoState, LfoWave, Patch, SlotParams } from "./types.ts";
-import { N_SLOTS } from "./types.ts";
-import { edgesEqual } from "./connections.ts";
+import type { LfoParams, LfoState, LfoWave, Patch } from "./types.ts";
 import { N_VOICES, midiToFreq } from "./keyboard.ts";
 import { VoiceAllocator } from "./voiceAllocator.ts";
 
@@ -15,13 +13,10 @@ import { VoiceAllocator } from "./voiceAllocator.ts";
 //     constructing/resuming an AudioContext outside a gesture just produces a
 //     "prevented from starting" warning and leaves the context suspended.
 //   - Until audio is live, the patch-sync effect merely stages the latest
-//     patch; on the first key press the staged patch is applied in full,
-//     after which subsequent edits are diffed and applied immediately.
+//     patch; on the first key press the staged patch is applied in full.
 //
 // All 8 synth voices share the same patch, so every patch change is applied
-// to every voice. We diff against the previously-applied patch and only send
-// the minimal set of updates (the routing, the changed slot's oscillator
-// params, or its envelope params) to keep live slider-dragging responsive.
+// in full to every voice via a single `setPatch` call.
 //
 // Synth calls are *fire-and-forget*: AudioWorklet MessagePorts preserve FIFO
 // ordering, so messages are applied in the order issued. Each call does
@@ -36,16 +31,8 @@ import { VoiceAllocator } from "./voiceAllocator.ts";
 // is true (the track editor is playing back a compiled module), this hook is
 // completely inert — it stages patch edits but sends nothing to the synth,
 // and note on/off are no-ops. When `disabled` transitions back to false the
-// synth has just been `reset` by the player, so the staged patch is forced to
-// re-apply in full (rather than diffing against a stale pre-play state).
-
-function slotParamsEqual(a: SlotParams, b: SlotParams): boolean {
-  return a.tl === b.tl && a.ml === b.ml && a.fb === b.fb && a.ws === b.ws;
-}
-
-function envParamsEqual(a: EnvParams, b: EnvParams): boolean {
-  return a.ar === b.ar && a.dr === b.dr && a.sl === b.sl && a.sr === b.sr && a.rr === b.rr;
-}
+// synth has just been `reset` by the player, so the staged patch is re-applied
+// in full.
 
 function lfoWaveEqual(a: LfoWave, b: LfoWave): boolean {
   if ("constant" in a) return "constant" in b;
@@ -65,49 +52,10 @@ function lfoParamsEqual(a: LfoParams, b: LfoParams): boolean {
   );
 }
 
-/** Fire the minimal set of synth messages to move `prev` -> `next` on all
- *  voices. Fire-and-forget: callers need not await. */
-function applyPatch(synth: Synth, prev: Patch | undefined, next: Patch): void {
-  if (!prev) {
-    for (let v = 0; v < N_VOICES; v++) {
-      void synth.reconnect({ voice: v, connections: next.connections.edges });
-      for (let s = 0; s < N_SLOTS; s++) {
-        const wave = next.slotWaves[s]!;
-        const sp = next.slotParams[s]!;
-        void synth.setSlotWave({ voice: v, slot: s, wave });
-        void synth.setSlotParams({ voice: v, slot: s, ...sp });
-        const env = next.envParams[s]!;
-        void synth.setSlotEnvParams({ voice: v, slot: s, ...env });
-      }
-    }
-    return;
-  }
-
-  if (!edgesEqual(prev.connections.edges, next.connections.edges)) {
-    for (let v = 0; v < N_VOICES; v++) {
-      void synth.reconnect({ voice: v, connections: next.connections.edges });
-    }
-  }
-
-  for (let s = 0; s < N_SLOTS; s++) {
-    if (prev.slotWaves[s] !== next.slotWaves[s]) {
-      const wave = next.slotWaves[s]!;
-      for (let v = 0; v < N_VOICES; v++) {
-        void synth.setSlotWave({ voice: v, slot: s, wave });
-      }
-    }
-    if (!slotParamsEqual(prev.slotParams[s]!, next.slotParams[s]!)) {
-      const sp = next.slotParams[s]!;
-      for (let v = 0; v < N_VOICES; v++) {
-        void synth.setSlotParams({ voice: v, slot: s, ...sp });
-      }
-    }
-    if (!envParamsEqual(prev.envParams[s]!, next.envParams[s]!)) {
-      const env = next.envParams[s]!;
-      for (let v = 0; v < N_VOICES; v++) {
-        void synth.setSlotEnvParams({ voice: v, slot: s, ...env });
-      }
-    }
+/** Apply a full patch to every voice. Fire-and-forget: callers need not await. */
+function applyPatch(synth: Synth, patch: Patch): void {
+  for (let v = 0; v < N_VOICES; v++) {
+    void synth.setPatch({ voice: v, patch });
   }
 }
 
@@ -150,12 +98,10 @@ export function usePatchSynth(
   const allocator = allocatorRef.current;
 
   // `audioLive` flips true once the AudioContext has been created (on first
-  // gesture) and the staged patch has been applied. `lastApplied` tracks what
-  // was last sent to the synth so we can diff subsequent edits. `staged`
-  // holds the latest patch the user wants; if audio isn't live yet it will
-  // be applied in full on the first key press.
+  // gesture) and the staged patch has been applied. `staged` holds the latest
+  // patch the user wants; if audio isn't live yet it will be applied in full
+  // on the first key press.
   const audioLiveRef = useRef(false);
-  const lastAppliedRef = useRef<Patch | undefined>(undefined);
   const stagedRef = useRef<Patch>(patch);
   const lastAppliedLfosRef = useRef<LfoState[] | undefined>(undefined);
   const stagedLfosRef = useRef<LfoState[] | undefined>(patch.lfos);
@@ -178,9 +124,8 @@ export function usePatchSynth(
 
   // Stage every patch change and keep the synth in sync while we own it.
   // While disabled we only stage (the player owns the synth). On the
-  // disabled -> enabled transition the synth was just `reset`, so force a
-  // full re-apply by clearing `lastApplied` instead of diffing against the
-  // stale pre-play patch.
+  // disabled -> enabled transition the synth was just `reset`, so clear the
+  // LFO diff baseline to force a full LFO re-apply.
   const prevDisabledRef = useRef(disabled);
   useEffect(() => {
     const justEnabled = prevDisabledRef.current && !disabled;
@@ -191,13 +136,11 @@ export function usePatchSynth(
     if (disabled) return;
 
     if (justEnabled) {
-      lastAppliedRef.current = undefined;
       lastAppliedLfosRef.current = undefined;
     }
 
     if (audioLiveRef.current) {
-      applyPatch(synth, lastAppliedRef.current, patch);
-      lastAppliedRef.current = patch;
+      applyPatch(synth, patch);
       if (patch.lfos) {
         applyLfos(synth, lastAppliedLfosRef.current, patch.lfos);
         lastAppliedLfosRef.current = patch.lfos;
@@ -214,8 +157,7 @@ export function usePatchSynth(
       // AudioContext is *constructed* within this user-gesture call frame.
       void ensureReady().then(() => {
         if (!audioLiveRef.current) {
-          applyPatch(synth, undefined, stagedRef.current);
-          lastAppliedRef.current = stagedRef.current;
+          applyPatch(synth, stagedRef.current);
           if (stagedLfosRef.current) {
             applyLfos(synth, undefined, stagedLfosRef.current);
             lastAppliedLfosRef.current = stagedLfosRef.current;

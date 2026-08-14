@@ -85,23 +85,17 @@ fn execute(
             return command.next();
         },
         .key_on => {
-            part.keyOn(driver.mod.commandData(command).freq);
+            driver.keyOn(voice, driver.mod.commandData(command).freq);
             driver.synth.keyOn(voice);
             return command.next();
         },
         .key_off => {
-            driver.synth.keyOff(voice);
+            driver.keyOff(voice);
             return command.next();
         },
         .set_patch => {
             const patch, _ = driver.mod.extra.decode(Patch, driver.mod.commandData(command).extra);
-            driver.synth.voicePtr(voice).reconnect(patch.connections) catch unreachable;
-            for (patch.slot_waves, 0..) |wave, slot| {
-                driver.synth.voiceSlotPtr(voice, @intCast(slot)).state = .init(wave);
-            }
-            part.synth_params.slot = patch.slot_params;
-            part.synth_params.slot_env = patch.slot_env_params;
-            part.synth_params.applyTo(driver.synth, voice);
+            driver.setPatch(voice, patch);
             return command.next();
         },
         .set_volume => {
@@ -185,23 +179,14 @@ pub fn keyOff(driver: *Driver, voice: Voice.Index) void {
     driver.synth.keyOff(voice);
 }
 
-pub fn reconnect(driver: *Driver, voice: Voice.Index, connections: Voice.Connections) error{Cycle}!void {
-    try driver.synth.voicePtr(voice).reconnect(connections);
-}
-
-pub fn setSlotWave(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, wave: Slot.Wave) void {
-    driver.synth.voiceSlotPtr(voice, slot).state = .init(wave);
-}
-
-pub fn setSlotParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Slot.UserParams) void {
+pub fn setPatch(driver: *Driver, voice: Voice.Index, patch: Patch) void {
+    driver.synth.voicePtr(voice).reconnect(patch.connections) catch unreachable;
+    for (patch.slot_waves, 0..) |wave, slot| {
+        driver.synth.voiceSlotPtr(voice, @intCast(slot)).state = .init(wave);
+    }
     const part = driver.partPtr(voice);
-    part.synth_params.slot[slot] = params;
-    part.synth_params.applyTo(driver.synth, voice);
-}
-
-pub fn setSlotEnvParams(driver: *Driver, voice: Voice.Index, slot: Voice.SlotIndex, params: Envelope.UserParams) void {
-    const part = driver.partPtr(voice);
-    part.synth_params.slot_env[slot] = params;
+    part.synth_params.slot = patch.slot_params;
+    part.synth_params.slot_env = patch.slot_env_params;
     part.synth_params.applyTo(driver.synth, voice);
 }
 

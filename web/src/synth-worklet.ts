@@ -1,6 +1,5 @@
 import * as Comlink from "comlink";
-import type { LfoParams } from "./patch/types.ts";
-import { SLOT_WAVE_VALUES, type SlotWave } from "./patch/types.ts";
+import type { LfoParams, Patch } from "./patch/types.ts";
 import { consoleLogFactory } from "./wasm-interface.ts";
 
 interface WasmExports {
@@ -12,18 +11,7 @@ interface WasmExports {
   load(): void;
   keyOn(voice: number, freq: number): void;
   keyOff(voice: number): void;
-  reconnect(voice: number, connections: bigint): number;
-  setSlotWave(voice: number, slot: number, wave: number): void;
-  setSlotParams(voice: number, slot: number, tl: number, ml: number, fb: number, ws: number): void;
-  setSlotEnvParams(
-    voice: number,
-    slot: number,
-    ar: number,
-    dr: number,
-    sl: number,
-    sr: number,
-    rr: number,
-  ): void;
+  setPatch(voice: number): void;
   enableLfo(voice: number, index: number): void;
   disableLfo(voice: number, index: number): void;
   setLfoParams(voice: number, index: number): void;
@@ -49,36 +37,9 @@ export interface KeyOffArgs {
   voice: number;
 }
 
-export interface ReconnectArgs {
+export interface SetPatchArgs {
   voice: number;
-  connections: boolean[][];
-}
-
-export interface SetSlotParamsArgs {
-  voice: number;
-  slot: number;
-  tl: number;
-  ml: number;
-  fb: number;
-  ws: number;
-}
-
-export interface SetSlotWaveArgs {
-  voice: number;
-  slot: number;
-  /** Waveform name ("sine" | "square" | "triangle" | "saw" | "noise").
-   *  Converted to its numeric enum value when passed to the wasm layer. */
-  wave: SlotWave;
-}
-
-export interface SetSlotEnvParamsArgs {
-  voice: number;
-  slot: number;
-  ar: number;
-  dr: number;
-  sl: number;
-  sr: number;
-  rr: number;
+  patch: Patch;
 }
 
 export interface SetLfoEnabledArgs {
@@ -156,32 +117,18 @@ export class SynthProcessor extends AudioWorkletProcessor {
     this.wasm.keyOff(voice);
   }
 
-  reconnect({ voice, connections }: ReconnectArgs) {
-    // connections[from][to] === true means `from` modulates `to`. The core
-    // stores this as Connections.deps[to] (a bitset with bit `from` set),
-    // bit-packed as a u64 where bit (to*8 + from) is set (wasm = little-endian).
-    let packed = 0n;
-    connections.forEach((from, fromIndex) => {
-      from.forEach((to, toIndex) => {
-        if (to) {
-          const bitIndex = 8 * toIndex + fromIndex;
-          packed |= 1n << BigInt(bitIndex);
-        }
-      });
-    });
-    return this.wasm.reconnect(voice, packed) !== 0;
-  }
-
-  setSlotParams({ voice, slot, tl, ml, fb, ws }: SetSlotParamsArgs) {
-    this.wasm.setSlotParams(voice, slot, tl, ml, fb, ws);
-  }
-
-  setSlotWave({ voice, slot, wave }: SetSlotWaveArgs) {
-    this.wasm.setSlotWave(voice, slot, SLOT_WAVE_VALUES[wave]);
-  }
-
-  setSlotEnvParams({ voice, slot, ar, dr, sl, sr, rr }: SetSlotEnvParamsArgs) {
-    this.wasm.setSlotEnvParams(voice, slot, ar, dr, sl, sr, rr);
+  setPatch({ voice, patch }: SetPatchArgs) {
+    this.transferWrite(
+      encodeBytes(
+        JSON.stringify({
+          connections: patch.connections.edges,
+          slot_waves: patch.slotWaves,
+          slot_params: patch.slotParams,
+          slot_env_params: patch.envParams,
+        }),
+      ),
+    );
+    this.wasm.setPatch(voice);
   }
 
   setLfoEnabled({ voice, index, enabled }: SetLfoEnabledArgs) {
