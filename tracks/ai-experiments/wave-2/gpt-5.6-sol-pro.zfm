@@ -1,0 +1,126 @@
+#title Scarlet Vector
+#composer gpt-5.6-sol-pro
+#tempo 174
+
+; An original high-energy stage theme in D minor.
+; Patches adapted from patches/patches.zfm.
+
+@brass-lead 0 1.
+  sine 0.2 1 0.3 0.04 0 0 0 0.00001
+  sine 1 1 0.2 0.04 0 0 0 0.00001
+
+@synth-bell 0 1.
+  sine 0.2 5 0 0.00001 0 0 0 0
+  sine 1 1 0 0.00001 2 0 0 2
+
+@harp 0 1 2 3.
+  triangle 0.1 4 0.2 0.00001 4 0 0 4
+  triangle 0.1 1 0 0.00001 4 0 0 4
+  triangle 0.1 1 0 0.00001 4 0 0 4
+  sine 1 1 0 0.00001 4 0 0 4
+
+@edm-bass-2 0 1.
+  sine 0.8 0.5 0 0.00001 1 0 0 0.00001
+  sine 1 0.25 0.2 0.00001 2 0 0 0.00001
+
+@strings 0 1, 2 3.
+  sine 0.1 3 0.2 0.1 0 0 0 0.2
+  sine 0.9 1 0 0.1 0 0 0 0.2
+  sine 0.2 5 0 0.1 4 0 0 0.4
+  sine 1 1 0 0.1 0 0 0 0.2
+
+@edm-kick .
+  sine 1 1 0.2 0.00001 10 0 0 0.00001
+
+@snare-drum .
+  sine 1 50 3 0.00001 1 0 0 0.00001
+  sine 0.3 1 0 0.00001 0.1 0 0 0.1
+  noise 0.1 1 0 0.5 0.08 2 0 0 1
+
+@air-hat .
+  noise 1 1 0 0.5 0.00001 0.07 0 0 0.025
+
+@crash .
+  noise 0.8 0.5 0 0.35 0.00001 0.7 0 0 0.6
+  sine 0.25 9 0.8 0.00001 0.25 0 0 0.4
+
+; Harmonic arpeggios: one macro per bar (sixteenth-note drive).
+!arp-d o4 l16 d a d f a d f a >d< a f d a f d a
+!arp-bb o3 l16 b- f b- >d f< b- >d f b- f d< b- >d< b- f d
+!arp-f o4 l16 f c f a >c< f a >c f< c a f >c< a f c
+!arp-c o4 l16 c g c e g c e g >c< g e c g e c g
+!arp-g o3 l16 g d g b- >d< g b- >d g< d b- g >d< b- g d
+!arp-a o3 l16 a e a >c+ e< a >c+ e a< e c+ a >e< c+ a e
+!arp-prog-a !arp-d !arp-bb !arp-f !arp-c !arp-d !arp-bb !arp-g !arp-a
+!arp-prog-b !arp-bb !arp-c !arp-d !arp-d !arp-g !arp-bb !arp-a !arp-a
+
+; Driving bass bars.
+!bass-d o2 l8 d d r d >d< d a c
+!bass-bb o1 l8 b- b- r b- >b-< b- f a
+!bass-f o2 l8 f f r f >f< f c e
+!bass-c o2 l8 c c r c >c< c g b-
+!bass-g o1 l8 g g r g >g< g d f
+!bass-a o1 l8 a a r a >a< a e g
+!bass-prog-a !bass-d !bass-bb !bass-f !bass-c !bass-d !bass-bb !bass-g !bass-a
+!bass-prog-b !bass-bb !bass-c !bass-d !bass-d !bass-g !bass-bb !bass-a !bass-a
+
+; Main melody, eight bars per phrase.
+!lead-a o5 l8 d f a >d< a f e d c+ e a >c+< a g e c+ d e f a >c< a f e d f e d c+ <a >c+ e f a >d f e d< a f g b- >d g f d< b- a a c+ e a g e c+ a a c+ e g a4 r4
+!lead-a2 o5 l8 d e f a >d< a f e c+ e a >e d c+< a e d f a >f e d< c+ a f a >d a g f< a f g b- >g f d< b- g a c+ e >c+< a e c+ a >d c< a f e d c+ a d4 a8 >d< c+ a f e
+!lead-b o5 l8 b- d f >d c< b- a f c e g >e d c< b- g d f a >f e d< c+ a d e f a g f e d g b- >d g f d< b- g b- >d f b- a f d< b- a c+ e >a g e c+< a a c+ e g a4 r4
+!lead-b2 o5 l8 f g a >c d c< a f g a b- >d e d< b- g a b- >c d e d c< a f e d c+ d e f g a b- >d g f d< b- g f a >d f e d< a f e g a >c+< a g e c+ d f a >d c a< f e d4 a8 >d< c+ a f d
+!lead-climax o6 l8 d c a f e f a >d< c+ a g e f e d c+ d f a >d f e d< a c e g >c e d c< g b- >d f g f d< b- a g f e a c+ e >a g e c+< a b- a f d e f g a d2 a4 >d4
+!lead-harmony o5 l8 a a f d c+ d f a a e e c+ d c+ a e f a >d< a >d c b- a< g >c< e g >c< b- g e f d c+ c e a >c+< b- a g e f d c+ a c+ d e f a2 e4 a4
+
+; Bell counterpoint for the contrasting middle section.
+!bell-b o6 l8 r f d b- f d b- d r g e c g e c e r a f d a f d f r a f d a f e d r b- g d b- g d g r f d b- f d b- d r e c+ a e c+ a c+ e4 r4 a4 r4
+!bell-b2 o6 l8 d f a f d a f d e g >c< g e c g e f a >d< a f d a f e g b- g e c+ a g f e d c+ d e f g a b- a f d f a >d< a f d a f e g a c+ a e c+ a e d2 a2
+
+; Pad progressions, each eight whole notes / eight bars.
+!pad-a-root o3 l1 d b- f c d b- g a
+!pad-a-third o3 l1 f d a e f d b- c+
+!pad-a-fifth o3 l1 a f >c< g a f d e
+!pad-b-root o3 l1 b- c d d g b- a a
+!pad-b-third o3 l1 d e f f b- d c+ c+
+!pad-b-fifth o3 l1 f g a a >d< f e e
+
+; One-bar drum grooves.
+!kick-a o2 l8 c r r c c r r c
+!kick-b o2 l8 c r c r c r c c
+!snare-a o4 l8 r c r r r c r r
+!snare-b o4 l8 r c r c r c r c
+!hat-a o6 l16 c c c c c c c c c c c c c c c c
+!hat-open o6 l16 c r c c c r c c c r c c c c c c
+
+; A: lead. Four-bar atmospheric opening, four-bar launch, then A/B/climax.
+A @brass-lead v0.34 p0 MT0,freq MS0,2.2,0 MW0,sine,5.8 MO0,key_on MA0,on *0,on
+A [r1]4 o5 l8 r2 a c+ d e d4 f a >d< a f e d c+4 e a >c+< a g e c+ d f a >d4< a4 f4
+A !lead-a !lead-a2 !lead-b !lead-b2 !lead-climax !lead-climax
+
+; B: lower harmony enters only for the final barrage.
+B @brass-lead v0.22 p-0.16 MT0,freq MS0,1.7,0 MW0,sine,5.2 MO0,key_on MA0,on *0,on
+B [r1]40 !lead-harmony !lead-harmony
+
+; C: constant sparkling sixteenth-note arpeggio.
+C @harp v0.20 p-0.45 !arp-prog-a !arp-prog-a !arp-prog-a !arp-prog-b !arp-prog-b !arp-prog-a !arp-prog-a
+
+; D: bell response in the middle section.
+D @synth-bell v0.16 p0.5 [r1]24 !bell-b !bell-b2 [r1]16
+
+; E: syncopated low-end drive.
+E @edm-bass-2 v0.42 p0 [r1]4 !bass-d !bass-bb !bass-g !bass-a
+E !bass-prog-a !bass-prog-a !bass-prog-b !bass-prog-b !bass-prog-a !bass-prog-a
+
+; F/G/H: three independent string voices form the chord bed.
+F @strings v0.10 p-0.55 !pad-a-root !pad-a-root !pad-a-root !pad-b-root !pad-b-root !pad-a-root !pad-a-root
+G @strings v0.09 p0 !pad-a-third !pad-a-third !pad-a-third !pad-b-third !pad-b-third !pad-a-third !pad-a-third
+H @strings v0.10 p0.55 !pad-a-fifth !pad-a-fifth !pad-a-fifth !pad-b-fifth !pad-b-fifth !pad-a-fifth !pad-a-fifth
+
+; I/J/K: kick, snare, and rapid hats. The kick uses the supplied pitch-drop LFO preset.
+I @edm-kick v0.55 p0 MT0,freq MS0,220,-440 MW0,exp,-20 MO0,key_on MA0,on *0,on
+I [r1]4 [!kick-a]20 [!kick-b]16 [!kick-a]8 [!kick-b]8
+J @snare-drum v0.26 p0.08 [r1]4 [!snare-a]20 [!snare-b]16 [!snare-a]8 [!snare-b]8
+K @air-hat v0.12 p0.32 [r1]4 [!hat-open]4 [!hat-a]16 [!hat-open]16 [!hat-a]16
+
+; L: section markers and a final cymbal tail.
+L @crash v0.18 p-0.2 o4 c1 [r1]7 c1 [r1]15 c1 [r1]15 c1 [r1]14 c2 r2

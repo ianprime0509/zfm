@@ -1,0 +1,74 @@
+#title Neon Rain Over Danmaku
+#composer gpt-5.6-luna-pro
+#tempo 168
+
+; A bright brass lead, punchy FM bass, rapid arpeggios, and a relentless
+; four-on-the-floor drum engine for a bullet-hell stage theme.
+
+@brass 0 1.
+  sine 0.2 1 0.3 0.04 0 0 0 0.00001
+  sine 1 1 0.2 0.04 0 0 0 0.00001
+
+@synth-bass 0 1.
+  sine 0.8 0.5 0 0.00001 0.05 0 0 0.00001
+  sine 1 1 0.3 0.00001 1 0 0 0.00001
+
+@electric-piano 0 1, 2 3.
+  sine 0.1 11 0.5 0.00001 0 0 0 0.00001
+  sine 0.3 12 0 0.00001 0.5 0 0 0.00001
+  sine 0.1 1 0 0.00001 2 0.2 0 2
+  sine 1 1 0 0.00001 4 0 0 1
+
+@edm-kick .
+  sine 1 1 0.2 0.00001 10 0 0 0.00001
+
+@snare-drum .
+  sine 1 50 3 0.00001 1 0 0 0.00001
+  sine 0.3 1 0 0.00001 0.1 0 0 0.1
+  noise 0.1 1 0 0.5 0.08 2 0 0 1
+
+@rim .
+  sine 1 2 3 0.00001 0.1 0 0 0.1
+  noise 0.2 1 0 1 0.00001 0.2 0 0 0.2
+
+; One-bar phrases. Every bar is exactly 96 ticks.
+!lead-a d16 f16 a16 d16 f16 a16 c16 a16 f16 e16 f16 a16 d16 a16 f16 e16
+!lead-b d16 f16 a16 d16 e16 f16 e16 d16 c16 e16 g16 c16 e16 g16 e16 c16
+!lead-c a16 c16 e16 a16 g16 e16 c16 a16 f16 a16 c16 f16 e16 c16 a16 g16
+!lead-d d16 a16 f16 d16 e16 g16 c16 e16 d16 f16 a16 d16 c16 a16 f16 e16
+
+!bass-a d8 r8 d8 d8 a-8 r8 c8 c8
+!bass-b b-8 r8 b-8 b-8 c8 r8 c8 c8
+!bass-c d8 d8 f8 d8 c8 c8 a-8 c8
+!bass-d d8 r8 a-8 r8 c8 r8 d8 r8
+
+!arp-a d16 a16 d16 f16 a16 d16 f16 a16 d16 a16 d16 f16 a16 d16 f16 a16
+!arp-b b-16 f16 b-16 d16 f16 b-16 d16 f16 c16 g16 c16 e16 g16 c16 e16 g16
+!arp-c a16 e16 a16 c16 e16 a16 c16 e16 f16 c16 f16 a16 c16 f16 a16 c16
+!arp-d d16 a16 d16 f16 a16 d16 f16 a16 c16 g16 c16 e16 g16 c16 e16 g16
+
+!kick c8 r8 c8 r8 c8 r8 c8 r8
+!kick-fill c16 r16 c16 r16 c16 c16 r16 c16 c16 r16 c16 r16 c16 c16 c16 r16
+!snare r8 c8 r8 c8 r8 c8 r8 c8
+!hat c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16
+!hat-accent c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16 c16
+
+; Lead: a sharp, fanfare-like hook with a small vibrato for extra motion.
+A @brass p0 v0.78 MT0,freq MS0,5,0 MW0,sine,5 MO0,key_on MA0,on *0
+  o5 [!lead-a !lead-b !lead-c !lead-d]2 [!lead-b !lead-c !lead-d !lead-a]2
+
+; Bass: syncopated low-end movement, locked to the kick but avoiding monotony.
+B @synth-bass p-0.12 v0.82
+  o2 [!bass-a !bass-b !bass-c !bass-d]2 [!bass-b !bass-c !bass-d !bass-a]2
+
+; The arpeggio fills the gaps between the lead notes and keeps the screen moving.
+C @electric-piano p0.25 v0.42
+  o4 [!arp-a !arp-b !arp-c !arp-d]2 [!arp-b !arp-c !arp-d !arp-a]2
+
+; Four-on-the-floor kick, backbeat snare, and constant hi-hat stream.
+D @edm-kick p0 v0.78
+  [!kick !kick !kick-fill !kick]4
+E @snare-drum p0 v0.48
+  [!snare !snare !snare !snare]4
+F @rim p0.1 v0.22
+  [!hat !hat !hat-accent !hat]4

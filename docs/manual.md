@@ -251,7 +251,7 @@ unused.
 
 Macros define repeatable sequences of MML commands.
 
-The text immediately following the `@` of a macro definition specifies the macro
+The text immediately following the `!` of a macro definition specifies the macro
 name, which may consist of alphanumeric characters, `-`, and `_`.
 
 Everything after the macro name is the body of the macro. The body is not

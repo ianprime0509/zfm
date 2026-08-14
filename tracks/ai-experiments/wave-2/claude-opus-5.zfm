@@ -1,0 +1,225 @@
+#title Bullet Storm
+#composer claude-opus-5
+#tempo 168
+
+; ============================================================
+;  Bullet Storm -- upbeat stage theme for a bullet hell shooter
+;  D minor, 168 BPM, driving 16ths, 4-on-the-floor-ish groove
+;
+;  Layout:  intro (4) | A (8) | A' (8) | B (8) -> loop to A
+;  Parts:   A lead      B lead octave    C psg arp
+;           D bass      E pad (3rd)      F pad (5th)
+;           G kick      H snare          I hats     J crash
+; ============================================================
+
+; ---------------- patches ----------------
+
+; punchy synth brass lead (carrier ML=2, so written pitch sounds +1 oct)
+@lead 0 3, 1 2 3.
+  sine 0.5489173 4 0.07957747 0.024840001 0.013824 0.70794576 0 0.122880004
+  sine 0.7112249 8 0 0.024840001 0.013824 0.70794576 0 0.122880004
+  sine 0.29992107 2 0 0.024840001 0.027648 0.5011872 0 0.122880004
+  sine 1 2 0 0.008316 0.055296 0.70794576 0 0.061440002
+
+; trumpet-ish doubling voice for the lead an octave down
+@lead2 0 3, 1 2 3.
+  sine 0.46185634 1 0.07957747 0.00032400002 0 1 0 0.49152002
+  sine 0.3564568 12 0 0.00032400002 0.055296 0.25118864 5.89824 0.49152002
+  sine 0.08213095 1 0 0.00032400002 0 1 0 0.49152002
+  sine 1 2 0 0.016632 0 1 0 0.122880004
+
+; tight PSG-style pluck for the 16th note arpeggios
+@psg 0 1, 0 2, 0 3.
+  sine 0.3269692 1 0.07957747 0.000020833333 0 1 0 94.37184
+  sine 1 1 0 0.000020833333 0.11059201 0.3548134 47.18592 0.00576
+  sine 1 1 0 0.000020833333 0.11059201 0.3548134 47.18592 0.00576
+  sine 1 1 0 0.000020833333 0.11059201 0.3548134 47.18592 0.00576
+
+; growling FM bass (carriers ML=2 -> written o1 sounds o2)
+@bass 0 1, 2 3.
+  sine 1.6865801 1 0.07957747 0.000020833333 0.018432 0.25118864 3.9321601 2.94912
+  sine 1 2 0 0.000020833333 0.018432 0.70794576 7.8643203 0.73728
+  sine 3.9995115 1 0 0.0062100003 0.013824001 0.3548134 3.9321601 2.94912
+  sine 1 2 0 0.000020833333 0.018432 0.70794576 7.8643203 0.73728
+
+; sustained string pad
+@pad 0 1 3, 2 3.
+  sine 0.29992107 4 0.039788734 0.000020833333 0 1 0 94.37184
+  sine 0.46185634 2 0 0.000020833333 0 1 0 94.37184
+  sine 0.29992107 8 0 0.000020833333 0 1 0 94.37184
+  sine 1 2 0 0.066528 0.147456 0.5011872 2.94912 2.94912
+
+; drums (play kick/snare at o4 c, hats at o5 c, crash at o6 c)
+@kick .
+  sine 1 0.25 0.6 0.02 0.5 0 0 0.1
+  noise 0.5 0.1 0 0.5 0.08 2 0 0 1
+  sine 1 0.25 0 0.00001 1 0 0 0.00001
+
+@snare .
+  sine 1 50 3 0.00001 1 0 0 0.00001
+  sine 0.3 1 0 0.00001 0.1 0 0 0.1
+  noise 0.1 1 0 0.5 0.08 2 0 0 1
+
+@hhc 0 1 3, 2 3.
+  sine 1.301688 15 0.07957747 0.000020833333 0 1 0 94.37184
+  sine 0.46185634 15 0 0.000020833333 0.020736 0.3548134 31.457281 94.37184
+  sine 1.8386834 12 0 0.000020833333 0 1 0 94.37184
+  sine 1 2 0 0.000020833333 0.010368 0.3548134 0.49152002 0.36864
+
+@hho 0 1 3, 2 3.
+  sine 1.301688 15 0.07957747 0.000020833333 0 1 0 94.37184
+  sine 0.46185634 15 0 0.000020833333 0.020736 0.3548134 31.457281 94.37184
+  sine 1.8386834 12 0 0.000020833333 0 1 0 94.37184
+  sine 1 2 0 0.000020833333 0.010368 0.3548134 3.9321601 0.36864
+
+@crash 0 1, 2 3.
+  sine 0.9215245 12 0.07957747 0.000020833333 0 1 0 94.37184
+  sine 1 8 0 0.000020833333 0.036864 0.70794576 1.9660801 1.47456
+  sine 0.7753663 7 0 0.000020833333 0 1 0 94.37184
+  sine 1 8 0 0.000020833333 0.036864 0.70794576 2.94912 2.94912
+
+; ---------------- melody macros (one bar each, l8, relative octaves) ----------------
+
+; A theme: Dm Bb F C Gm Bb C Dm
+!mA1 a4 f8 a8 >d4< a8 f8
+!mA2 g4 b8 >d8< b4 g8 f8
+!mA3 a4 >c8< a8 f4 a8 >c8<
+!mA4 >d8 c8< a8 g8 e4 g8 b8
+!mA5 b4 a8 g8 b4 >d8< b8
+!mA6 >d4 f8 d8< b4 a8 b8
+!mA7 >c4< a8 g8 e4 g8 a8
+!mA8 a4 f8 d8 d2
+!melA !mA1 !mA2 !mA3 !mA4 !mA5 !mA6 !mA7 !mA8
+
+; A' theme: same changes, busier
+!mB1 d16 e16 f8 a8 >d8< a8 f8 e8 d8
+!mB2 f16 g16 b8 >d8 f8 d8< b8 a8 g8
+!mB3 a4 >c8 f8 e8 c8< a8 f8
+!mB4 g4 a8 >c8 e8 c8< a8 g8
+!mB5 b16 a16 g8 b8 >d8 g8 d8< b8 g8
+!mB6 >f4 d8< b8 a8 b8 >d8 f8<
+!mB7 >e4 c8< a8 g8 e8 g8 a8
+!mB8 >d8 c8< a8 f8 a4 >d4<
+!melA2 !mB1 !mB2 !mB3 !mB4 !mB5 !mB6 !mB7 !mB8
+
+; B theme (bridge): Gm A Dm Dm Bb C A A
+!mC1 >d4 c8< b8 g4 b8 >d8<
+!mC2 >c+4< a8 e8 a4 >c+8 e8<
+!mC3 >d4< a8 f8 d4 f8 a8
+!mC4 >d8 e8 f8 e8 d8 c8< a8 f8
+!mC5 b4 >d8 f8 d8< b8 a8 g8
+!mC6 a4 >c8 e8 g8 e8 c8< a8
+!mC7 a4 >c+8 e8< a4 e8 c+8
+!mC8 e8 g8 a8 >c+8 e8 d8 c+8< a8
+!melB !mC1 !mC2 !mC3 !mC4 !mC5 !mC6 !mC7 !mC8
+
+; ---------------- bass macros (l16, 16 notes per bar) ----------------
+
+!bDm [d d >d< d]4
+!bBb [b b >b< b]4
+!bF  [f f >f< f]4
+!bC  [c c >c< c]4
+!bGm [g g >g< g]4
+!bA  [a a >a< a]4
+!bAf [a a >a< a]3 a >c+ e< a
+
+; ---------------- arp macros (l16, 16 notes per bar) ----------------
+
+!aDm [d f a >d<]4
+!aBb [b >d f b<]4
+!aF  [f a >c f<]4
+!aC  [c e g >c<]4
+!aGm [g b >d g<]4
+!aA  [a >c+ e a<]4
+
+; ---------------- drum macros (tick lengths, 96 ticks per bar) ----------------
+
+!k1 c%6 r%30 c%6 r%6 c%6 r%6 c%6 r%30
+!k2 c%6 r%12 c%6 r%12 c%6 r%6 c%6 r%18 c%6 r%18
+!k0 c%6 r%42 c%6 r%42
+!s1 r%24 c%6 r%42 c%6 r%18
+!s2 r%24 c%6 r%18 c%6 r%18 c%6 r%12 c%6
+!sf r%48 c%6 c%6 c%6 c%6 c%6 c%6 c%6 c%6
+!sF [c%6]16
+!h1 @hhc [c%12]8
+!h2 @hhc [c%6]16
+!ho @hhc [c%12]7 @hho c%12
+
+; ============================================================
+;  part setup
+; ============================================================
+
+A @lead  v0.9  p0.06 o4 l8 _{-b}
+  MT0,freq MS0,3.5,0 MW0,sine,6 MO0,key_on MA0,on *0,on
+B @lead2 v0.55 p-0.18 o3 l8 _{-b}
+  MT0,freq MS0,3,0 MW0,sine,5.5 MO0,key_on MA0,on *0,on
+C @psg   v0.4  p-0.42 o4 l16 _{-b}
+D @bass  v1    p0     o1 l16 _{-b}
+E @pad   v0.28 p-0.62 o3 l1  _{-b}
+F @pad   v0.28 p0.62  o3 l1  _{-b}
+G @kick  v1    p0     o4
+H @snare v0.7  p0.12  o4
+I @hhc   v0.32 p0.38  o5
+J @crash v0.5  p-0.25 o6
+
+; ============================================================
+;  intro : Dm  Dm  Bb  C
+; ============================================================
+
+A r1 r1 r1 r1
+B r1 r1 r1 r1
+C !aDm !aDm !aBb !aC
+D r1 r1 !bBb !bC
+E o3 f1 f1 o4 d1 o3 e1
+F o3 a1 a1 o4 f1 o3 g1
+G r1 r1 !k0 !k1
+H r1 r1 r1 !sf
+I r1 !h1 !h1 !ho
+J c1 r1 r1 r1
+
+; ============================================================
+;  A section : Dm  Bb  F  C  Gm  Bb  C  Dm     (loop point)
+; ============================================================
+
+ABCDEFGHIJ L
+
+A o4 !melA
+B r1 r1 r1 r1 r1 r1 r1 r1
+C !aDm !aBb !aF !aC !aGm !aBb !aC !aDm
+D !bDm !bBb !bF !bC !bGm !bBb !bC !bDm
+E o3 f1 o4 d1 o3 a1 e1 b1 o4 d1 o3 e1 f1
+F o3 a1 o4 f1 c1 o3 g1 o4 d1 f1 o3 g1 a1
+G !k1 !k1 !k1 !k2 !k1 !k1 !k1 !k2
+H !s1 !s1 !s1 !s2 !s1 !s1 !s2 !sf
+I !h1 !h1 !h1 !ho !h1 !h1 !h2 !ho
+J c1 r1 r1 r1 c1 r1 r1 r1
+
+; ============================================================
+;  A' section : same changes, lead doubled an octave down
+; ============================================================
+
+A o4 !melA2
+B o3 !melA2
+C !aDm !aBb !aF !aC !aGm !aBb !aC !aDm
+D !bDm !bBb !bF !bC !bGm !bBb !bC !bDm
+E o3 f1 o4 d1 o3 a1 e1 b1 o4 d1 o3 e1 f1
+F o3 a1 o4 f1 c1 o3 g1 o4 d1 f1 o3 g1 a1
+G !k2 !k1 !k2 !k1 !k2 !k1 !k1 !k2
+H !s2 !s1 !s2 !s1 !s2 !s1 !s2 !sf
+I !h1 !ho !h1 !ho !h2 !ho !h2 !ho
+J c1 r1 r1 r1 c1 r1 r1 r1
+
+; ============================================================
+;  B section (bridge) : Gm  A  Dm  Dm  Bb  C  A  A
+; ============================================================
+
+A o4 !melB
+B o3 !melB
+C !aGm !aA !aDm !aDm !aBb !aC !aA !aA
+D !bGm !bA !bDm !bDm !bBb !bC !bA !bAf
+E o3 b1 o4 c+1 o3 f1 f1 o4 d1 o3 e1 o4 c+1 c+1
+F o4 d1 e1 o3 a1 a1 o4 f1 o3 g1 o4 e1 e1
+G !k1 !k2 !k1 !k1 !k1 !k2 !k1 !k0
+H !s1 !s2 !s1 !sf !s1 !s2 !s2 !sF
+I !h1 !h1 !ho !h2 !h1 !h1 !h2 !ho
+J c1 r1 r1 r1 c1 r1 r1 c1

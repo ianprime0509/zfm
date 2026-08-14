@@ -1,0 +1,108 @@
+#title Stellar Barrage
+#composer gpt-5.6-terra-pro
+#tempo 180
+
+; A fast, looping-style stage theme: bright FM leads over a relentless arcade rhythm.
+; The arrangement is 32 bars long (about 43 seconds at 180 BPM).
+
+@neon-lead 0 1.
+  sine 1.4 5 0 0.004 0.08 0.15 0 0.10
+  sine 1 1 0.15 0.004 0.20 0.65 0 0.12
+
+@pulse-stab 0 1.
+  square 0.9 2 0 0.42 0.003 0.12 0.45 0 0.08
+  square 1 1 0.1 0.50 0.003 0.18 0.55 0 0.10
+
+@drive-bass 0 1.
+  sine 1.2 0.5 0 0.002 0.08 0 0 0.05
+  sine 1 1 0.25 0.002 0.18 0.35 0 0.06
+
+@arcade-kick .
+  sine 1 1 0.2 0.001 0.08 0 0 0.03
+  noise 0.16 1 0 0.7 0.001 0.03 0 0 0.03
+
+@arcade-snare .
+  noise 1 1 0 0.35 0.001 0.10 0 0 0.06
+  sine 0.45 3 0.25 0.001 0.12 0 0 0.06
+
+@arcade-hat .
+  noise 1 1 0 0.18 0.001 0.035 0 0 0.02
+
+@star-bell 0 1.
+  sine 0.7 6 0 0.002 0.12 0.15 0 0.35
+  sine 1 1 0 0.002 0.24 0.18 0 0.40
+
+@laser-rise 0 1.
+  sine 2.2 12 0 0.002 0.04 0 0 0.18
+  sine 1 1 0 0.002 0.10 0.25 0 0.22
+
+; One-bar melodic cells (all are exactly sixteen sixteenth notes).
+!lead-a o5 l16 e g a b >c b a g <e g a b >d c b a
+!lead-b o5 l16 d e g a >b a g e <d e g a >c b a g
+!lead-c o5 l16 c e g a >c b a g <e g a b >d c b a
+!lead-d o5 l16 b >c d e g e d c <b >d c b a g e d
+!lead-e o5 l16 a b >c e d c b a <g a b >d c b a g
+!lead-f o5 l16 e g b >d c b a g <e g a b >e d c b
+
+; Bass cells trace Am - F - C - G without slowing the pulse.
+!bass-a o2 l8 a a >e <a a a >e <g
+!bass-f o2 l8 f f >c <f f f >c <e
+!bass-c o2 l8 c c >g <c c c >g <b
+!bass-g o2 l8 g g >d <g g g >d <f
+
+; Four-on-the-floor kick, backbeat snare, and tightly closed hats.
+!kick l8 c r c r c r c r
+!snare l8 r r c r r r c r
+!hat l16 c c c c c c c c c c c c c c c c
+!hat-open l16 c c c c c c c c c c c c c c c r
+
+; Eight half-note chord hits equal four bars per progression cycle.
+!chords-root o4 l2 a f c g a f c g
+!chords-third o5 l2 c a e b c a e b
+!chords-fifth o5 l2 e c g d e c g d
+
+; Main player melody: two statements, a denser final attack, and a clear cadence.
+A @neon-lead v0.42 p-0.18
+  !lead-a !lead-b !lead-c !lead-d !lead-a !lead-b !lead-c !lead-d
+  !lead-e !lead-f !lead-c !lead-d !lead-e !lead-f !lead-a !lead-d
+  !lead-a !lead-b !lead-c !lead-d !lead-e !lead-f !lead-a !lead-d
+  !lead-e !lead-f !lead-c !lead-d !lead-a !lead-b !lead-c !lead-d
+
+; Counterline enters after the opening wave, leaving room for the lead at first.
+B @star-bell v0.24 p0.45 l16
+  [r1]8
+  o6 e b a g e g a b  >c b a g e g a b
+  o6 d a g e d e g a  >b a g e d e g a
+  o6 c g e g a g e c  >c b a g e g a b
+  o6 b g e d b d e g  >b a g e d e g a
+  o6 a e c e a g e c  >d c b a g a b c
+  o6 e b a g e g a b  >e d c b a g e d
+
+; Constant eighth-note bass drives the dodge pattern forward.
+C @drive-bass v0.42 p0
+  [!bass-a !bass-f !bass-c !bass-g]8
+
+; Chord stabs are split over three voices for a wide, bright pad.
+D @pulse-stab v0.19 p-0.58 !chords-root !chords-root !chords-root !chords-root !chords-root !chords-root !chords-root !chords-root
+E @pulse-stab v0.17 p0.12 !chords-third !chords-third !chords-third !chords-third !chords-third !chords-third !chords-third !chords-third
+F @pulse-stab v0.15 p0.62 !chords-fifth !chords-fifth !chords-fifth !chords-fifth !chords-fifth !chords-fifth !chords-fifth !chords-fifth
+
+; Rhythm section. The very last bar opens the hats to signal a loop point.
+G @arcade-kick v0.46 p0 [!kick]32
+H @arcade-snare v0.34 p0 [!snare]32
+I @arcade-hat v0.16 p0.28 [!hat]31 !hat-open
+
+; A high arpeggio gives the opening and transitions a shower-of-bullets sparkle.
+J @laser-rise v0.17 p-0.48 l16
+  o6 a e c e a e c e  >c g e g c g e g
+  o6 a e c e a e c e  >d a f a d a f a
+  o6 c g e g c g e g  >e b g b e b g b
+  o6 g d b d g d b d  >d a f a d a f a
+  [o6 a e c e a e c e >c g e g c g e g]3
+  o6 a e c e >d a f a  >e b g b >d a f a
+
+; Final scan-line sweep: a compact portamento flourish on the last two bars.
+K @star-bell v0.22 p0.72 l16
+  [r1]30
+  o5 {a>e}%48 {e>a}%48
+  o6 {c>g}%48 {g>c}%48

@@ -1,0 +1,391 @@
+#title Crimson Zenith - Stage 1 (Aerial Fleet Assault)
+#composer gemini-3.7-flash
+#tempo 165
+
+; ==============================================================================
+; FM SYNTH PATCHES
+; ==============================================================================
+
+; 1. Main Shmup Lead (Bright Cutting FM Saw/Square Lead with Vibrato)
+@shmup-lead 0 1, 2 3, 4.
+  saw 0.45 2 0.15 0.001 0.1 0.7 0 0.05
+  saw 1.0 1 0 0.001 0.1 0.85 0 0.05
+  square 0.3 3 0 0.5 0.001 0.15 0.6 0 0.05
+  sine 0.7 1 0 0.001 0.1 0.85 0 0.05
+  triangle 0.35 0.5 0 0.001 0.1 0.85 0 0.05
+
+; 2. Twin Lead (Warm FM Brass / Flute Lead for Dual Harmonies)
+@twin-lead 0 1, 2 3.
+  sine 0.5 3 0.2 0.002 0.1 0.7 0 0.06
+  saw 1.0 1 0 0.002 0.1 0.85 0 0.06
+  square 0.35 2 0 0.4 0.002 0.12 0.7 0 0.06
+  sine 0.8 1 0 0.002 0.1 0.85 0 0.06
+
+; 3. Sparkle Bell (Crystalline High FM Bell)
+@sparkle-bell 0 1, 2 3.
+  sine 0.6 3.5 0.1 0.0001 0.5 0.15 0 0.2
+  sine 1.0 1 0 0.0001 0.8 0.2 0 0.25
+  sine 0.4 7 0 0.0001 0.3 0.05 0 0.15
+  triangle 0.7 2 0 0.0001 0.5 0.15 0 0.2
+
+; 4. Arp Synth (Plucky 16th-note Ostinato Pluck)
+@arp-synth 0 1, 2 3.
+  square 0.6 2 0 0.4 0.0001 0.08 0.1 0 0.03
+  saw 1.0 1 0 0.0001 0.1 0.1 0 0.03
+  sine 0.35 4 0 0.0001 0.06 0.05 0 0.02
+  triangle 0.5 1 0 0.0001 0.1 0.1 0 0.03
+
+; 5. Brass Pad / Stabs (Warm FM Synth Brass)
+@brass-pad 0 1, 2 3.
+  saw 0.4 1 0.1 0.015 0.15 0.75 0 0.08
+  saw 1.0 1 0 0.015 0.15 0.8 0 0.08
+  saw 0.35 2 0 0.015 0.15 0.7 0 0.08
+  sine 0.7 1 0 0.015 0.15 0.8 0 0.08
+
+; 6. EPiano / Clav (Percussive Comping Keys)
+@epiano 0 1, 2 3.
+  sine 0.15 11 0.1 0.0001 0.05 0.3 0 0.12
+  sine 0.4 1 0 0.0001 0.6 0.1 0 0.1
+  sine 0.2 1 0 0.0001 0.8 0.2 0 0.12
+  sine 1.0 1 0 0.0001 0.8 0.1 0 0.1
+
+; 7. Driving FM Bass (Punchy, Relentless 16th-note FM Bass)
+@drive-bass 0 1, 2 3.
+  saw 0.8 1 0.3 0.0001 0.12 0.4 0 0.04
+  sine 1.0 0.5 0 0.0001 0.25 0.5 0 0.04
+  square 0.5 2 0 0.5 0.0001 0.08 0.2 0 0.04
+  saw 0.7 0.5 0 0.0001 0.2 0.4 0 0.04
+
+; 8. Kick Drum (Punchy FM/Noise Kick)
+@kick .
+  sine 1.0 0.5 0.4 0.0001 0.08 0 0 0.02
+  noise 0.25 0.5 0 6 0.0001 0.02 0 0 0.01
+
+; 9. Snare Drum (Snappy FM/Noise Snare)
+@snare .
+  noise 0.85 1 0 2.5 0.0001 0.12 0 0 0.04
+  sine 0.5 2 0.5 0.0001 0.08 0 0 0.03
+  saw 0.3 3 0 0.0001 0.06 0 0 0.02
+
+; 10. Closed Hi-Hat
+@hat-cl .
+  noise 0.8 1 0 0.15 0.0001 0.025 0 0 0.012
+
+; 11. Open Hi-Hat
+@hat-op .
+  noise 0.85 1 0 0.25 0.0001 0.16 0 0 0.08
+
+; 12. Crash Cymbal
+@crash .
+  noise 0.95 1 0 0.2 0.0001 0.9 0 0 0.6
+  sine 0.2 11 0.4 0.0001 0.4 0 0 0.3
+
+; 13. Synth Tom
+@tom .
+  sine 1.0 1 0.5 0.0001 0.15 0 0 0.04
+  noise 0.2 1 0 4 0.0001 0.02 0 0 0.01
+
+
+; ==============================================================================
+; TRACK SCORE
+; ==============================================================================
+
+; Part A
+A @shmup-lead o5 v0.82 p-0.2 MT0,freq MS0,3.5,0 MW0,sine,5.8 MO0,key_on MA0,on *0,on l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 > d8. e16 f8 g8 a8 > d8 < a8. f16 b-8. > c16 d8 e8 f8 d8 < b-8. g16 > c8. d16 e8 f8 g8 e8 c8. < a16 > c+8. d16 e8 f8 g8 e8 c+8 < a8
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  > d8. e16 f8 g8 a8. f16 d8. e16 f8 g8 a8 > d8 < a4+16 g8 f16 e8. f16 g8 a8 b-8. g16 e8. c16 a8 b-8 > c8 f8 < a4+16 g8 f16 b-8. > c16 d8 e8 f8. d16 < b-8. g16 > d8 e8 f8 g8 f4+16 e8 d16 e8. f16 g8 a8 > d8 < a8 e4 > c+8. d16 e8 f8 g8 e8 c+8 < a8
+  > d8. e16 f8 g8 a8 > d8 < a8. f16 b-8. > c16 d8 e8 f8. d16 < b-8. g16 > c8. d16 e8 f8 g8 > c8 < g8. e16 > f8. e16 d8 c8 d4+16 < a8 > d16 b-8. > c16 d8 e8 f8 g8 a8. f16 > d8. e16 f8 g8 a8 > d8 < a8. f16 > e8. f16 g8 a8 > c8 < a8 g8. e16 d4+16 < a8 > d16 f8 e8 d8 c16 d16
+  ; Section B - Pre-Chorus (Bars 25-32)
+  > d8. f16 b-8 > d8 < f4+16 d8 < b-16 > e8. g16 > c8 e8 < g4+16 e8 c16 > f8. a16 > d8 f8 < a4+16 f8 d16 > a8. > c16 f8 a8 > c4+16 < a8 f16 > g8. b-16 > d8 g8 b-4+16 g8 d16 > a8. > c16 e8 a8 > c4+16 < a8 e16 > b-8. > d16 f8 b-8 > d4+16 < b-8 f16 > e8. f16 g8 a8 > c+8 e8 < a4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  > f4+8. d16 g8 f8 e8 d16 c16 > e4+8. c16 f8 e8 d8 c16 < b-16 > d4+8. < a16 > e8 d8 c8 d16 e16 f8. g16 a8 > c8 < a4+16 g8 f16 > f4+8. d16 g8 f8 e8 d16 c16 > g4+8. e16 a8 g8 f8 e16 d16 > a4+8. f16 > d8 < a8 f8 e16 d16 > d8. e16 f8 g8 a8 > d8 < a4
+  > f4+8. d16 g8 f8 e8 d16 c16 > e4+8. c16 f8 e8 d8 c16 < b-16 > d4+8. < a16 > e8 d8 c8 d16 e16 f8. g16 a8 > c8 < a4+16 g8 f16 b-8. > c16 d8 e8 f8. d16 < b-8. g16 > c8. d16 e8 f8 g8. e16 c8. < a16 > d8. e16 f8 g8 a8 > d8 < a8. f16 > e8. f16 g8 a8 > c+8 e8 < a4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  > d16 f a > d < a f d f a > d f a f d < a f e16 g > c e < g e c e g > c e g e c < g e d16 f b- > d < f d < b- > d f b- > d f d < b- f d c+16 e g a > c+ < a g e c+ e g a > c+ < a g e > d8. f16 a8 > d8 < a4+16 f8 d16 b-8. > d16 g8 b-8 > d4+16 < b-8 g16 > c8. e16 g8 > c8 < g4+16 e8 c16 > f8. a16 > c8 f8 < a4+16 f8 c16
+  r8 f16 a16 > d16 f16 a8 f8 d8 < a8 f8 r8 e16 g16 > c16 e16 g8 e8 c8 < g8 e8 r8 d16 f16 b-16 > d16 f8 d8 < b-8 f8 d8 r8 c16 f16 a16 > c16 f8 c8 < a8 f8 c8 > e8. f16 g8 b-8 g8. e16 < b-8. g16 b-8. > c16 d8 e8 f8 a8 f8. d16 > c+8. d16 e8 f8 a8 e8 c+4 a8. b-16 > c+8 d8 e8 c+8 < a8 e8
+  ; Section E - Outro / Transition (Bars 65-72)
+  > d8. e16 f8 g8 a8 > d8 < a8. f16 > e8. f16 g8 a8 > c8 < a8 g8. e16 > f8. g16 a8 > d8 < a4+16 g8 f16 > a8. b-16 > c8 f8 < a4+16 g8 f16 > b-8. > c16 d8 e8 f8. d16 < b-8. g16 > d8. e16 f8 g8 a8 > d8 < a8. f16 > e8. f16 g8 a8 > d8 < a8 e4 > c+8. d16 e8 f8 g8 e8 c+8 < a8
+
+; Part B
+B @twin-lead o5 v0.74 p0.25 MT0,freq MS0,3.5,0 MW0,sine,5.8 MO0,key_on MA0,on *0,on l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 < a8. > c16 d8 e8 f8 a8 f8. d16 g8. a16 b-8 > c8 d8 < b-8 g8. e16 a8. b-16 > c8 d8 e8 c8 < a8. f16 a8. b-16 > c+8 d8 e8 c+8 < a8 e8
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  < a8. > c16 d8 e8 f8. d16 < a8. > c16 d8 e8 f8 a8 f4+16 e8 d16 c8. d16 e8 f8 g8. e16 c8. < a16 f8 g8 a8 > c8 < f4+16 e8 d16 g8. a16 b-8 > c8 d8. < b-16 g8. e16 b-8 > c8 d8 e8 d4+16 c8 < b-16 c+8. d16 e8 f8 a8 e8 c+4 a8. b-16 > c+8 d8 e8 c+8 < a8 e8
+  < a8. > c16 d8 e8 f8 a8 f8. d16 g8. a16 b-8 > c8 d8. < b-16 g8. e16 a8. b-16 > c8 d8 e8 g8 e8. c16 > d8. c16 < b-8 a8 b-4+16 f8 b-16 g8. a16 b-8 > c8 d8 e8 f8. d16 b-8. > c16 d8 e8 f8 a8 f8. d16 > c8. d16 e8 f8 a8 f8 e8. c16 < a4+16 f8 a16 > d8 c8 < b-8 a16 b-16
+  ; Section B - Pre-Chorus (Bars 25-32)
+  < b-8. > d16 f8 b-8 > d4+16 < b-8 f16 > c8. e16 g8 > c8 < e4+16 c8 < g16 > d8. f16 a8 > d8 < f4+16 d8 < a16 > f8. a16 > c8 f8 a4+16 f8 c16 > d8. g16 b-8 > d8 g4+16 d8 < b-16 > e8. a16 > c8 e8 a4+16 e8 c16 > f8. b-16 > d8 f8 b-4+16 f8 d16 > c+8. d16 e8 f8 g8 > c+8 < e4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  > d4+8. < b-16 > e8 d8 c8 < b-16 a16 > c4+8. < a16 > d8 c8 < b-8 a16 g16 < a4+8. f16 > c8 < b-8 a8 b-16 > c16 c8. d16 f8 a8 f4+16 e8 d16 > d4+8. < b-16 > e8 d8 c8 < b-16 a16 > e4+8. c16 f8 e8 d8 c16 < b-16 > f4+8. d16 a8 f8 d8 c16 < b-16 f8. g16 a8 > c8 d8 f8 d4
+  > d4+8. < b-16 > e8 d8 c8 < b-16 a16 > c4+8. < a16 > d8 c8 < b-8 a16 g16 < a4+8. f16 > c8 < b-8 a8 b-16 > c16 c8. d16 f8 a8 f4+16 e8 d16 g8. a16 b-8 > c8 d8. < b-16 g8. e16 a8. b-16 > c8 d8 e8. c16 < a8. f16 b-8. > c16 d8 e8 f8 a8 f8. d16 > c+8. d16 e8 f8 g8 > c+8 < e4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  r1 r1 r1 r1 r1 r1 r1 r1
+  > d8. e16 f8 g8 a8 > d8 < a8. f16 > c8. d16 e8 f8 g8 > c8 < g8. e16 < b-8. > c16 d8 e8 f8. d16 < b-8. g16 a8 b-8 > c8 f8 < a4+16 g8 f16 g8. a16 b-8 > d8 < b-8. g16 e8. d16 d8. e16 f8 g8 a8 > d8 < a8. f16 e8. f16 g8 a8 > d8 < a8 e4 > c+8. d16 e8 f8 g8 e8 c+8 < a8
+  ; Section E - Outro / Transition (Bars 65-72)
+  < b-8. > c16 d8 e8 f8 a8 f8. d16 > c8. d16 e8 f8 a8 f8 e8. c16 > d8. e16 f8 a8 f4+16 e8 d16 f8. g16 a8 > c8 < f4+16 e8 d16 > g8. a16 b-8 > c8 d8. < b-16 g8. e16 b-8. > c16 d8 e8 f8 a8 f8. d16 > c+8. d16 e8 f8 a8 e8 c+4 a8. b-16 > c+8 d8 e8 c+8 < a8 e8
+
+; Part C
+C @sparkle-bell o6 v0.65 p0.45 l16
+  ; Intro (Bars 1-8)
+  r1 r2 r8 > d16 f16 a16 > d16 f8 r1 r2 r8 < a16 > c+16 e16 a16 > c+8 r1 r1 r1 r1
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  r1 r1 r1 r1 r1 r1 r1 r1
+  r1 r1 r1 r1 r1 r1 r1 r1
+  ; Section B - Pre-Chorus (Bars 25-32)
+  r8 f16 b-16 > d16 f16 b-16 > d16 < f16 d16 < b-16 f16 d16 < b-16 f16 d16 r8 g16 > c16 e16 g16 > c16 e16 < g16 e16 c16 < g16 e16 c16 < g16 e16 r8 a16 > d16 f16 a16 > d16 f16 < a16 f16 d16 < a16 f16 d16 < a16 f16 r8 > c16 f16 a16 > c16 f16 a16 < f16 c16 < a16 f16 c16 < a16 f16 c16 r8 d16 g16 b-16 > d16 g16 b-16 < g16 d16 < b-16 g16 d16 < b-16 g16 d16 r8 e16 a16 > c16 e16 a16 > c16 < a16 e16 c16 < a16 e16 c16 < a16 e16 r8 f16 b-16 > d16 f16 b-16 > d16 < b-16 f16 d16 < b-16 f16 d16 < b-16 f16 r8 < a16 > c+16 e16 a16 > c+16 e16 a16 g16 e16 c+16 < a16 g16 e16 c+16
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [d f a > d <]4
+  [b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [a > c e a <]4 [< b- > d f b-]4 [< a > c+ e g]4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  r1 r1 r1 r1 r8 > d16 f16 a16 > d16 f16 a16 f16 d16 < a16 f16 d16 < a16 f16 d16 r8 < b-16 > d16 g16 b-16 > d16 g16 d16 < b-16 g16 d16 < b-16 g16 d16 < b-16 r8 < g16 > c16 e16 g16 > c16 e16 c16 < g16 e16 c16 < g16 e16 c16 < g16 r8 < a16 > c16 f16 a16 > c16 f16 c16 < a16 f16 c16 < a16 f16 c16 < a16
+  r1 r1 r1 r1 r1 r1 r1 r1
+  ; Section E - Outro / Transition (Bars 65-72)
+  [b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [< b- > d f b-]4 [< a > d e a]4 [< a > c+ e g]4
+
+; Part D
+D @arp-synth o5 v0.55 p-0.65 l16
+  ; Intro (Bars 1-8)
+  [d f a > d <]4 [d f a > d <]4 [d f a > d <]4 [< a > c+ e a]4 [d f a > d <]4 [< b- > d f b-]4 [c e g > c <]4 [< a > c+ e g]4
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  [d f a > d <]4 [< b- > d f b-]4 [c e g > c <]4 [f a > c f <]4 [g b- > d g <]4 [< b- > d f b-]4 [< a > d e a]4 [< a > c+ e g]4
+  [d f a > d <]4 [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [g b- > d g <]4 [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4
+  ; Section B - Pre-Chorus (Bars 25-32)
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [a > c e a <]4 [< b- > d f b-]4 [< a > c+ e g]4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [d f a > d <]4
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [a > c e a <]4 [< b- > d f b-]4 [< a > c+ e g]4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  [d f a > d <]4 [c e g > c <]4 [< b- > d f b-]4 [< a > c+ e g]4 [d f a > d <]4 [g b- > d g <]4 [c e g > c <]4 [f a > c f <]4
+  [< b- > d f b-]4 [a > c e a <]4 [g b- > d g <]4 [f a > c f <]4 [< e g b- > e <]4 [g b- > d g <]4 [< a > d e a]4 [< a > c+ e g]4
+  ; Section E - Outro / Transition (Bars 65-72)
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [< b- > d f b-]4 [< a > d e a]4 [< a > c+ e g]4
+
+; Part E
+E @arp-synth o5 v0.50 p0.65 l16
+  ; Intro (Bars 1-8)
+  r16 [d f a > d <]3 d16 f16 a16 [d f a > d <]4 [d f a > d <]4 [< a > c+ e a]4 [d f a > d <]4 [< b- > d f b-]4 [c e g > c <]4 [< a > c+ e g]4
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  [d f a > d <]4 [< b- > d f b-]4 [c e g > c <]4 [f a > c f <]4 [g b- > d g <]4 [< b- > d f b-]4 [< a > d e a]4 [< a > c+ e g]4
+  [d f a > d <]4 [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [g b- > d g <]4 [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4
+  ; Section B - Pre-Chorus (Bars 25-32)
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [a > c e a <]4 [< b- > d f b-]4 [< a > c+ e g]4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [d f a > d <]4
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [a > c e a <]4 [< b- > d f b-]4 [< a > c+ e g]4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  [d f a > d <]4 [c e g > c <]4 [< b- > d f b-]4 [< a > c+ e g]4 [d f a > d <]4 [g b- > d g <]4 [c e g > c <]4 [f a > c f <]4
+  [< b- > d f b-]4 [a > c e a <]4 [g b- > d g <]4 [f a > c f <]4 [< e g b- > e <]4 [g b- > d g <]4 [< a > d e a]4 [< a > c+ e g]4
+  ; Section E - Outro / Transition (Bars 65-72)
+  [< b- > d f b-]4 [c e g > c <]4 [d f a > d <]4 [f a > c f <]4 [g b- > d g <]4 [< b- > d f b-]4 [< a > d e a]4 [< a > c+ e g]4
+
+; Part F
+F @brass-pad o4 v0.62 p-0.35 l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 r16 > d16 r8 < a8 > d8 r8 f8 r4 r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < c16 r8 > e8 g8 r8 < c8 r4 r16 < c+16 r8 > e8 g8 r8 < c+8 r4
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  r16 > d16 r8 < a8 > d8 r8 f8 r4 r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < c16 r8 > e8 g8 r8 < c8 r4 r16 < f16 r8 > a8 > c8 r8 < f8 r4 r16 < g16 r8 > b-8 > d8 r8 < g8 r4 r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < a16 r8 > d8 e8 r8 < a8 r4 r16 < c+16 r8 > e8 g8 r8 < c+8 r4
+  r16 > d16 r8 < a8 > d8 r8 f8 r4 r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < c16 r8 > e8 g8 r8 < c8 r4 r16 > d16 r8 < a8 > d8 r8 f8 r4 r16 < g16 r8 > b-8 > d8 r8 < g8 r4 r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < c16 r8 > e8 g8 r8 < c8 r4 r16 > d16 r8 < a8 > d8 r8 f8 r4
+  ; Section B - Pre-Chorus (Bars 25-32)
+  r8 < b-8 > d8 f8 b-2 r8 < c8 > e8 g8 > c2 r8 < d8 > f8 a8 > d2 r8 < f8 > a8 > c8 f2 r8 < g8 > b-8 > d8 g2 r8 < a8 > c8 e8 a2 r8 < b-8 > d8 f8 b-2 r16 < a16 r8 > c+8 e8 g8 r8 r4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  r16 < b-16 > d16 f16 r8 < b-8 > d8 r8 f4 r16 < c16 > e16 g16 r8 < c8 > e8 r8 g4 r16 > d16 f16 a16 r8 < a8 > d8 r8 f4 r16 < f16 > a16 > c16 r8 < f8 > a8 r8 > c4 r16 < b-16 > d16 f16 r8 < b-8 > d8 r8 f4 r16 < c16 > e16 g16 r8 < c8 > e8 r8 g4 r16 > d16 f16 a16 r8 < a8 > d8 r8 f4 r16 > d16 f16 a16 r8 < a8 > d8 r8 f4
+  r16 < b-16 > d16 f16 r8 < b-8 > d8 r8 f4 r16 < c16 > e16 g16 r8 < c8 > e8 r8 g4 r16 > d16 f16 a16 r8 < a8 > d8 r8 f4 r16 < f16 > a16 > c16 r8 < f8 > a8 r8 > c4 r16 < g16 > b-16 > d16 r8 < g8 > b-8 r8 > d4 r16 < a16 > c16 e16 r8 < a8 > c8 r8 e4 r16 < b-16 > d16 f16 r8 < b-8 > d8 r8 f4 r16 < a16 r8 > c+8 e8 g8 r8 r4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  r16 > d16 r8 < a8 > d8 r8 f8 r4 r16 < c16 r8 > e8 g8 r8 < c8 r4 r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < c+16 r8 > e8 g8 r8 < c+8 r4 r16 > d16 r8 < a8 > d8 r8 f8 r4 r16 < g16 r8 > b-8 > d8 r8 < g8 r4 r16 < c16 r8 > e8 g8 r8 < c8 r4 r16 < f16 r8 > a8 > c8 r8 < f8 r4
+  r16 < b-16 r8 > d8 f8 r8 < b-8 r4 r16 < a16 r8 > c8 e8 r8 < a8 r4 r16 < g16 r8 > b-8 > d8 r8 < g8 r4 r16 < f16 r8 > a8 > c8 r8 < f8 r4 r16 < e16 r8 > g8 b-8 r8 < e8 r4 r16 < g16 r8 > b-8 > d8 r8 < g8 r4 r16 < a16 r8 > d8 e8 r8 < a8 r4 r16 < a16 r8 > c+8 e8 g8 r8 r4
+  ; Section E - Outro / Transition (Bars 65-72)
+  r16 < b-16 > d16 f16 r8 < b-8 > d8 r8 f4 r16 < c16 > e16 g16 r8 < c8 > e8 r8 g4 r16 > d16 f16 a16 r8 < a8 > d8 r8 f4 r16 < f16 > a16 > c16 r8 < f8 > a8 r8 > c4 r16 < g16 > b-16 > d16 r8 < g8 > b-8 r8 > d4 r16 < b-16 > d16 f16 r8 < b-8 > d8 r8 f4 r16 < a16 > d16 e16 r8 < a8 > d8 r8 e4 r16 < a16 r8 > c+8 e8 g8 r8 r4
+
+; Part G
+G @brass-pad o4 v0.58 p0.35 l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 r16 < a16 r8 > f8 a8 r8 d8 r4 r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < g16 r8 > e8 g8 r8 < a8 r4 r16 < e16 r8 > c+8 e8 r8 < a8 r4
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  r16 < a16 r8 > f8 a8 r8 d8 r4 r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < g16 r8 > e8 g8 r8 < a8 r4 r16 < c16 r8 > f8 a8 r8 < f8 r4 r16 < d16 r8 > g8 b-8 r8 < g8 r4 r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < e16 r8 > a8 > d8 r8 < a8 r4 r16 < e16 r8 > c+8 e8 r8 < a8 r4
+  r16 < a16 r8 > f8 a8 r8 d8 r4 r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < g16 r8 > e8 g8 r8 < a8 r4 r16 < a16 r8 > f8 a8 r8 d8 r4 r16 < d16 r8 > g8 b-8 r8 < g8 r4 r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < g16 r8 > e8 g8 r8 < a8 r4 r16 < a16 r8 > f8 a8 r8 d8 r4
+  ; Section B - Pre-Chorus (Bars 25-32)
+  r8 < f8 b-8 > d8 f2 r8 < g8 > c8 e8 g2 r8 < a8 > d8 f8 a2 r8 < c8 > f8 a8 > c2 r8 < d8 > g8 b-8 > d2 r8 < e8 > a8 > c8 e2 r8 < f8 b-8 > d8 f2 r16 < e16 r8 > a8 > c+8 e8 r8 r4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  r16 < f16 > b-16 > d16 r8 < f8 b-8 r8 > d4 r16 < g16 > c16 e16 r8 < g8 > c8 r8 e4 r16 < a16 > d16 f16 r8 < f8 a8 r8 > d4 r16 < c16 > f16 a16 r8 < c8 f8 r8 a4 r16 < f16 > b-16 > d16 r8 < f8 b-8 r8 > d4 r16 < g16 > c16 e16 r8 < g8 > c8 r8 e4 r16 < a16 > d16 f16 r8 < f8 a8 r8 > d4 r16 < a16 > d16 f16 r8 < f8 a8 r8 > d4
+  r16 < f16 > b-16 > d16 r8 < f8 b-8 r8 > d4 r16 < g16 > c16 e16 r8 < g8 > c8 r8 e4 r16 < a16 > d16 f16 r8 < f8 a8 r8 > d4 r16 < c16 > f16 a16 r8 < c8 f8 r8 a4 r16 < d16 > g16 b-16 r8 < d8 g8 r8 b-4 r16 < e16 > a16 > c16 r8 < e8 a8 r8 > c4 r16 < f16 > b-16 > d16 r8 < f8 b-8 r8 > d4 r16 < e16 r8 > a8 > c+8 e8 r8 r4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  r16 < a16 r8 > f8 a8 r8 d8 r4 r16 < g16 r8 > e8 g8 r8 < a8 r4 r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < e16 r8 > c+8 e8 r8 < a8 r4 r16 < a16 r8 > f8 a8 r8 d8 r4 r16 < d16 r8 > g8 b-8 r8 < g8 r4 r16 < g16 r8 > e8 g8 r8 < a8 r4 r16 < c16 r8 > f8 a8 r8 < f8 r4
+  r16 < f16 r8 > d8 f8 r8 < g8 r4 r16 < e16 r8 > a8 > c8 r8 < a8 r4 r16 < d16 r8 > g8 b-8 r8 < g8 r4 r16 < c16 r8 > f8 a8 r8 < f8 r4 r16 < b-16 r8 > e8 g8 r8 < b-8 r4 r16 < d16 r8 > g8 b-8 r8 < g8 r4 r16 < e16 r8 > a8 > d8 r8 < a8 r4 r16 < e16 r8 > a8 > c+8 e8 r8 r4
+  ; Section E - Outro / Transition (Bars 65-72)
+  r16 < f16 > b-16 > d16 r8 < f8 b-8 r8 > d4 r16 < g16 > c16 e16 r8 < g8 > c8 r8 e4 r16 < a16 > d16 f16 r8 < f8 a8 r8 > d4 r16 < c16 > f16 a16 r8 < c8 f8 r8 a4 r16 < d16 > g16 b-16 r8 < d8 g8 r8 b-4 r16 < f16 > b-16 > d16 r8 < f8 b-8 r8 > d4 r16 < e16 > a16 > d16 r8 < e8 a8 r8 > d4 r16 < e16 r8 > a8 > c+8 e8 r8 r4
+
+; Part H
+H @epiano o4 v0.52 p-0.2 l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < a16 e16 a16 > d16 r16 < a16 e16 a16 > d16 r16 < a16 e16 a16 > d16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8
+  d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8
+  ; Section B - Pre-Chorus (Bars 25-32)
+  < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < a16 e16 a16 > c16 r16 < a16 e16 a16 > c16 r16 < a16 e16 a16 > c16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8
+  ; Section C - Chorus / Climax (Bars 33-48)
+  < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8
+  < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < a16 e16 a16 > c16 r16 < a16 e16 a16 > c16 r16 < a16 e16 a16 > c16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8
+  ; Section D - Bridge / Solo (Bars 49-64)
+  d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8
+  < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < a16 e16 a16 > c16 r16 < a16 e16 a16 > c16 r16 < a16 e16 a16 > c16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8 < e16 b-16 > e16 g16 r16 < e16 b-16 > e16 g16 r16 < e16 b-16 > e16 g16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < a16 e16 a16 > d16 r16 < a16 e16 a16 > d16 r16 < a16 e16 a16 > d16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8
+  ; Section E - Outro / Transition (Bars 65-72)
+  < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r16 < c16 g16 > c16 e16 r8 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r16 d16 < a16 > d16 f16 r8 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r16 < f16 > c16 f16 a16 r8 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r16 < g16 > d16 g16 b-16 r8 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r16 < b-16 f16 b-16 > d16 r8 < a16 e16 a16 > d16 r16 < a16 e16 a16 > d16 r16 < a16 e16 a16 > d16 r8 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r16 < a16 e16 a16 > c+16 r8
+
+; Part I
+I @drive-bass o3 v0.88 p0 l16
+  ; Intro (Bars 1-8)
+  r1 r1 [d8 r8]4 d8 r8 d8 r8 a8 a8 a8 a8 d16 d > d < d d d > d < d d d > d < d d e f g b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c a16 < a > a < a a a > a < a a a > a < a a g f e
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  d16 d > d < d d d > d < d d d > d < d d e f g b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c f16 < f > f < f f f > f < f f f > f < f f g a f g16 < g > g < g g g > g < g g g > g < g g a b- g b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e a16 < a > a < a a a > a < a a a > a < a a b- > c < a a16 < a > a < a a a > a < a a a > a < a a g f e
+  d16 d > d < d d d > d < d d d > d < d d e f g b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c d16 d > d < d d d > d < d d d > d < d d e f d g16 < g > g < g g g > g < g g g > g < g g a b- g b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c d16 d > d < d d d > d < d d d > d < d d c < b- a
+  ; Section B - Pre-Chorus (Bars 25-32)
+  b-16 r16 b-16 b-16 b-16 r16 b-16 b-16 b-16 r16 b-16 b-16 b-16 > c16 d16 e16 c16 r16 c16 c16 c16 r16 c16 c16 c16 r16 c16 c16 c16 d16 e16 f16 d16 r16 d16 d16 d16 r16 d16 d16 d16 r16 d16 d16 d16 e16 f16 g16 f16 r16 f16 f16 f16 r16 f16 f16 f16 r16 f16 f16 f16 g16 a16 f16 g16 r16 g16 g16 g16 r16 g16 g16 g16 r16 g16 g16 g16 a16 b-16 g16 a16 r16 a16 a16 a16 r16 a16 a16 a16 r16 a16 a16 a16 b-16 > c16 < a16 b-16 r16 b-16 b-16 b-16 r16 b-16 b-16 b-16 r16 b-16 b-16 b-16 > c16 d16 e16 a16 a a a a a a a a16 a16 a16 a16 a16 a16 a16 a16
+  ; Section C - Chorus / Climax (Bars 33-48)
+  b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c d16 d > d < d d d > d < d d d > d < d d e f g f16 < f > f < f f f > f < f f f > f < f f g a f b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c d16 d > d < d d d > d < d d d > d < d d e f g d16 d > d < d d d > d < d d d > d < d d c < b- a
+  b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c d16 d > d < d d d > d < d d d > d < d d e f g f16 < f > f < f f f > f < f f f > f < f f g a f g16 < g > g < g g g > g < g g g > g < g g a b- g a16 < a > a < a a a > a < a a a > a < a a b- > c < a b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e a16 < a > a < a a a > a < a a a > a < a a g f e
+  ; Section D - Bridge / Solo (Bars 49-64)
+  d8 r8 d16 d8. r8 d16 d16 d8 e16 f16 c8 r8 c16 c8. r8 c16 c16 c8 d16 e16 b-8 r8 b-16 b-8. r8 b-16 b-16 b-8 > c16 d16 a8 r8 a16 a8. r8 a16 a16 a8 g16 e16 d16 d > d < d d d > d < d d d > d < d d e f g g16 < g > g < g g g > g < g g g > g < g g a b- g c16 < c > c < c c c > c < c c c > c < c c d e c f16 < f > f < f f f > f < f f f > f < f f g a f
+  b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e a16 < a > a < a a a > a < a a a > a < a a b- > c < a g16 < g > g < g g g > g < g g g > g < g g a b- g f16 < f > f < f f f > f < f f f > f < f f g a f e16 < e > e < e e e > e < e e e > e < e e f g e g16 < g > g < g g g > g < g g g > g < g g a b- g a16 < a > a < a a a > a < a a a > a < a a b- > c < a a16 a a a a a a a a16 a16 a16 a16 a16 a16 a16 a16
+  ; Section E - Outro / Transition (Bars 65-72)
+  b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e c16 < c > c < c c c > c < c c c > c < c c d e c d16 d > d < d d d > d < d d d > d < d d e f g f16 < f > f < f f f > f < f f f > f < f f g a f g16 < g > g < g g g > g < g g g > g < g g a b- g b-16 < b- > b- < b- b- b- > b- < b- b- b- > b- < b- b- > c d e a16 < a > a < a a a > a < a a a > a < a a b- > c < a a16 a a a a a a a a16 a16 a16 a16 a8 r8
+
+; Part J
+J @kick o2 v0.92 p0 MT0,freq MS0,140,-70 MW0,exp,-35 MO0,key_on MA0,on *0,on l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 r8
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 r8
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 r8
+  ; Section B - Pre-Chorus (Bars 25-32)
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 c8
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 r8
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 c8
+  ; Section D - Bridge / Solo (Bars 49-64)
+  c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 c8 c8 c8
+  ; Section E - Outro / Transition (Bars 65-72)
+  [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 [c8 r8 c8 r8]2 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 r8 c8 c8 c8 r8
+
+; Part K
+K @snare o3 v0.84 p0 l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r2 [c16]8 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 c16 c16 c16 c16 c16 c16 c8
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 c16 c16 c16 c16 c16 c16 c8
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 c16 c16 c16 c16 c16 c16 c8
+  ; Section B - Pre-Chorus (Bars 25-32)
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 [c16]8 [c16]16
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 c16 c16 c16 c16 c16 c16 c8
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [c16]16
+  ; Section D - Bridge / Solo (Bars 49-64)
+  r4 c4 r4 c4 r4 c4 r4 c4 r4 c4 r4 c4 r4 c4 r4 c4 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 [c16]8 [c16]16
+  ; Section E - Outro / Transition (Bars 65-72)
+  [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 [r4 c4]2 r4 c4 [c16]8 [c16]12 c8 r8
+
+; Part L
+L @hat-cl o6 v0.55 p0.3 l16
+  ; Intro (Bars 1-8)
+  r1 r1 [c c v0.75 c v0.55 c]4 [c c c c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4
+  ; Section B - Pre-Chorus (Bars 25-32)
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4 [c c c c]4
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4
+  ; Section D - Bridge / Solo (Bars 49-64)
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4 [c c c c]4
+  ; Section E - Outro / Transition (Bars 65-72)
+  [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c v0.75 c v0.55 c]4 [c c c c]4 [c c c c]4
+
+; Part M
+M @hat-op o6 v0.60 p-0.3 l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  ; Section B - Pre-Chorus (Bars 25-32)
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  ; Section C - Chorus / Climax (Bars 33-48)
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  ; Section D - Bridge / Solo (Bars 49-64)
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+  ; Section E - Outro / Transition (Bars 65-72)
+  [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 [r8 c8]4 r8 c8 r8 c8 r2
+
+; Part N
+N @crash o6 v0.72 p-0.15 l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 c1 r1 r1 r1
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  c1 r1 r1 r1 r1 r1 r1 r1
+  c1 r1 r1 r1 r1 r1 r1 r1
+  ; Section B - Pre-Chorus (Bars 25-32)
+  c1 r1 r1 r1 r1 r1 r1 r1
+  ; Section C - Chorus / Climax (Bars 33-48)
+  c1 r1 r1 r1 r1 r1 r1 r1
+  c1 r1 r1 r1 r1 r1 r1 r1
+  ; Section D - Bridge / Solo (Bars 49-64)
+  c1 r1 r1 r1 r1 r1 r1 r1
+  c1 r1 r1 r1 r1 r1 r1 r1
+  ; Section E - Outro / Transition (Bars 65-72)
+  c1 r1 r1 r1 r1 r1 r1 c1
+
+; Part O
+O @tom o3 v0.80 p0 MT0,freq MS0,100,-50 MW0,exp,-25 MO0,key_on MA0,on *0,on l16
+  ; Intro (Bars 1-8)
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  ; Loop point at Stage Theme (Section A, Bar 9)
+  L
+  ; Section A - Stage Theme (Bars 9-24)
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  ; Section B - Pre-Chorus (Bars 25-32)
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  ; Section C - Chorus / Climax (Bars 33-48)
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  ; Section D - Bridge / Solo (Bars 49-64)
+  r1 r1 r1 r1 r1 r1 r1 r1
+  r1 r1 r1 r1 r1 r1 r1 r2 d16 d16 < a16 a16 f16 f16 d8
+  ; Section E - Outro / Transition (Bars 65-72)
+  r1 r1 r1 r1 r1 r1 r1 d16 d16 < a16 a16 f16 f16 d16 d16 < a16 a16 f16 f16 d8 r8
