@@ -78,6 +78,20 @@ export function ParamField({
     return lo * Math.pow(max / lo, t);
   };
 
+  // Position of the thumb along the track as a percentage, used to fill the
+  // rendered track up to the thumb with the accent color.
+  const sliderValue = toSlider(value);
+  const sliderMin = log ? 0 : min;
+  const sliderMax = log ? 100 : max;
+  const progress =
+    sliderMax === sliderMin
+      ? 0
+      : Math.min(100, Math.max(0, ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * 100));
+  const sliderStyle: Record<string, string> = {
+    "--range-progress": `${progress}%`,
+  };
+  if (accent) sliderStyle["--accent"] = accent;
+
   return (
     <div class={classes.root} title={title ?? `${label}: ${value}`}>
       <label class={classes.label} htmlFor={id}>
@@ -90,9 +104,9 @@ export function ParamField({
         min={log ? 0 : min}
         max={log ? 100 : max}
         step={log ? 0.1 : step}
-        value={toSlider(value)}
+        value={sliderValue}
         onChange={(e) => onChange(fromSlider(parseFloat(e.currentTarget.value)))}
-        style={accent ? { accentColor: accent } : undefined}
+        style={sliderStyle}
       />
       <input
         class={classes.number}
