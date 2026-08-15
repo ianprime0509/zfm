@@ -14,6 +14,7 @@ const string = Tag.define();
 const note = Tag.define();
 const accidental = Tag.define();
 const command = Tag.define();
+const skipCommand = Tag.define();
 const partName = Tag.define();
 const patchName = Tag.define();
 const macroName = Tag.define();
@@ -285,6 +286,11 @@ function readToken(stream: StringStream, state: MmlState): string | null {
     return "comment";
   }
 
+  if (stream.peek() === "\"") {
+    stream.next();
+    return "skipCommand";
+  }
+
   switch (state.kind) {
     case "directive":
       return readDirective(stream, state);
@@ -329,6 +335,7 @@ const mmlParser: StreamParser<MmlState> = {
     note,
     accidental,
     command,
+    skipCommand,
     partName,
     patchName,
     macroName,
@@ -350,6 +357,7 @@ export const zfmHighlightStyle = HighlightStyle.define([
   { tag: note, color: "var(--color-syntax-note)" },
   { tag: accidental, color: "var(--color-syntax-accidental)" },
   { tag: command, color: "var(--color-syntax-command)" },
+  { tag: skipCommand, color: "var(--color-syntax-command)", fontWeight: "600" },
   { tag: partName, color: "var(--color-syntax-part)", fontWeight: "600" },
   { tag: patchName, color: "var(--color-syntax-patch)" },
   { tag: macroName, color: "var(--color-syntax-macro)" },

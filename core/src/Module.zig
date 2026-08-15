@@ -43,6 +43,10 @@ pub fn commandSpan(mod: *const Module, command: Command.Index) SourceIndex.Span 
     return mod.commands.items(.span)[@backingInt(command)];
 }
 
+pub fn commandSkipped(mod: *const Module, command: Command.Index) bool {
+    return mod.commands.items(.skipped)[@backingInt(command)];
+}
+
 pub const PartLength = struct {
     total: Ticks,
     loop: ?Ticks,
@@ -147,6 +151,7 @@ pub fn dump(mod: *const Module, gpa: Allocator, w: *Writer) (Writer.Error || All
         else
             @ptrCast(mod.commands.items(.data)),
         @ptrCast(mod.commands.items(.span)),
+        @ptrCast(mod.commands.items(.skipped)),
         @ptrCast(mod.parts),
         @ptrCast(mod.patches),
         @ptrCast(mod.extra.data),
@@ -196,6 +201,7 @@ pub fn load(gpa: Allocator, r: *Reader) (Reader.Error || Allocator.Error)!Module
         else
             @ptrCast(mod.commands.items(.data)),
         @ptrCast(mod.commands.items(.span)),
+        @ptrCast(mod.commands.items(.skipped)),
         @ptrCast(mod.parts),
         @ptrCast(mod.patches),
         @ptrCast(mod.extra.data),
@@ -225,7 +231,12 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
 
     try out.objectField("commands");
     try out.beginArray();
-    for (mod.commands.items(.tag), mod.commands.items(.data), mod.commands.items(.span)) |tag, data, span| {
+    for (
+        mod.commands.items(.tag),
+        mod.commands.items(.data),
+        mod.commands.items(.span),
+        mod.commands.items(.skipped),
+    ) |tag, data, span, skipped| {
         try out.beginObject();
         try out.objectField(@tagName(tag));
         switch (Command.Tag.data_tags[@backingInt(tag)]) {
@@ -241,6 +252,10 @@ pub fn dumpJson(mod: *const Module, w: *Writer) Writer.Error!void {
         if (tag != .end) {
             try out.objectField("span");
             try out.write(span);
+        }
+        if (skipped) {
+            try out.objectField("skipped");
+            try out.write(true);
         }
         try out.endObject();
     }
@@ -377,6 +392,7 @@ pub const Command = struct {
     tag: Tag,
     data: Data,
     span: SourceIndex.Span,
+    skipped: bool,
 
     pub const Index = enum(u32) {
         _,

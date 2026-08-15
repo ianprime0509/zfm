@@ -2,6 +2,7 @@ source: [:0]const u8,
 pos: SourceIndex,
 current_part: ?u8,
 current_start: SourceIndex,
+skipping: bool,
 parts: std.array_hash_map.Auto(u8, Part),
 patches: std.array_hash_map.Auto(StringPool.Index, Patch.Entry),
 macros: std.array_hash_map.Auto(StringPool.Index, SourceIndex),
@@ -25,6 +26,7 @@ pub fn init(gpa: Allocator, source: [:0]const u8) Compiler {
         .pos = .start,
         .current_part = null,
         .current_start = undefined,
+        .skipping = false,
         .parts = .empty,
         .patches = .empty,
         .macros = .empty,
@@ -105,11 +107,12 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         const start: Command.Index = @fromBackingInt(@intCast(commands.len));
         try commands.ensureUnusedCapacity(c.gpa, part.commands.len + 1);
         const slice = part.commands.slice();
-        for (slice.items(.tag), slice.items(.data), slice.items(.span)) |tag, data, span| {
+        for (slice.items(.tag), slice.items(.data), slice.items(.span), slice.items(.skipped)) |tag, data, span, skipped| {
             commands.appendAssumeCapacity(.{
                 .tag = tag,
                 .data = data,
                 .span = span,
+                .skipped = skipped,
             });
         }
 
@@ -123,6 +126,7 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
             .tag = .end,
             .data = .{ .none = {} },
             .span = undefined,
+            .skipped = false,
         });
     }
 
@@ -155,6 +159,12 @@ fn compileLine(c: *Compiler) !void {
         '@' => try c.compilePatch(),
         '!' => try c.compileMacro(),
         'A'...'Z', 'a'...'z' => try c.compileParts(),
+        '"' => {
+            c.skipChar();
+            for (c.parts.values()) |*part| part.skipping = !part.skipping;
+            c.skipping = !c.skipping;
+            try c.endLineAndContinuation();
+        },
         else => try c.endLineAndContinuation(),
     }
 }
@@ -338,7 +348,7 @@ fn compileParts(c: *Compiler) !void {
         if (!isPartNameChar(part_name)) continue;
         const gop = try c.parts.getOrPut(c.gpa, part_name);
         if (!gop.found_existing) {
-            gop.value_ptr.* = .init;
+            gop.value_ptr.* = .init(c.skipping);
         }
         const part = gop.value_ptr;
 
@@ -491,6 +501,10 @@ fn compileCommand(c: *Compiler, part: *Part, call_stack: *CallStack) !void {
                     try c.reportSpan(.invalid_command, c.current_start, c.pos);
                 },
             }
+        },
+        '"' => {
+            c.skipChar();
+            part.skipping = !part.skipping;
         },
         else => {
             c.skipChar();
@@ -1064,15 +1078,19 @@ const Part = struct {
     default_length: Ticks,
     global_loop: ?Command.Index,
     loops: Loop.Stack,
+    skipping: bool,
 
-    const init: Part = .{
-        .commands = .empty,
-        .octave = 4.0,
-        .default_accidentals = .initFill(0.0),
-        .default_length = Ticks.zenlen.fraction(4) catch unreachable,
-        .global_loop = null,
-        .loops = .empty,
-    };
+    fn init(skipping: bool) Part {
+        return .{
+            .commands = .empty,
+            .octave = 4.0,
+            .default_accidentals = .initFill(0.0),
+            .default_length = Ticks.zenlen.fraction(4) catch unreachable,
+            .global_loop = null,
+            .loops = .empty,
+            .skipping = skipping,
+        };
+    }
 
     fn deinit(part: *Part, gpa: Allocator) void {
         part.commands.deinit(gpa);
@@ -1088,6 +1106,10 @@ const Part = struct {
             .tag = tag,
             .data = data,
             .span = .{ .start = c.current_start, .end = c.pos },
+            .skipped = part.skipping and switch (tag) {
+                .key_on, .key_off, .rest => true,
+                else => false,
+            },
         });
     }
 
@@ -1275,6 +1297,10 @@ test "multiple parts" {
     try runTest("multiple-parts");
 }
 
+test "skip" {
+    try runTest("skip");
+}
+
 fn runTest(comptime name: []const u8) !void {
     const gpa = std.testing.allocator;
 
@@ -1334,6 +1360,10 @@ test "tie errors" {
     try runErrorTest("tie-errors");
 }
 
+test "invalid skip" {
+    try runErrorTest("invalid-skip");
+}
+
 fn runErrorTest(comptime name: []const u8) !void {
     const gpa = std.testing.allocator;
 
@@ -1367,9 +1397,9 @@ const assert = std.debug.assert;
 const zfm = @import("./zfm.zig");
 const Driver = zfm.Driver;
 const Module = zfm.Module;
+const Command = Module.Command;
 const SourceIndex = Module.SourceIndex;
 const SourceLocation = Module.SourceLocation;
-const Command = Module.Command;
 const Patch = Module.Patch;
 const Lfo = Module.Lfo;
 const Extra = Module.Extra;

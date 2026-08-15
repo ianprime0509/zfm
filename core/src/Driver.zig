@@ -69,6 +69,12 @@ fn execute(
     voice: Voice.Index,
     command: Command.Index,
 ) Command.Index {
+    if (driver.mod.commandSkipped(command)) {
+        // The only commands which can be skipped are key_on, key_off, and rest,
+        // so it is safe to just go to the immediately next command.
+        return command.next();
+    }
+
     switch (driver.mod.commandTag(command)) {
         .end => {
             if (part.global_loop == command) {

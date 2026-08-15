@@ -159,6 +159,7 @@ first character in the line:
 - `@`: patch definition
 - `!`: macro definition
 - `A-Z`, `a-z`: part definition
+- `"`: toggles skip state of all current and future parts (see the `"` command)
 
 Comments may be added using `;`: all characters starting with the `;` and
 continuing to the end of the line are ignored by the compiler. As an exception,
@@ -571,3 +572,45 @@ Examples:
 - `_{+f=c-b}`: sets F to sharp, C to natural, and B to flat in the part's key
   signature
 - `_{++f}`: sets F to two sharps in the part's key signature
+
+#### Toggle skip (`"`)
+
+Toggles whether note and rest commands are skipped on the part. This is a
+compile-only command.
+
+Unlike comments, which completely skip processing of commented text, this
+command does not stop the compiler from processing and validating skipped
+commands. It only removes any skipped notes and rests from the final output,
+keeping all other commands (such as patch settings, key signature changes, and
+LFO settings) as-is.
+
+The purpose of this command is to allow testing different sections of a track.
+For example, consider the following MML snippet:
+
+```zfm
+"
+A @electric-piano o3 cdefgab>c<
+"
+A defgab>cd<
+```
+
+The entire first line of part A is skipped: none of the notes in the C major
+scale will be played. However, the `@electric-piano` patch setting and octave
+setting will still be applied, so the second line of part A will sound exactly
+as it would if no skip commands had been used.
+
+As in the above example, the most common use of this command is at the beginning
+of a line, which causes it to apply to all current and future parts, allowing
+entire sections of the track to be skipped. However, it is possible to use it
+within a part as a normal command:
+
+```zfm
+A @electric-piano o3 cd"efgab>"c<
+```
+
+Because the octave change command is still processed within the skip, this is
+equivalent to the following:
+
+```zfm
+A @electric-piano o3 cd>c<
+```

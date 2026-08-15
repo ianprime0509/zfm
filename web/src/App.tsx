@@ -98,7 +98,11 @@ function App() {
     // linter surfaces compile errors in the editor; on failure just leave
     // the synth untouched.
     const ok = await compiler.compile(source);
-    if (!ok) return;
+    if (!ok) {
+      // TODO: display a modal with these errors or do something to signal it to the user
+      console.error(await compiler.errors());
+      return;
+    }
     const mod = await compiler.module();
     await synth.load({ mod });
     setPlaying(true);
