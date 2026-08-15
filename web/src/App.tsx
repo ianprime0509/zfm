@@ -13,6 +13,7 @@ import { PanelRightClose, PanelRightOpen, Play, Square, Download } from "lucide-
 import { Button } from "./components/Button.tsx";
 import { LoadButton } from "./components/LoadButton.tsx";
 import { downloadText } from "./download.ts";
+import INITIAL_TRACK from "../../tracks/lofi.zfm?raw";
 
 // App shell: a fixed "ZFM" header above a body that pairs a Monaco text
 // editor with the bank editor.
@@ -32,16 +33,6 @@ import { downloadText } from "./download.ts";
 // track and loads it into the synth; while playing, keyboard play in the bank
 // editor is disabled so the two never drive the synth at once.
 
-const DEFAULT_TRACK = `#title Test
-#tempo 120
-
-@test 0 1.
-  sin 1 1 0 1 0 0 0 1
-  sin 1 1 0 1 0 0 0 1
-
-A @test cdefgab
-`;
-
 const TRACK_KEY = "track";
 const BANK_KEY = "bank";
 
@@ -53,7 +44,7 @@ function App() {
   // The track source lives here so the play button can compile the exact
   // text currently in the editor. Restore the last-edited track from local
   // storage so the user resumes where they left off.
-  const [source, setSource] = useState(() => loadString(TRACK_KEY, DEFAULT_TRACK));
+  const [source, setSource] = useState(() => loadString(TRACK_KEY, INITIAL_TRACK));
   useEffect(() => saveString(TRACK_KEY, source), [source]);
 
   const [playing, setPlaying] = useState(false);
