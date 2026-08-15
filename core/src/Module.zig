@@ -435,7 +435,7 @@ pub const Command = struct {
         set_lfo_adjust,
         loop,
 
-        const data_tags = std.enums.directEnumArray(Tag, std.meta.FieldEnum(Data), 0, .{
+        pub const data_tags = std.enums.directEnumArray(Tag, std.meta.FieldEnum(Data), 0, .{
             .end = .none,
             .rest = .ticks,
             .key_on = .freq,

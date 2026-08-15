@@ -1305,7 +1305,6 @@ fn runTest(comptime name: []const u8) !void {
     const gpa = std.testing.allocator;
 
     const source = @embedFile("./Compiler/testdata/" ++ name ++ ".zfm");
-    const expected_json = @embedFile("./Compiler/testdata/" ++ name ++ ".json");
 
     var compiler: Compiler = .init(gpa, source);
     defer compiler.deinit();
@@ -1313,11 +1312,53 @@ fn runTest(comptime name: []const u8) !void {
     try std.testing.expect(compiler.errors.items.len == 0);
     var mod: Module = try compiler.toModule();
     defer mod.deinit(gpa);
+
+    // JSON output snapshot
+    const expected_json = @embedFile("./Compiler/testdata/" ++ name ++ ".json");
     var actual_json: Writer.Allocating = .init(gpa);
     defer actual_json.deinit();
     try mod.dumpJson(&actual_json.writer);
-
     try std.testing.expectEqualStrings(expected_json, actual_json.written());
+
+    // Module dump/load round-trip
+    var dumped: Writer.Allocating = .init(gpa);
+    defer dumped.deinit();
+    try mod.dump(gpa, &dumped.writer);
+    var dumped_reader: Reader = .fixed(dumped.written());
+    var loaded_mod: Module = try .load(gpa, &dumped_reader);
+    defer loaded_mod.deinit(gpa);
+    try expectEqualModules(&mod, &loaded_mod);
+}
+
+fn expectEqualModules(expected: *const Module, actual: *const Module) !void {
+    try std.testing.expectEqualSlices(Command.Tag, expected.commands.items(.tag), actual.commands.items(.tag));
+    // We already know at this point that the tags are the same, thanks to the previous assertion.
+    for (
+        expected.commands.items(.tag),
+        expected.commands.items(.data),
+        actual.commands.items(.data),
+    ) |tag, expected_data, actual_data| {
+        switch (tag) {
+            inline else => |t| {
+                const data_tag = @tagName(Command.Tag.data_tags[@backingInt(t)]);
+                try std.testing.expectEqual(
+                    @field(expected_data, data_tag),
+                    @field(actual_data, data_tag),
+                );
+            },
+        }
+    }
+    try std.testing.expectEqualSlices(SourceIndex.Span, expected.commands.items(.span), actual.commands.items(.span));
+    try std.testing.expectEqualSlices(bool, expected.commands.items(.skipped), actual.commands.items(.skipped));
+    try std.testing.expectEqualSlices(Module.Part, expected.parts, actual.parts);
+    try std.testing.expectEqualSlices(Patch.Entry, expected.patches, actual.patches);
+    try std.testing.expectEqualSlices(Extra.Datum, expected.extra.data, actual.extra.data);
+    try std.testing.expectEqualStrings(expected.strings.bytes, actual.strings.bytes);
+
+    try std.testing.expectEqual(expected.title, actual.title);
+    try std.testing.expectEqual(expected.composer, actual.composer);
+    try std.testing.expectEqual(expected.arranger, actual.arranger);
+    try std.testing.expectEqual(expected.initial_tempo.bpm, actual.initial_tempo.bpm);
 }
 
 test "invalid note lengths" {
@@ -1392,6 +1433,7 @@ const Compiler = @This();
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
+const Reader = Io.Reader;
 const Writer = Io.Writer;
 const assert = std.debug.assert;
 const zfm = @import("./zfm.zig");
