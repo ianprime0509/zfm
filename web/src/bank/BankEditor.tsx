@@ -2,7 +2,6 @@ import { useEffect, useState } from "preact/hooks";
 import { Minus, Plus, Download, Pencil } from "lucide-preact";
 import { PatchEditor } from "../patch/PatchEditor.tsx";
 import { ELECTRIC_PIANO } from "../patch/presets.ts";
-import { INITIAL_BANK } from "./initial-bank.ts";
 import { usePatchSynth } from "../patch/usePatchSynth.ts";
 import { useSynthKeyboard } from "../patch/useSynthKeyboard.ts";
 import { type Patch } from "../patch/types.ts";
@@ -14,6 +13,7 @@ import { LoadButton } from "../components/LoadButton.tsx";
 import { downloadText } from "../download.ts";
 import { formatBank } from "../patch/format.ts";
 import classes from "./BankEditor.module.css";
+import INITIAL_BANK from "virtual:zfm/initial-bank";
 
 // A BankEditor manages a collection of patches (a "bank"). It shows a
 // selectable list of patches; the selected patch is playable via the
