@@ -9,7 +9,7 @@ import type {
   SetLfoParamsArgs,
   SetPatchArgs,
 } from "./synth-worklet.ts";
-import synthWorkletUrl from "./synth-worklet.ts?url";
+import synthWorkletUrl from "./synth-worklet.ts?worker&url";
 import wasmUrl from "../zig-out/bin/audio.wasm?url";
 
 const wasmModule = await WebAssembly.compileStreaming(fetch(wasmUrl));

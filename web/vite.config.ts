@@ -4,11 +4,6 @@ import { initialBankPlugin } from "./vite-plugin-initial-bank.ts";
 
 // https://vite.dev/config/
 export default defineConfig({
-  server: {
-    // HMR causes issues with AudioWorklet:
-    // https://github.com/vitejs/vite/issues/9606
-    hmr: false,
-  },
   worker: {
     format: "es",
   },
