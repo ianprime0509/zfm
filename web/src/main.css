@@ -63,6 +63,20 @@
   --slot-7-accent: light-dark(#b53780, #e070a8);
   --slot-7-soft: light-dark(#fbe3ee, #3a1d2a);
   --slot-7-text: light-dark(#751f54, #e8a0c8);
+
+  --color-syntax-comment: light-dark(#8a8a8a, #7d8799);
+  --color-syntax-number: light-dark(#2563a8, #5b9bd5);
+  --color-syntax-string: light-dark(#2f8f4e, #7bc47f);
+  --color-syntax-note: light-dark(#c0392b, #e57373);
+  --color-syntax-accidental: light-dark(#c87a1a, #e8a04a);
+  --color-syntax-command: light-dark(#7a4ab8, #b491e0);
+  --color-syntax-part: light-dark(#1f8a8a, #4db8b8);
+  --color-syntax-patch: light-dark(#b53780, #e070a8);
+  --color-syntax-macro: light-dark(#b08510, #d4a83a);
+  --color-syntax-directive: light-dark(#4d2b7b, #c8a8e8);
+  --color-syntax-wave: light-dark(#0d7d7d, #5fd0a8);
+  --color-syntax-enum: light-dark(#5a3fa0, #a89be0);
+  --color-syntax-operator: light-dark(#6b6b6b, #9a9a9a);
 }
 
 html {

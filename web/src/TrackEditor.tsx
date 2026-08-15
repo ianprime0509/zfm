@@ -9,6 +9,7 @@ import CodeMirror, {
   type DecorationSet,
 } from "@uiw/react-codemirror";
 import type { Compiler } from "./compiler.ts";
+import { zfm } from "./mml.ts";
 import classes from "./TrackEditor.module.css";
 
 export interface TrackEditorProps {
@@ -116,7 +117,7 @@ export function TrackEditor({
       value={value}
       onChange={onChange}
       editable={!readOnly}
-      extensions={[zfmLinter, commandSpanField]}
+      extensions={[zfmLinter, commandSpanField, zfm]}
       onCreateEditor={(view) => {
         viewRef.current = view;
       }}
