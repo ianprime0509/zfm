@@ -4,7 +4,7 @@
   --color-text: light-dark(#1c1c1c, #e8e8e8);
   --color-text-muted: light-dark(#444, #b0b0b0);
   --color-text-secondary: light-dark(#666, #909090);
-  --color-text-faint: light-dark(#888, #707070);
+  --color-text-faint: light-dark(#767676, #858585);
   --color-outline: light-dark(#333, #ccc);
 
   --color-bg: light-dark(#fff, #1c1c1c);
@@ -18,8 +18,8 @@
   --color-border-soft: light-dark(#ccc, #444);
 
   --color-accent: light-dark(#2563a8, #5b9bd5);
-  --color-accent-soft: light-dark(#e6eef8, #143355);
-  --color-on-accent: light-dark(#fff, #fff);
+  --color-accent-soft: light-dark(#e6eef8, #142a45);
+  --color-on-accent: light-dark(#fff, #1c1c1c);
 
   --color-danger: light-dark(#c0392b, #e57373);
 
@@ -30,25 +30,25 @@
 
   --color-illegal-bg: light-dark(#fbeae7, #3a1d1a);
   --color-illegal-border: light-dark(#e6c1bd, #6b3a35);
-  --color-diag-stripe: light-dark(#eee, #262626);
+  --color-diag-stripe: light-dark(#eee, #242424);
 
   --slot-0-accent: light-dark(#c0392b, #e57373);
   --slot-0-soft: light-dark(#fbeae7, #3a1d1a);
   --slot-0-text: light-dark(#7b1f15, #f0a59c);
 
-  --slot-1-accent: light-dark(#c87a1a, #e8a04a);
+  --slot-1-accent: light-dark(#a4680a, #e8a04a);
   --slot-1-soft: light-dark(#fdf0dc, #3a2a14);
   --slot-1-text: light-dark(#8a4f08, #f0b878);
 
-  --slot-2-accent: light-dark(#b08510, #d4a83a);
+  --slot-2-accent: light-dark(#8f6f0d, #d4a83a);
   --slot-2-soft: light-dark(#faf3cf, #3a3014);
   --slot-2-text: light-dark(#6f5402, #e8c870);
 
-  --slot-3-accent: light-dark(#2f8f4e, #5cbf7a);
+  --slot-3-accent: light-dark(#2a7f45, #5cbf7a);
   --slot-3-soft: light-dark(#e7f4ea, #143a1f);
   --slot-3-text: light-dark(#1c5c30, #8ed8a8);
 
-  --slot-4-accent: light-dark(#1f8a8a, #4db8b8);
+  --slot-4-accent: light-dark(#177a7a, #4db8b8);
   --slot-4-soft: light-dark(#e2f3f3, #143030);
   --slot-4-text: light-dark(#0d5555, #80d0d0);
 
@@ -64,19 +64,21 @@
   --slot-7-soft: light-dark(#fbe3ee, #3a1d2a);
   --slot-7-text: light-dark(#751f54, #e8a0c8);
 
-  --color-syntax-comment: light-dark(#8a8a8a, #7d8799);
-  --color-syntax-number: light-dark(#2563a8, #5b9bd5);
-  --color-syntax-string: light-dark(#2f8f4e, #7bc47f);
-  --color-syntax-note: light-dark(#c0392b, #e57373);
-  --color-syntax-accidental: light-dark(#c87a1a, #e8a04a);
-  --color-syntax-command: light-dark(#7a4ab8, #b491e0);
-  --color-syntax-part: light-dark(#1f8a8a, #4db8b8);
-  --color-syntax-patch: light-dark(#b53780, #e070a8);
-  --color-syntax-macro: light-dark(#b08510, #d4a83a);
-  --color-syntax-directive: light-dark(#4d2b7b, #c8a8e8);
-  --color-syntax-wave: light-dark(#0d7d7d, #5fd0a8);
-  --color-syntax-enum: light-dark(#5a3fa0, #a89be0);
-  --color-syntax-operator: light-dark(#6b6b6b, #9a9a9a);
+  /* Syntax colors reuse the slot palette so the editor matches the rest of
+     the UI. Hues repeat for token kinds that never appear near each other. */
+  --color-syntax-comment: light-dark(#5c6b7c, #8a94a3);
+  --color-syntax-number: var(--slot-5-accent);
+  --color-syntax-string: var(--slot-3-accent);
+  --color-syntax-note: var(--slot-0-accent);
+  --color-syntax-accidental: var(--slot-1-accent);
+  --color-syntax-command: var(--slot-6-accent);
+  --color-syntax-part: var(--slot-4-accent);
+  --color-syntax-patch: var(--slot-7-accent);
+  --color-syntax-macro: var(--slot-2-accent);
+  --color-syntax-directive: var(--slot-7-accent);
+  --color-syntax-wave: var(--slot-3-accent);
+  --color-syntax-enum: var(--slot-4-accent);
+  --color-syntax-operator: var(--color-text-secondary);
 }
 
 html {

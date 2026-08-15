@@ -74,10 +74,9 @@
   border-color: var(--color-text-muted);
 }
 
+/* Border and text color are set inline to the slot's accent color. */
 .waveOptionActive {
-  border-color: var(--color-on-accent);
-  color: var(--color-on-accent);
-  background: color-mix(in srgb, var(--color-on-accent) 14%, var(--color-bg));
+  background: color-mix(in srgb, currentColor 14%, var(--color-bg));
 }
 
 .waveGlyph {
