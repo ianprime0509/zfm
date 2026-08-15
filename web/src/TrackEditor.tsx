@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { linter } from "@codemirror/lint";
 import CodeMirror, {
   Decoration,
   EditorView,
+  ExternalChange,
   RangeSetBuilder,
   StateEffect,
   StateField,
@@ -10,6 +11,7 @@ import CodeMirror, {
 } from "@uiw/react-codemirror";
 import type { Compiler } from "./compiler.ts";
 import { zfm } from "./mml.ts";
+import { textDiff } from "./textDiff.ts";
 import classes from "./TrackEditor.module.css";
 
 export interface TrackEditorProps {
@@ -108,16 +110,43 @@ export function TrackEditor({
     viewRef.current?.dispatch({ effects: setCommandSpans.of(currentCommandSpans) });
   }, [currentCommandSpans]);
 
+  // The editor's document is authoritative for text the user types: those
+  // changes flow out through `onChange` and must never be pushed back in, or a
+  // stale parent snapshot can overwrite keystrokes that landed after it was
+  // taken (the parent's render plus its post-paint effects span frames, while
+  // typing happens between them). `value` is therefore only written into the
+  // editor when it differs from the current document — an external replacement
+  // such as loading a track or inserting a patch — and it is applied
+  // synchronously during commit (layout effect) so no keystroke can slip in
+  // between the parent render and the write-back. The `value` handed to
+  // CodeMirror itself stays fixed at the mount-time content, which keeps the
+  // wrapper's own post-paint value-sync effect dormant.
+  const [initialValue] = useState(value);
+  useLayoutEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const doc = view.state.doc.toString();
+    if (value === doc) return;
+    view.dispatch({
+      changes: textDiff(doc, value),
+      annotations: [ExternalChange.of(true)],
+    });
+  }, [value]);
+
+  // Keep the extension list stable across renders; a fresh array every render
+  // makes the wrapper reconfigure the whole editor state on each keystroke.
+  const extensions = useMemo(() => [zfmLinter, commandSpanField, zfm], [zfmLinter]);
+
   return (
     <CodeMirror
       className={classes.root}
       theme={editorTheme}
       width="100%"
       height="100%"
-      value={value}
+      value={initialValue}
       onChange={onChange}
       editable={!readOnly}
-      extensions={[zfmLinter, commandSpanField, zfm]}
+      extensions={extensions}
       onCreateEditor={(view) => {
         viewRef.current = view;
       }}
