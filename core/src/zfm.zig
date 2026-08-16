@@ -13,4 +13,5 @@ test {
     _ = Driver;
     _ = Module;
     _ = Compiler;
+    _ = @import("test.zig");
 }

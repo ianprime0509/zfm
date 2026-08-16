@@ -13,6 +13,7 @@ var driver: Driver = .{
     .tick_delay = .zero,
     .lfo_delay = .zero,
     .tempo = .default,
+    .elapsed_ticks = .zero,
 };
 
 var transfer: std.ArrayList(u8) = .empty;

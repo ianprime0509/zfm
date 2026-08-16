@@ -331,6 +331,10 @@ pub const Ticks = enum(u32) {
 
     pub const zenlen: Ticks = @fromBackingInt(96);
 
+    pub fn plusOne(ticks: Ticks) Ticks {
+        return @fromBackingInt(@backingInt(ticks) + 1);
+    }
+
     pub fn minusOne(ticks: Ticks) Ticks {
         return @fromBackingInt(@backingInt(ticks) - 1);
     }

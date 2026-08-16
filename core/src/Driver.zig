@@ -4,6 +4,8 @@ parts: []Part,
 tick_delay: Samples,
 lfo_delay: Samples,
 tempo: Tempo,
+elapsed_ticks: Ticks,
+hooks: Hooks = .none,
 
 const lfo_delay_reset: Samples = @fromBackingInt(48);
 
@@ -17,6 +19,7 @@ pub fn init(synth: *Synth, mod: *const Module, parts: []Part) Driver {
         .tick_delay = .zero,
         .lfo_delay = .zero,
         .tempo = mod.initial_tempo,
+        .elapsed_ticks = .zero,
     };
 }
 
@@ -43,6 +46,7 @@ fn tick(driver: *Driver) void {
         const voice: Voice.Index = @fromBackingInt(@intCast(i));
         driver.executePending(part, voice);
     }
+    driver.elapsed_ticks = driver.elapsed_ticks.plusOne();
 }
 
 fn tickLfos(driver: *Driver) void {
@@ -74,6 +78,8 @@ fn execute(
         // so it is safe to just go to the immediately next command.
         return command.next();
     }
+
+    driver.hooks.onExecuteCommand(driver, part, voice, command);
 
     switch (driver.mod.commandTag(command)) {
         .end => {
@@ -338,10 +344,91 @@ pub const Part = struct {
     };
 };
 
+pub const Hooks = struct {
+    ctx: *anyopaque,
+    vtable: *const VTable,
+
+    pub const VTable = struct {
+        onExecuteCommand: *const fn (ctx: *anyopaque, driver: *Driver, part: *Part, voice: Voice.Index, command: Command.Index) void,
+    };
+
+    pub const none: Hooks = .{
+        .ctx = undefined,
+        .vtable = &.{
+            .onExecuteCommand = &noOpOnExecuteCommand,
+        },
+    };
+
+    fn onExecuteCommand(h: Hooks, driver: *Driver, part: *Part, voice: Voice.Index, command: Command.Index) void {
+        h.vtable.onExecuteCommand(h.ctx, driver, part, voice, command);
+    }
+
+    fn noOpOnExecuteCommand(_: *anyopaque, _: *Driver, _: *Part, _: Voice.Index, _: Command.Index) void {}
+};
+
+pub const LoggingHooks = struct {
+    writer: *Writer,
+
+    pub fn init(writer: *Writer) LoggingHooks {
+        return .{ .writer = writer };
+    }
+
+    pub fn hooks(h: *LoggingHooks) Hooks {
+        return .{
+            .ctx = h,
+            .vtable = &.{
+                .onExecuteCommand = &onExecuteCommand,
+            },
+        };
+    }
+
+    fn onExecuteCommand(ctx: *anyopaque, driver: *Driver, _: *Part, voice: Voice.Index, command: Command.Index) void {
+        const h: *LoggingHooks = @ptrCast(@alignCast(ctx));
+        h.logCommand(driver, voice, command) catch {};
+    }
+
+    fn logCommand(h: *const LoggingHooks, driver: *const Driver, voice: Voice.Index, command: Command.Index) !void {
+        switch (driver.mod.commandTag(command)) {
+            .end, .rest, .loop => {
+                // Not considered relevant for playback (implementation
+                // details), so not logged. Rests, for example, are visible just
+                // by looking at the `ticks` field in the other events.
+            },
+            inline else => |tag| {
+                var out: std.json.Stringify = .{ .writer = h.writer };
+                try out.beginObject();
+
+                try out.objectField("ticks");
+                try out.write(@backingInt(driver.elapsed_ticks));
+
+                try out.objectField("part");
+                try out.write(&[_]u8{driver.mod.parts[@backingInt(voice)].name});
+
+                try out.objectField(@tagName(tag));
+                const data_tag = Command.Tag.data_tags[@backingInt(tag)];
+                const data = @field(driver.mod.commandData(command), @tagName(data_tag));
+                if (@TypeOf(data) == void) {
+                    try out.write(.{});
+                } else {
+                    try out.write(data);
+                }
+
+                try out.endObject();
+
+                try h.writer.writeByte('\n');
+                try h.writer.flush();
+            },
+        }
+    }
+};
+
 const Driver = @This();
 
+const builtin = @import("builtin");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const Io = std.Io;
+const Writer = Io.Writer;
 const assert = std.debug.assert;
 const zfm = @import("./zfm.zig");
 const Frame = zfm.Frame;

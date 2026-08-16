@@ -20,7 +20,8 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
     var maybe_input_path: ?[]const u8 = null;
-    var maybe_output_path: ?[:0]const u8 = null;
+    var maybe_output_path: ?[]const u8 = null;
+    var maybe_log_path: ?[]const u8 = null;
     var options: Player.Options = .{};
 
     var args: ArgIterator = .init(try init.minimal.args.toSlice(arena));
@@ -37,6 +38,9 @@ pub fn main(init: std.process.Init) !void {
                 options.loops = std.fmt.parseInt(u8, value, 10) catch fatal("invalid value for --loops: {s}", .{value});
             } else if (option.is('o', "output")) {
                 maybe_output_path = args.optionValue() orelse fatal("missing value for --output", .{});
+            } else if (option.is(null, "log-file")) {
+                if (!debug_features) fatal("--log-file is only available in debug builds", .{});
+                maybe_log_path = args.optionValue() orelse fatal("missing value for --log-file", .{});
             } else {
                 fatal("unrecognized option: {f}", .{option});
             },
@@ -69,11 +73,18 @@ pub fn main(init: std.process.Init) !void {
     defer gpa.free(voices);
     const slots = try gpa.alloc(Synth.Slot, mod.parts.len * Synth.Voice.n_slots);
     defer gpa.free(slots);
-    var synth: Synth = .init(voices, slots, 0.1);
+    var synth: Synth = .init(voices, slots, 0.2);
 
     const parts = try gpa.alloc(Driver.Part, mod.parts.len);
     defer gpa.free(parts);
     var player: Player = .init(&synth, &mod, parts, options);
+
+    const maybe_log_file: ?Io.File = if (maybe_log_path) |log_path| try Io.Dir.cwd().createFile(io, log_path, .{}) else null;
+    defer if (maybe_log_file) |log_file| log_file.close(io);
+    var log_buf: [1024]u8 = undefined;
+    var maybe_log_writer: ?Io.File.Writer = if (maybe_log_file) |log_file| log_file.writer(io, &log_buf) else null;
+    var maybe_logging_hooks: ?Driver.LoggingHooks = if (maybe_log_writer) |*log_writer| .init(&log_writer.interface) else null;
+    if (maybe_logging_hooks) |*logging_hooks| player.driver.hooks = logging_hooks.hooks();
 
     if (maybe_output_path) |output_path| {
         try mainSave(gpa, io, &player, output_path);
@@ -431,7 +442,8 @@ const PmdPatch = struct {
 fn readInput(gpa: Allocator, io: Io, path: []const u8) !Module {
     if (std.mem.endsWith(u8, path, ".zfm")) {
         return try readInputZfm(gpa, io, path);
-    } else if (debug_features and std.mem.endsWith(u8, path, ".mod")) {
+    } else if (std.mem.endsWith(u8, path, ".mod")) {
+        if (!debug_features) fatal("module format is not stable/portable and is only available in debug builds", .{});
         return try readInputMod(gpa, io, path);
     } else {
         fatal("unknown input file type", .{});
@@ -515,6 +527,11 @@ const Player = struct {
         }
         return player.volume > 0.0;
     }
+
+    fn drain(player: *Player) void {
+        var frames: [256]Frame = undefined;
+        while (player.render(&frames)) {}
+    }
 };
 
 fn printPartLengths(gpa: Allocator, mod: *const Module) !void {
@@ -575,7 +592,7 @@ fn mainPlay(io: Io, player: *Player) !void {
     ctx.done.waitUncancelable(io);
 }
 
-fn mainSave(gpa: Allocator, io: Io, player: *Player, path: [:0]const u8) !void {
+fn mainSave(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
     const commands = player.driver.mod.commands;
     for (commands.items(.tag), commands.items(.data)) |tag, data| {
         if (tag == .loop and data.loop.count == .infinite) {
@@ -585,16 +602,18 @@ fn mainSave(gpa: Allocator, io: Io, player: *Player, path: [:0]const u8) !void {
 
     if (std.mem.endsWith(u8, path, ".wav")) {
         try saveWav(io, player, path);
-    } else if (debug_features and std.mem.endsWith(u8, path, ".mod")) {
+    } else if (std.mem.endsWith(u8, path, ".mod")) {
+        if (!debug_features) fatal("module format is not stable/portable and is only available in debug builds", .{});
         try saveMod(gpa, io, player, path);
-    } else if (debug_features and std.mem.endsWith(u8, path, ".json")) {
+    } else if (std.mem.endsWith(u8, path, ".json")) {
+        if (!debug_features) fatal("JSON output format is only available in debug builds", .{});
         try saveJson(io, player, path);
     } else {
         fatal("unknown output file type", .{});
     }
 }
 
-fn saveWav(io: Io, player: *Player, path: [:0]const u8) !void {
+fn saveWav(io: Io, player: *Player, path: []const u8) !void {
     const channels: u16 = 2;
     const bits_per_sample: u16 = @bitSizeOf(f32);
     const block_align = channels * @sizeOf(f32);
@@ -649,6 +668,9 @@ fn saveMod(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
     var writer = file.writer(io, &buf);
     try player.driver.mod.dump(gpa, &writer.interface);
     try writer.interface.flush();
+    // Although we're not saving the player output, we need to drain it in case
+    // a log file is being used.
+    player.drain();
 }
 
 fn saveJson(io: Io, player: *Player, path: []const u8) !void {
@@ -658,6 +680,9 @@ fn saveJson(io: Io, player: *Player, path: []const u8) !void {
     var writer = file.writer(io, &buf);
     try player.driver.mod.dumpJson(&writer.interface);
     try writer.interface.flush();
+    // Although we're not saving the player output, we need to drain it in case
+    // a log file is being used.
+    player.drain();
 }
 
 const AudioContext = struct {
@@ -804,6 +829,7 @@ const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const Reader = Io.Reader;
 const Writer = Io.Writer;
+const assert = std.debug.assert;
 const log = std.log;
 const zfm = @import("zfm");
 const Sample = zfm.Sample;

@@ -1,0 +1,11 @@
+{"ticks":0,"part":"A","toggle_lfo":"user_0"}
+{"ticks":0,"part":"A","set_lfo_target":{"index":"user_0","target":"freq"}}
+{"ticks":0,"part":"A","set_lfo_size":{"index":"user_0","data":0}}
+{"ticks":0,"part":"A","set_lfo_wave":{"index":"user_0","data":2}}
+{"ticks":0,"part":"A","set_lfo_trigger":{"index":"user_0","trigger":"key_on"}}
+{"ticks":0,"part":"A","set_lfo_adjust":{"index":"user_0","adjust":true}}
+{"ticks":0,"part":"A","key_on":261.62554931640625}
+{"ticks":24,"part":"A","key_off":[]}
+{"ticks":24,"part":"A","set_lfo_enabled":{"index":"user_1","enabled":false}}
+{"ticks":24,"part":"A","key_on":293.6647644042969}
+{"ticks":48,"part":"A","key_off":[]}

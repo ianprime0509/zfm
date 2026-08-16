@@ -1,0 +1,10 @@
+{"ticks":0,"part":"A","set_lfo_target":{"index":"porta","target":"freq"}}
+{"ticks":0,"part":"A","set_lfo_size":{"index":"porta","data":0}}
+{"ticks":0,"part":"A","set_lfo_wave":{"index":"porta","data":2}}
+{"ticks":0,"part":"A","toggle_lfo":"porta"}
+{"ticks":0,"part":"A","key_on":261.62554931640625}
+{"ticks":24,"part":"A","toggle_lfo":"porta"}
+{"ticks":24,"part":"A","key_on":587.3295288085938}
+{"ticks":24,"part":"A","key_off":[]}
+{"ticks":24,"part":"A","key_on":659.255126953125}
+{"ticks":48,"part":"A","key_off":[]}
