@@ -1,6 +1,6 @@
 const gpa = std.heap.wasm_allocator;
 
-var synth: Synth = .zero;
+var synth: Synth = .init(&.{}, &.{}, 0.0);
 var voices: []Voice = &.{};
 var slots: []Slot = &.{};
 
@@ -91,14 +91,14 @@ fn loadModule(new_mod: Module) Allocator.Error!void {
 
     voices = try gpa.alloc(Voice, mod.parts.len);
     slots = try gpa.alloc(Slot, mod.parts.len * Voice.n_slots);
-    synth = .init(voices, slots, 0.2);
+    synth = .init(voices, slots, Synth.default_volume);
 
     parts = try gpa.alloc(Driver.Part, mod.parts.len);
     driver = .init(&synth, &mod, parts);
 }
 
 fn clear() void {
-    synth = .zero;
+    synth = .init(&.{}, &.{}, 0.0);
     gpa.free(voices);
     voices = &.{};
     gpa.free(slots);

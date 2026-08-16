@@ -90,7 +90,7 @@ fn runTest(comptime name: []const u8) !void {
     defer gpa.free(voices);
     const slots = try gpa.alloc(Synth.Slot, mod.parts.len * Synth.Voice.n_slots);
     defer gpa.free(slots);
-    var synth: Synth = .init(voices, slots, 0.2);
+    var synth: Synth = .init(voices, slots, Synth.default_volume);
     const parts = try gpa.alloc(Driver.Part, mod.parts.len);
     defer gpa.free(parts);
     var driver: Driver = .init(&synth, &mod, parts);

@@ -2,7 +2,8 @@ voices: []Voice,
 slots: []Slot,
 volume: f32,
 
-pub const zero: Synth = .init(&.{}, &.{}, 0.0);
+/// A reasonable default value for the synth volume.
+pub const default_volume: f32 = 0.2;
 
 pub fn init(voices: []Voice, slots: []Slot, volume: f32) Synth {
     assert(slots.len == voices.len * Voice.n_slots);
