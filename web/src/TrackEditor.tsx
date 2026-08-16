@@ -52,15 +52,17 @@ const commandSpanField = StateField.define<DecorationSet>({
 
     const builder = new RangeSetBuilder<Decoration>();
     if (spans) {
-      spans.forEach((span, part) => {
-        if (!span) return;
-        const color = PART_COLORS[part % PART_COLORS.length];
-        builder.add(
-          span[0],
-          span[1],
-          Decoration.mark({ attributes: { style: `background: ${color}` } }),
-        );
-      });
+      spans
+        .filter((span) => span !== null)
+        .toSorted(([start1], [start2]) => start1 - start2)
+        .forEach(([start, end], part) => {
+          const color = PART_COLORS[part % PART_COLORS.length];
+          builder.add(
+            start,
+            end,
+            Decoration.mark({ attributes: { style: `background: ${color}` } }),
+          );
+        });
     }
     return builder.finish();
   },
