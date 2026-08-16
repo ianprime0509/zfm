@@ -2,7 +2,7 @@
     .name = .zfm_core,
     .version = "0.0.1",
     .fingerprint = 0xf4343523314ce35b,
-    .minimum_zig_version = "0.17.0-dev.1454+5faa79730",
+    .minimum_zig_version = "0.17.0-dev.1770+5d7cf3f34",
     .paths = .{
         "README.md",
         "LICENSE",
