@@ -94,16 +94,11 @@ fn runTest(comptime name: []const u8) !void {
     const parts = try gpa.alloc(Driver.Part, mod.parts.len);
     defer gpa.free(parts);
     var driver: Driver = .init(&synth, &mod, parts);
+    var player: Player = .init(&driver, .{ .fade = false });
     var logging_hooks: Driver.LoggingHooks = .init(&actual_log.writer);
     driver.hooks = logging_hooks.hooks();
 
-    while (true) {
-        _ = driver.sample();
-        const ended = for (driver.parts) |part| {
-            if (!part.ended and part.cycle == 0) break false;
-        } else true;
-        if (ended) break;
-    }
+    player.drain();
 
     const expected_log = @embedFile("./testdata/" ++ name ++ ".log.jsonl");
     try std.testing.expectEqualStrings(expected_log, actual_log.written());
@@ -222,3 +217,4 @@ const Patch = Module.Patch;
 const Extra = Module.Extra;
 const Synth = zfm.Synth;
 const Driver = zfm.Driver;
+const Player = zfm.Player;

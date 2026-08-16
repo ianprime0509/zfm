@@ -77,7 +77,8 @@ pub fn main(init: std.process.Init) !void {
 
     const parts = try gpa.alloc(Driver.Part, mod.parts.len);
     defer gpa.free(parts);
-    var player: Player = .init(&synth, &mod, parts, options);
+    var driver: Driver = .init(&synth, &mod, parts);
+    var player: Player = .init(&driver, options);
 
     const maybe_log_file: ?Io.File = if (maybe_log_path) |log_path| try Io.Dir.cwd().createFile(io, log_path, .{}) else null;
     defer if (maybe_log_file) |log_file| log_file.close(io);
@@ -104,340 +105,10 @@ fn convertPmdBank(gpa: Allocator, io: Io, input_path: []const u8, output_path: [
     var writer_buf: [1024]u8 = undefined;
     var writer = output_file.writer(io, &writer_buf);
 
-    var arena_state: std.heap.ArenaAllocator = .init(gpa);
-    defer arena_state.deinit();
-    const arena = arena_state.allocator();
-    var name_bytes: std.ArrayList(u8) = .empty;
-    var seen_names: std.array_hash_map.String(void) = .empty;
-
-    while (true) {
-        const pmd_patch = PmdPatch.read(&reader.interface) catch |err| switch (err) {
-            error.ReadFailed => return error.ReadFailed,
-            error.EndOfStream => break,
-        };
-
-        const raw_name = pmd_patch.name();
-        // The PMD bank format is just a dump of internal instrument data, including uninitialized entries.
-        // These uninitialized entries can be identified because they have no name; just skip them.
-        if (raw_name.len == 0) continue;
-        const name_start = name_bytes.items.len;
-        try escapePatchName(arena, &name_bytes, raw_name);
-        const name_prefix_end = name_bytes.items.len;
-        var counter: u32 = 2;
-        while (seen_names.contains(name_bytes.items[name_start..])) : (counter += 1) {
-            name_bytes.items.len = name_prefix_end;
-            try name_bytes.print(arena, "-{}", .{counter});
-        }
-        const name = name_bytes.items[name_start..];
-        try seen_names.put(arena, name, {});
-
-        try writer.interface.print("@{s} {s}.\n", .{ name, switch (pmd_patch.alg) {
-            0 => "0 1 2 3",
-            1 => "0 2 3, 1 2",
-            2 => "0 3, 1 2 3",
-            3 => "0 1 3, 2 3",
-            4 => "0 1, 2 3",
-            5 => "0 1, 0 2, 0 3",
-            6 => "0 1, 2, 3",
-            7 => "0, 1, 2, 3",
-        } });
-        for (pmd_patch.slots, 0..) |slot, i| {
-            const carrier = pmd_patch.isCarrier(@intCast(i));
-            // Detune and amplitude modulation have no synth equivalent.
-            // The synth's per-sample phase is in cycles (multiplied by tau
-            // only inside the oscillator), so the modulator's radian phase
-            // deviation and the feedback term are divided by tau.
-            const tl = Opn.tlLinear(slot.tl) * (if (carrier) 1.0 else Opn.pm_scale / std.math.tau);
-            const ml = Opn.multiple(slot.multi);
-            const fb = if (i == 0) Opn.feedback(pmd_patch.fb, carrier) / std.math.tau else 0.0;
-            const env = Opn.envelope(slot);
-            try writer.interface.print("  sin {d} {d} {d} {d} {d} {d} {d} {d}\n", .{
-                tl,
-                ml,
-                fb,
-                env.ar,
-                env.dr,
-                env.sl,
-                env.sr,
-                env.rr,
-            });
-        }
-        try writer.interface.print("\n", .{});
-    }
+    try zfm.convert.pmd.toZfm(gpa, &reader.interface, &writer.interface);
 
     try writer.interface.flush();
 }
-
-fn escapePatchName(gpa: Allocator, bytes: *std.ArrayList(u8), raw_name: []const u8) !void {
-    for (raw_name) |b| {
-        try bytes.append(gpa, switch (b) {
-            'A'...'Z', 'a'...'z', '0'...'9', '-', '_' => b,
-            else => '_',
-        });
-    }
-}
-
-/// Approximate conversions from YM2608 (OPNA) parameters to synth
-/// parameters. The envelope model and increment table follow the ymfm
-/// emulator, validated against it empirically.
-const Opn = struct {
-    /// FM clock at the nominal 8 MHz master clock: 8 MHz / (6 * 24).
-    const fm_clock = 8_000_000.0 / 144.0;
-    /// The envelope generator clocks once every 3 FM clocks.
-    const eg_clock = fm_clock / 3.0;
-    /// dB per envelope attenuation unit (0.75 dB / 8).
-    const atten_db = 0.09375;
-    /// Key scaling makes envelope rates note-dependent; approximate it at
-    /// a fixed mid-range key code (block 4, around A440).
-    const ref_keycode: u32 = 16;
-    /// Envelope fall covered by the synth's sustain and release times
-    /// (Envelope.silence is 1e-4, i.e. -80 dB).
-    const silence_db = 80.0;
-
-    /// Peak phase deviation in radians of a full-scale (TL=0) modulator:
-    /// its 13-bit magnitude output is halved, then added to the 10-bit
-    /// (tau = 1024 units) carrier phase.
-    const pm_scale: f32 = 8191.0 / 2048.0 * std.math.tau;
-
-    /// Attenuation increments for each 6-bit envelope rate, packed as
-    /// eight 4-bit values indexed by the step counter (ymfm's
-    /// attenuation_increment table).
-    const increment_table: [64]u32 = .{
-        0x00000000, 0x00000000, 0x10101010, 0x10101010,
-        0x10101010, 0x10101010, 0x11101110, 0x11101110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x10101010, 0x10111010, 0x11101110, 0x11111110,
-        0x11111111, 0x21112111, 0x21212121, 0x22212221,
-        0x22222222, 0x42224222, 0x42424242, 0x44424442,
-        0x44444444, 0x84448444, 0x84848484, 0x88848884,
-        0x88888888, 0x88888888, 0x88888888, 0x88888888,
-    };
-
-    fn increment(rate: u32, index: u32) u32 {
-        return (increment_table[rate] >> @intCast(4 * index)) & 0xf;
-    }
-
-    /// 6-bit envelope rate for a raw register rate, including the key
-    /// scaling offset at the reference key code. Raw rate 0 never
-    /// advances, regardless of key scaling.
-    fn effectiveRate(raw: u32, ks: u3) u32 {
-        if (raw == 0) return 0;
-        return @min(raw + (ref_keycode >> @as(u5, ks ^ 3)), 63);
-    }
-
-    fn tlLinear(tl: u7) f32 {
-        // TL steps are 0.75 dB.
-        return std.math.pow(f32, 10.0, -0.0375 * @as(f32, @floatFromInt(tl)));
-    }
-
-    fn multiple(multi: u4) f32 {
-        // MULTI 0 means 0.5.
-        return if (multi == 0) 0.5 else @floatFromInt(multi);
-    }
-
-    fn feedback(fb: u3, carrier: bool) f32 {
-        if (fb == 0) return 0.0;
-        // The feedback register shifts the operator's own 14-bit output
-        // into its 10-bit phase by (9 - fb), wrapping to 2^(fb-8) once
-        // expressed per unit of modulator output in the synth; modulator
-        // outputs carry the pm_scale factor, carrier outputs don't.
-        const scale = std.math.pow(f32, 2.0, @as(f32, @floatFromInt(fb)) - 8.0);
-        return scale * (if (carrier) pm_scale else 1.0);
-    }
-
-    /// Approximate attack duration in seconds: the time for the envelope
-    /// attenuation to fall from maximum to 1.5 dB, following ymfm's
-    /// envelope algorithm. Rates 62+ attack instantly; rates below 4
-    /// never advance, which the synth expresses as a held (silent)
-    /// attack, matching the hardware.
-    fn attackTime(rate: u32) f32 {
-        if (rate < 4) return 0.0;
-        if (rate >= 62) return zfm.sample_time;
-        const rate_shift: u5 = @intCast(rate >> 2);
-        var atten: u32 = 0x3ff;
-        var counter: u32 = 0;
-        var ticks: u32 = 0;
-        // Every rate >= 4 has a non-zero increment at least every eighth
-        // step, so the attenuation strictly decreases until the loop
-        // condition is met.
-        while (atten > 16) {
-            counter +%= 1;
-            ticks += 1;
-            const shifted = counter << rate_shift;
-            if (shifted & 0x7ff != 0) continue;
-            const index = if (rate_shift <= 11) (shifted >> 11) & 7 else (shifted >> rate_shift) & 7;
-            atten -|= ((atten + 1) * increment(rate, index) + 15) >> 4;
-        }
-        return @as(f32, @floatFromInt(ticks)) / eg_clock;
-    }
-
-    /// Average attenuation rate in dB per second of the decay, sustain
-    /// and release phases at the given 6-bit rate.
-    fn decayDbPerSec(rate: u32) f32 {
-        if (rate < 4) return 0.0;
-        var total: u32 = 0;
-        for (0..8) |i| total += increment(rate, @intCast(i));
-        const avg = @as(f32, @floatFromInt(total)) / 8.0;
-        // Steps happen once every 2^(11 - rate_shift) EG clocks.
-        const rate_shift: f32 = @floatFromInt(@min(rate >> 2, 11));
-        return avg * eg_clock * std.math.pow(f32, 2.0, rate_shift - 11.0) * atten_db;
-    }
-
-    fn sustainDb(sl: u4) f32 {
-        // SL steps are 3 dB, except SL 15 which means 93 dB.
-        return if (sl == 15) 93.0 else 3.0 * @as(f32, @floatFromInt(sl));
-    }
-
-    const EnvTimes = struct { ar: f32, dr: f32, sl: f32, sr: f32, rr: f32 };
-
-    fn envelope(slot: PmdPatch.Slot) EnvTimes {
-        const sustain_db = sustainDb(slot.sl);
-        const dr_rate = decayDbPerSec(effectiveRate(2 * @as(u32, slot.dr), slot.ks));
-        const sr_rate = decayDbPerSec(effectiveRate(2 * @as(u32, slot.sr), slot.ks));
-        const rr_rate = decayDbPerSec(effectiveRate(4 * @as(u32, slot.rr) + 2, slot.ks));
-        return .{
-            .ar = attackTime(effectiveRate(2 * @as(u32, slot.ar), slot.ks)),
-            .dr = if (dr_rate > 0.0) sustain_db / dr_rate else 0.0,
-            .sl = std.math.pow(f32, 10.0, -sustain_db / 20.0),
-            .sr = if (sr_rate > 0.0) silence_db / sr_rate else 0.0,
-            .rr = if (rr_rate > 0.0) silence_db / rr_rate else 0.0,
-        };
-    }
-};
-
-const PmdPatch = struct {
-    name_buf: [7]u8,
-    fb: u3,
-    alg: u3,
-    slots: [4]Slot,
-
-    const Slot = struct {
-        multi: u4,
-        dt: i3,
-        tl: u7,
-        ks: u3,
-        ar: u5,
-        am: u1,
-        dr: u5,
-        sr: u5,
-        sl: u4,
-        rr: u4,
-    };
-
-    const FbAlg = packed struct(u8) {
-        alg: u3,
-        fb: u3,
-        _unused: u2,
-    };
-
-    const DtMulti = packed struct(u8) {
-        multi: u4,
-        raw_dt: packed struct(u3) {
-            abs: u2,
-            sign: bool,
-        },
-        _unused: u1,
-
-        fn dt(dt_multi: DtMulti) i3 {
-            const raw_dt = dt_multi.raw_dt;
-            return if (raw_dt.sign) -@as(i3, raw_dt.abs) else raw_dt.abs;
-        }
-    };
-
-    const Tl = packed struct(u8) {
-        tl: u7,
-        _unused: u1,
-    };
-
-    const KsAr = packed struct(u8) {
-        ar: u5,
-        _unused: u1,
-        ks: u2,
-    };
-
-    const AmDr = packed struct(u8) {
-        dr: u5,
-        _unused: u2,
-        am: u1,
-    };
-
-    const Sr = packed struct(u8) {
-        sr: u5,
-        _unused: u3,
-    };
-
-    const SlRr = packed struct(u8) {
-        rr: u4,
-        sl: u4,
-    };
-
-    fn read(reader: *Reader) !PmdPatch {
-        const raw = try reader.take(32);
-        var patch: PmdPatch = undefined;
-        patch.name_buf = raw[25..][0..7].*;
-        const fb_alg: FbAlg = @bitCast(raw[24]);
-        patch.fb = fb_alg.fb;
-        patch.alg = fb_alg.alg;
-        const slots: [4]*Slot = .{ &patch.slots[0], &patch.slots[2], &patch.slots[1], &patch.slots[3] };
-        // DT/MULTI
-        for (slots, 0..) |slot, i| {
-            const dt_multi: DtMulti = @bitCast(raw[i]);
-            slot.multi = dt_multi.multi;
-            slot.dt = dt_multi.dt();
-        }
-        // TL
-        for (slots, 0..) |slot, i| {
-            const tl: Tl = @bitCast(raw[4 + i]);
-            slot.tl = tl.tl;
-        }
-        // KS/AR
-        for (slots, 0..) |slot, i| {
-            const ks_ar: KsAr = @bitCast(raw[8 + i]);
-            slot.ks = ks_ar.ks;
-            slot.ar = ks_ar.ar;
-        }
-        // AM/DR
-        for (slots, 0..) |slot, i| {
-            const am_dr: AmDr = @bitCast(raw[12 + i]);
-            slot.am = am_dr.am;
-            slot.dr = am_dr.dr;
-        }
-        // SR
-        for (slots, 0..) |slot, i| {
-            const sr: Sr = @bitCast(raw[16 + i]);
-            slot.sr = sr.sr;
-        }
-        // SL/RR
-        for (slots, 0..) |slot, i| {
-            const sl_rr: SlRr = @bitCast(raw[20 + i]);
-            slot.sl = sl_rr.sl;
-            slot.rr = sl_rr.rr;
-        }
-        return patch;
-    }
-
-    fn name(patch: *const PmdPatch) []const u8 {
-        return std.mem.sliceTo(&patch.name_buf, 0);
-    }
-
-    fn isCarrier(patch: *const PmdPatch, slot: u2) bool {
-        const carriers: u4 = switch (patch.alg) {
-            0, 1, 2, 3 => 0b1000,
-            4 => 0b1010,
-            5, 6 => 0b1110,
-            7 => 0b1111,
-        };
-        return carriers & (@as(u4, 1) << slot) != 0;
-    }
-};
 
 fn readInput(gpa: Allocator, io: Io, path: []const u8) !Module {
     if (std.mem.endsWith(u8, path, ".zfm")) {
@@ -490,49 +161,6 @@ fn fatal(comptime format: []const u8, args: anytype) noreturn {
     std.log.info("{s}", .{usage});
     std.process.exit(1);
 }
-
-const Player = struct {
-    driver: Driver,
-    options: Options,
-    volume: f32,
-
-    const Options = struct {
-        loops: u8 = 1,
-        fade: bool = true,
-    };
-
-    const fade_speed = 0.00001;
-
-    fn init(synth: *Synth, mod: *const Module, parts: []Driver.Part, options: Options) Player {
-        return .{
-            .driver = .init(synth, mod, parts),
-            .options = options,
-            .volume = 1.0,
-        };
-    }
-
-    fn ended(player: *const Player) bool {
-        return for (player.driver.parts) |part| {
-            if (!part.ended and part.cycle < player.options.loops) break false;
-        } else true;
-    }
-
-    fn render(player: *Player, frames: []Frame) bool {
-        for (frames) |*frame| {
-            const FrameVec = @Vector(2, f32);
-            frame.* = @as(FrameVec, @splat(player.volume)) * @as(FrameVec, player.driver.sample());
-            if (player.ended()) {
-                player.volume = if (player.options.fade) @max(0.0, player.volume - fade_speed) else 0.0;
-            }
-        }
-        return player.volume > 0.0;
-    }
-
-    fn drain(player: *Player) void {
-        var frames: [256]Frame = undefined;
-        while (player.render(&frames)) {}
-    }
-};
 
 fn printPartLengths(gpa: Allocator, mod: *const Module) !void {
     const PartLength = struct {
@@ -593,12 +221,7 @@ fn mainPlay(io: Io, player: *Player) !void {
 }
 
 fn mainSave(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
-    const commands = player.driver.mod.commands;
-    for (commands.items(.tag), commands.items(.data)) |tag, data| {
-        if (tag == .loop and data.loop.count == .infinite) {
-            fatal("cannot render WAV with infinite loop", .{});
-        }
-    }
+    if (player.driver.mod.hasInfiniteLoop()) fatal("cannot render WAV with infinite loop", .{});
 
     if (std.mem.endsWith(u8, path, ".wav")) {
         try saveWav(io, player, path);
@@ -614,51 +237,12 @@ fn mainSave(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
 }
 
 fn saveWav(io: Io, player: *Player, path: []const u8) !void {
-    const channels: u16 = 2;
-    const bits_per_sample: u16 = @bitSizeOf(f32);
-    const block_align = channels * @sizeOf(f32);
-    const byte_rate = zfm.sample_rate * @as(u32, block_align);
-
     var file = try Io.Dir.cwd().createFile(io, path, .{});
     defer file.close(io);
     var buf: [1024]u8 = undefined;
     var writer = file.writer(io, &buf);
-
-    var header: [44]u8 = undefined;
-    header[0..4].* = "RIFF".*;
-    std.mem.writeInt(u32, header[4..8], 0, .little); // chunk size (patched)
-    header[8..12].* = "WAVE".*;
-    header[12..16].* = "fmt ".*;
-    std.mem.writeInt(u32, header[16..20], 16, .little); // fmt chunk size
-    std.mem.writeInt(u16, header[20..22], 3, .little); // format tag: IEEE float
-    std.mem.writeInt(u16, header[22..24], channels, .little);
-    std.mem.writeInt(u32, header[24..28], zfm.sample_rate, .little);
-    std.mem.writeInt(u32, header[28..32], byte_rate, .little);
-    std.mem.writeInt(u16, header[32..34], block_align, .little);
-    std.mem.writeInt(u16, header[34..36], bits_per_sample, .little);
-    header[36..40].* = "data".*;
-    std.mem.writeInt(u32, header[40..44], 0, .little); // data chunk size (patched)
-    try writer.interface.writeAll(&header);
-
-    var frames: [256]Frame = undefined;
-    var data_bytes: u64 = 0;
-    while (true) {
-        const done = !player.render(&frames);
-        for (frames) |frame| {
-            for (frame) |sample| {
-                try writer.interface.writeInt(u32, @bitCast(sample), .little);
-            }
-            data_bytes += @sizeOf(Frame);
-        }
-        if (done) break;
-    }
+    try player.renderToWav(&writer);
     try writer.interface.flush();
-
-    var size_bytes: [4]u8 = undefined;
-    std.mem.writeInt(u32, &size_bytes, @intCast(36 + data_bytes), .little);
-    try file.writePositionalAll(io, &size_bytes, 4);
-    std.mem.writeInt(u32, &size_bytes, @intCast(data_bytes), .little);
-    try file.writePositionalAll(io, &size_bytes, 40);
 }
 
 fn saveMod(gpa: Allocator, io: Io, player: *Player, path: []const u8) !void {
@@ -839,4 +423,5 @@ const Synth = zfm.Synth;
 const Module = zfm.Module;
 const Ticks = Module.Ticks;
 const Compiler = zfm.Compiler;
+const Player = zfm.Player;
 const c = @import("c");

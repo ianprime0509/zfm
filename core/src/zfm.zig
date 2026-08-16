@@ -7,11 +7,18 @@ pub const Synth = @import("./Synth.zig");
 pub const Driver = @import("./Driver.zig");
 pub const Module = @import("./Module.zig");
 pub const Compiler = @import("./Compiler.zig");
+pub const Player = @import("./Player.zig");
+
+pub const convert = @import("./convert.zig");
 
 test {
     _ = Synth;
     _ = Driver;
     _ = Module;
     _ = Compiler;
+    _ = Player;
+
+    _ = convert;
+
     _ = @import("test.zig");
 }

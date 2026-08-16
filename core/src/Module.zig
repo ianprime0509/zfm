@@ -88,6 +88,13 @@ pub fn calculatePartLength(mod: *const Module, voice: Voice.Index) ?PartLength {
     };
 }
 
+/// Returns whether the module contains any infinite loops.
+pub fn hasInfiniteLoop(mod: *const Module) bool {
+    return for (mod.commands.items(.tag), mod.commands.items(.data)) |tag, data| {
+        if (tag == .loop and data.loop.count == .infinite) break true;
+    } else false;
+}
+
 // The approach taken for dump/save is exactly the same as what Zig does
 // internally for its ZIR cache (see Zcu.zig, loadZirCache and saveZirCache).
 // This is obviously unsafe and depends on compiler internals, but it's so
