@@ -286,7 +286,7 @@ function readToken(stream: StringStream, state: MmlState): string | null {
     return "comment";
   }
 
-  if (stream.peek() === "\"") {
+  if (stream.peek() === '"') {
     stream.next();
     return "skipCommand";
   }

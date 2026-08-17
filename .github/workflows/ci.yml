@@ -1,0 +1,76 @@
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@v1.17.0
+        with:
+          working-directory: web
+          cache: true
+          run-install: true
+      - name: Run core tests
+        run: |
+          cd core
+          zig build test
+      - name: Run web tests
+        run: |
+          cd web
+          zig build
+          vp check
+          vp test
+      - name: Run CLI tests
+        run: |
+          cd cli
+          zig build
+
+  build-web:
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@v1.17.0
+        with:
+          working-directory: web
+          cache: true
+          run-install: true
+      - name: Build web UI
+        run: |
+          cd web
+          zig build -Doptimize=ReleaseSmall
+          vp build
+      - name: Upload web UI artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+
+  publish-web:
+    needs: [build-web]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
