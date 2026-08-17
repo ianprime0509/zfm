@@ -3,7 +3,7 @@ pos: SourceIndex,
 current_part: ?u8,
 current_start: SourceIndex,
 skipping: bool,
-parts: std.array_hash_map.Auto(u8, Part),
+parts: Part.Map,
 patches: std.array_hash_map.Auto(StringPool.Index, Patch.Entry),
 macros: std.array_hash_map.Auto(StringPool.Index, SourceIndex),
 extra: Extra.Wip,
@@ -44,7 +44,6 @@ pub fn init(gpa: Allocator, source: [:0]const u8) Compiler {
 }
 
 pub fn deinit(c: *Compiler) void {
-    for (c.parts.values()) |*part| part.deinit(c.gpa);
     c.parts.deinit(c.gpa);
     c.patches.deinit(c.gpa);
     c.macros.deinit(c.gpa);
@@ -103,7 +102,10 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
     const parts = try c.gpa.alloc(Module.Part, c.parts.count());
     errdefer c.gpa.free(parts);
 
-    for (c.parts.keys(), c.parts.values(), parts) |name, part, *mod_part| {
+    var part_entries = c.parts.iterator();
+    var i: usize = 0;
+    while (part_entries.next()) |entry| : (i += 1) {
+        const part = entry.part;
         const start: Command.Index = @fromBackingInt(@intCast(commands.len));
         try commands.ensureUnusedCapacity(c.gpa, part.commands.len + 1);
         const slice = part.commands.slice();
@@ -117,8 +119,8 @@ pub fn toModule(c: *Compiler) Allocator.Error!Module {
         }
 
         const global_loop = part.global_loop orelse part.nextCommandIndex();
-        mod_part.* = .{
-            .name = name,
+        parts[i] = .{
+            .name = entry.name,
             .start = start,
             .global_loop = start.offset(.between(@fromBackingInt(0), global_loop)),
         };
@@ -161,7 +163,8 @@ fn compileLine(c: *Compiler) !void {
         'A'...'Z', 'a'...'z' => try c.compileParts(),
         '"' => {
             c.skipChar();
-            for (c.parts.values()) |*part| part.skipping = !part.skipping;
+            var parts = c.parts.iterator();
+            while (parts.next()) |entry| entry.part.skipping = !entry.part.skipping;
             c.skipping = !c.skipping;
             try c.endLineAndContinuation();
         },
@@ -170,12 +173,10 @@ fn compileLine(c: *Compiler) !void {
 }
 
 fn finishCompilation(c: *Compiler) !void {
-    c.parts.lockPointers();
-    defer c.parts.unlockPointers();
-
-    for (c.parts.keys(), c.parts.values()) |part_name, *part| {
-        c.current_part = part_name;
-        try c.finishPart(part);
+    var parts = c.parts.iterator();
+    while (parts.next()) |entry| {
+        c.current_part = entry.name;
+        try c.finishPart(entry.part);
     }
     c.current_part = null;
 }
@@ -346,16 +347,10 @@ fn compileParts(c: *Compiler) !void {
     const start = c.pos;
     for (part_names) |part_name| {
         if (!isPartNameChar(part_name)) continue;
-        const gop = try c.parts.getOrPut(c.gpa, part_name);
-        if (!gop.found_existing) {
-            gop.value_ptr.* = .init(c.skipping);
-        }
-        const part = gop.value_ptr;
 
+        const part = c.parts.getOrPut(part_name, c.skipping);
         c.current_part = part_name;
         defer c.current_part = null;
-        c.parts.lockPointers();
-        defer c.parts.unlockPointers();
         c.pos = start;
         try c.compilePart(part);
     }
@@ -1128,6 +1123,76 @@ const Part = struct {
         const midi = midi_base + accidentals;
         return 440.0 * std.math.pow(f32, 2.0, (midi - 69.0) / 12.0);
     }
+
+    const Map = struct {
+        parts: [max_parts]Part,
+        set: Set,
+
+        const Set = std.bit_set.Static(max_parts);
+
+        const max_parts = 26 + 26; // A-Z, a-z
+        const empty: Map = .{ .parts = undefined, .set = .empty };
+
+        fn deinit(map: *Map, gpa: Allocator) void {
+            var parts = map.iterator();
+            while (parts.next()) |entry| entry.part.deinit(gpa);
+            map.* = undefined;
+        }
+
+        fn count(map: *const Map) usize {
+            return map.set.count();
+        }
+
+        fn getOrPut(map: *Map, name: u8, skipping: bool) *Part {
+            const i = partIndex(name);
+            if (!map.set.isSet(i)) {
+                map.parts[i] = .init(skipping);
+                map.set.set(i);
+            }
+            return &map.parts[i];
+        }
+
+        fn iterator(map: *Map) Iterator {
+            return .{
+                .map = map,
+                .set = map.set.iterator(.{}),
+            };
+        }
+
+        const Entry = struct {
+            name: u8,
+            part: *Part,
+        };
+
+        const Iterator = struct {
+            map: *Map,
+            set: Set.Iterator(.{}),
+
+            fn next(iter: *Iterator) ?Entry {
+                const i = iter.set.next() orelse return null;
+                return .{
+                    .name = partName(i),
+                    .part = &iter.map.parts[i],
+                };
+            }
+        };
+
+        fn partIndex(name: u8) usize {
+            // Order: A, a, B, b, ...
+            return switch (name) {
+                'A'...'Z' => 2 * (name - 'A'),
+                'a'...'z' => 2 * (name - 'a') + 1,
+                else => unreachable,
+            };
+        }
+
+        fn partName(i: usize) u8 {
+            return if (i % 2 == 0)
+                @intCast('A' + i / 2)
+            else
+                @intCast('a' + (i - 1) / 2);
+        }
+    };
 
     const Loop = struct {
         start: Command.Index,

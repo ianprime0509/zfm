@@ -67,7 +67,7 @@ pub fn main(init: std.process.Init) !void {
     var mod = try readInput(gpa, io, input_path);
     defer mod.deinit(gpa);
 
-    try printPartLengths(gpa, &mod);
+    try printPartLengths(&mod);
 
     const voices = try gpa.alloc(Synth.Voice, mod.parts.len);
     defer gpa.free(voices);
@@ -162,26 +162,9 @@ fn fatal(comptime format: []const u8, args: anytype) noreturn {
     std.process.exit(1);
 }
 
-fn printPartLengths(gpa: Allocator, mod: *const Module) !void {
-    const PartLength = struct {
-        name: u8,
-        len: ?Module.PartLength,
-    };
-
-    const parts = try gpa.alloc(PartLength, mod.parts.len);
-    defer gpa.free(parts);
-    for (parts, mod.parts, 0..) |*part, mod_part, i| {
-        part.name = mod_part.name;
-        part.len = mod.calculatePartLength(@fromBackingInt(@intCast(i)));
-    }
-    std.sort.heap(PartLength, parts, {}, struct {
-        fn lessThan(_: void, p1: PartLength, p2: PartLength) bool {
-            return p1.name < p2.name;
-        }
-    }.lessThan);
-
-    for (parts) |part| {
-        if (part.len) |len| {
+fn printPartLengths(mod: *const Module) !void {
+    for (mod.parts, 0..) |part, i| {
+        if (mod.calculatePartLength(@fromBackingInt(@intCast(i)))) |len| {
             if (len.loop) |loop_len| {
                 log.info("Part {c}: {} ticks (loop: {} ticks)", .{ part.name, @backingInt(len.total), @backingInt(loop_len) });
             } else {
