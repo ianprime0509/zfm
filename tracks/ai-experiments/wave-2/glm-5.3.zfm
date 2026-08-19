@@ -1,0 +1,137 @@
+#title Barrage Horizon
+#composer glm-5.3
+
+; ---- Patches ----
+
+; Bright FM lead: punchy attack modulator, octave-up carrier for sparkle.
+@lead 0 1, 2.
+  sin 0.45 2 0 0.00001 0.15 0.5 0.2 0.08
+  sin 0.7 1 0 0.00001 0 0 0 0.08
+  sin 0.35 2 0 0.00001 0 0 0 0.08
+
+; Punchy pluck bass with slight carrier feedback growl.
+@bass-pulse 0 1.
+  sin 0.7 2 0 0.00001 0.06 0 0.08 0.03
+  sin 1 1 0.2 0.00001 0.05 0.4 0.1 0.03
+
+; Fast arp pluck.
+@pluck 0 1.
+  sin 0.5 2 0 0.00001 0.04 0 0.1 0.04
+  sin 1 1 0 0.00001 0.03 0.3 0.12 0.04
+
+; Short white-noise hat.
+@hat .
+  noi 1 1 0 0.1 0.00001 0.001 0.001 0.03 0.02
+
+@bass-drum .
+  sin 1 0.25 0.6 0.02 0.5 0 0 0.1
+  noi 0.5 0.1 0 0.5 0.08 2 0 0 1
+  sin 1 0.25 0 0.00001 1 0 0 0.00001
+
+@snare-drum .
+  sin 1 50 3 0.00001 1 0 0 0.00001
+  sin 0.3 1 0 0.00001 0.1 0 0 0.1
+  noi 0.1 1 0 0.5 0.08 2 0 0 1
+
+@strings 0 1, 2 3.
+  sin 0.1 3 0.2 0.1 0 0 0 0.2
+  sin 0.9 1 0 0.1 0 0 0 0.2
+  sin 0.2 5 0 0.1 4 0 0 0.4
+  sin 1 1 0 0.1 0 0 0 0.2
+
+; ---- Arp chord macros: 16th-note R-3-5-3 pattern, 1 bar each ----
+
+!am o4 [a>ce<a]4
+!fm o4 [fa>c<a]4
+!cm o4 [cege]4
+!gm o4 [gb>d<b]4
+!dm o4 [dfaf]4
+!em o4 [eg+bg+]4
+
+; ---- Lead (A): melody with vibrato ----
+
+A @lead v0.8 l8
+  MT0,freq MS0,6,0 MW0,sin,5.5 MO0,key_on MA0,on *0
+  r1 r1
+  L
+  ; Section A: Am F C G Am F Dm E
+  o5ea>c<bab>ce
+  o6fedcdc<af
+  o5eg>cedc<ge
+  o5dgb>ded<bg
+  o5a>cefedc<b
+  o5afac>fedc
+  o6d<afa>dfed
+  o5bg+b>ed<bg+b
+  ; Section B: Dm E F G Am E F E
+  o5fa>defedc
+  o5g+b>ded<bg+b
+  o5fac>fec<af
+  o5dgb>ded<bg
+  o5ea>cefedc
+  o5g+b>eded<bg+
+  o5fac>fgfed
+  o5eg+b>ed<bg+b
+
+; ---- Bass (B): driving eighths with octave pops ----
+
+B @bass-pulse v0.65 o2 l8
+  r1 [a]8
+  L
+  o2aa>a<aaaa>a
+  o2ff>f<ffff>f
+  o3cc>c<cccc>c
+  o2gg>g<gggg>g
+  o2aa>a<aaaa>a
+  o2ff>f<ffff>f
+  o3dd>d<dddd>d
+  o2ee>e<eeee>e
+  o3dd>d<dddd>d
+  o2ee>e<eeee>e
+  o2ff>f<ffff>f
+  o2gg>g<gggg>g
+  o2aa>a<aaaa>a
+  o2ee>e<eeee>e
+  o2ff>f<ffff>f
+  o2ee>e<eeee>e
+
+; ---- Arpeggio (C): constant 16ths ----
+
+C @pluck v0.3 p-0.4 l16
+  r1 r1
+  L
+  !am !fm !cm !gm !am !fm !dm !em
+  !dm !em !fm !gm !am !em !fm !em
+
+; ---- Kick (D): driving eighths ----
+
+D @bass-drum v0.85 l4
+  c r c r
+  l8 [c]8
+  L
+  l8 [[c]8]16
+
+; ---- Snare (E): backbeat with fills ----
+
+E @snare-drum v0.5 p-0.25
+  r1
+  l16 [c]16
+  L
+  l4 [r c r c]7 l8 [c]8
+  l4 [r c r c]7 l8 [c]8
+
+; ---- Hats (F): off-beats, busier in section B ----
+
+F @hat v0.2 p0.35 l8
+  r1 [r c]4
+  L
+  l8 [[r c]4]8
+  l16 [[r c]8]8
+
+; ---- Pad (G): sustained strings ----
+
+G @strings v0.25 p0.2 l2
+  r1 r1
+  L
+  o3a>e o3f>c o3cg o3g>d o3a>e o3f>c o3da o3eb
+  o3da o3eb o3f>c o3g>d o3a>e o3eb o3f>c o3eb
