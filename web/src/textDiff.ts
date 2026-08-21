@@ -1,6 +1,4 @@
-// Compute the minimal change that turns `from` into `to`. When an external
-// value is pushed into the editor, replacing only the differing span keeps
-// positions outside it (cursor, selection) intact instead of resetting them.
+/** Compute the minimal change that turns `from` into `to`. */
 export function textDiff(from: string, to: string): { from: number; to: number; insert: string } {
   if (from === to) return { from: 0, to: 0, insert: "" };
   let start = 0;

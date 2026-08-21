@@ -4,35 +4,6 @@ import type { LfoState, Patch } from "./types.ts";
 import { N_VOICES, midiToFreq } from "./keyboard.ts";
 import { VoiceAllocator } from "./voiceAllocator.ts";
 
-// Bridges the editor's `Patch` state to the WebAssembly synth, and exposes
-// note on/off callbacks for the keyboard.
-//
-// Audio-init discipline (the important part):
-//   - The AudioContext is created lazily on the *first user gesture* (a key
-//     press via `noteOn`), never at mount time. Browsers block autoplay, so
-//     constructing/resuming an AudioContext outside a gesture just produces a
-//     "prevented from starting" warning and leaves the context suspended.
-//   - Until audio is live, the patch-sync effect merely stages the latest
-//     patch; on the first key press the staged patch is applied in full.
-//
-// All 8 synth voices share the same patch, so every patch change is applied
-// in full to every voice via a single `setPatch` call.
-//
-// Synth calls are *fire-and-forget*: AudioWorklet MessagePorts preserve FIFO
-// ordering, so messages are applied in the order issued. Each call does
-// resolve the (memoized) AudioContext once it's live, but constructing it is
-// gated behind the first gesture.
-//
-// LFO states (stored on the patch, edited via the LfoPanel) are synced the
-// same way: staged until audio is live, then re-applied in full.
-//
-// Ownership: the `synth` is shared with the rest of the app. While `disabled`
-// is true (the track editor is playing back a compiled module), this hook is
-// completely inert — it stages patch edits but sends nothing to the synth,
-// and note on/off are no-ops. When `disabled` transitions back to false the
-// synth has just been `reset` by the player, so the staged patch is re-applied
-// in full.
-
 /** Apply a full patch to every voice. Fire-and-forget: callers need not await. */
 function applyPatch(synth: Synth, patch: Patch): void {
   for (let v = 0; v < N_VOICES; v++) {
@@ -57,8 +28,6 @@ export interface PatchSynth {
 }
 
 export interface UsePatchSynthOptions {
-  /** When true, this hook neither touches the synth nor triggers notes. Used
-   *  to yield the synth to track playback so the two never collide. */
   disabled?: boolean;
 }
 
@@ -73,22 +42,15 @@ export function usePatchSynth(
   if (allocatorRef.current === null) allocatorRef.current = new VoiceAllocator();
   const allocator = allocatorRef.current;
 
-  // `audioLive` flips true once the AudioContext has been created (on first
-  // gesture) and the staged patch has been applied. `staged` holds the latest
-  // patch the user wants; if audio isn't live yet it will be applied in full
-  // on the first key press.
+  // Changes to patch or LFO state are staged until the audio becomes live.
   const audioLiveRef = useRef(false);
   const stagedRef = useRef<Patch>(patch);
   const stagedLfosRef = useRef<LfoState[] | undefined>(patch.lfos);
 
-  // `disabled` as a ref so the memoized note callbacks read the latest value
-  // without being recreated on every toggle.
   const disabledRef = useRef(disabled);
   disabledRef.current = disabled;
 
-  // Memoized one-time `reset({voices: 8})`. This is the call that constructs
-  // (and resumes) the AudioContext, so it must originate from a user gesture
-  // — which it does, since it's only ever triggered by `noteOn`.
+  // The `AudioContext` must be created only in response to a user gesture.
   const readyRef = useRef<Promise<void> | null>(null);
   const ensureReady = useCallback(() => {
     if (readyRef.current === null) {
@@ -97,8 +59,6 @@ export function usePatchSynth(
     return readyRef.current;
   }, [synth]);
 
-  // Stage every patch change and keep the synth in sync while we own it.
-  // While disabled we only stage (the player owns the synth).
   const prevDisabledRef = useRef(disabled);
   useEffect(() => {
     prevDisabledRef.current = disabled;
@@ -118,8 +78,6 @@ export function usePatchSynth(
       if (disabledRef.current) return;
       const { voice, held } = allocator.noteOn(midi);
       const freq = midiToFreq(midi);
-      // ensureReady() runs synchronously up to the first await, so the
-      // AudioContext is *constructed* within this user-gesture call frame.
       void ensureReady().then(() => {
         if (!audioLiveRef.current) {
           applyPatch(synth, stagedRef.current);
@@ -138,8 +96,6 @@ export function usePatchSynth(
       if (disabledRef.current) return;
       const voice = allocator.noteOff(midi);
       if (voice === null) return;
-      // Audio is live if a note was ever pressed (noteOn always precedes the
-      // matching noteOff), so ensureReady is already resolved.
       void ensureReady().then(() => {
         void synth.keyOff({ voice });
       });

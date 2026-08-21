@@ -19,11 +19,9 @@ export interface TrackEditorProps {
   value: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
-  currentCommandSpans?: (number[] | null)[] | null;
+  currentCommandSpans?: ([number, number] | null)[] | null;
 }
 
-// One distinct highlight color per part (parts cycle through these when there
-// are more parts than colors). Low-alpha so the code underneath stays legible.
 const PART_COLORS = [
   "rgba(255, 99, 132, 0.35)",
   "rgba(54, 162, 235, 0.35)",
@@ -36,15 +34,15 @@ const PART_COLORS = [
 ];
 
 // Effect carrying the latest set of per-part command spans (or null when
-// nothing is playing). `(number[] | null)[] | null`.
-const setCommandSpans = StateEffect.define<(number[] | null)[] | null>();
+// nothing is playing).
+const setCommandSpans = StateEffect.define<([number, number] | null)[] | null>();
 
 // Highlights the range of source positions of the currently executing command
 // of each part. `null` (no running command) for a part yields no decoration.
 const commandSpanField = StateField.define<DecorationSet>({
   create: () => Decoration.none,
   update(decorations, tr) {
-    let spans: (number[] | null)[] | null = undefined as never;
+    let spans: ([number, number] | null)[] | null = undefined as never;
     for (const effect of tr.effects) {
       if (effect.is(setCommandSpans)) spans = effect.value;
     }
@@ -93,9 +91,6 @@ export function TrackEditor({
     [compiler],
   );
 
-  // CodeMirror has its own theme system separate from our CSS, so drive it from
-  // the same prefers-color-scheme media query that our `light-dark()` tokens
-  // resolve against.
   const prefersDark =
     typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
   const [editorTheme, setEditorTheme] = useState<"light" | "dark">(prefersDark ? "dark" : "light");
@@ -112,17 +107,9 @@ export function TrackEditor({
     viewRef.current?.dispatch({ effects: setCommandSpans.of(currentCommandSpans) });
   }, [currentCommandSpans]);
 
-  // The editor's document is authoritative for text the user types: those
-  // changes flow out through `onChange` and must never be pushed back in, or a
-  // stale parent snapshot can overwrite keystrokes that landed after it was
-  // taken (the parent's render plus its post-paint effects span frames, while
-  // typing happens between them). `value` is therefore only written into the
-  // editor when it differs from the current document — an external replacement
-  // such as loading a track or inserting a patch — and it is applied
-  // synchronously during commit (layout effect) so no keystroke can slip in
-  // between the parent render and the write-back. The `value` handed to
-  // CodeMirror itself stays fixed at the mount-time content, which keeps the
-  // wrapper's own post-paint value-sync effect dormant.
+  // After the initial value, the editor owns its document state except for
+  // external changes added in via diffs. Applying the value every time could
+  // lead to user text being overwritten.
   const [initialValue] = useState(value);
   useLayoutEffect(() => {
     const view = viewRef.current;
@@ -135,8 +122,6 @@ export function TrackEditor({
     });
   }, [value]);
 
-  // Keep the extension list stable across renders; a fresh array every render
-  // makes the wrapper reconfigure the whole editor state on each keystroke.
   const extensions = useMemo(() => [zfmLinter, commandSpanField, zfm], [zfmLinter]);
 
   return (

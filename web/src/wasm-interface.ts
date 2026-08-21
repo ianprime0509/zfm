@@ -1,10 +1,10 @@
+import { decodeBytes } from "./worklet-shims.ts";
+
 export type ConsoleLogFunction = (level: number, msgPtr: number, msgLen: number) => void;
 
 export function consoleLogFactory(memorySupplier: () => WebAssembly.Memory): ConsoleLogFunction {
   return (level, msgPtr, msgLen) => {
-    const msgBytes = new Uint8Array(memorySupplier().buffer, msgPtr, msgLen);
-    // TextDecoder is not available in AudioWorklet.
-    const msg = Array.from(msgBytes, (b) => String.fromCharCode(b)).join("");
+    const msg = decodeBytes(new Uint8Array(memorySupplier().buffer, msgPtr, msgLen));
     // Keep in sync with Zig `std.log.Level`.
     switch (level) {
       case 0:

@@ -19,8 +19,6 @@
   cursor: default;
 }
 
-/* Compact icon button: tight padding, no extra line height so the SVG sits
-   snugly, and a muted color that strengthens on hover. */
 .icon {
   padding: 2px;
   line-height: 0;

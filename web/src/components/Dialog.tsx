@@ -4,15 +4,6 @@ import { X } from "lucide-preact";
 import { Button } from "./Button.tsx";
 import classes from "./Dialog.module.css";
 
-// A thin wrapper around the native <dialog> element that consolidates the
-// open/close wiring, backdrop-click, and Escape handling that the app
-// repeats across every modal. The <dialog> is always mounted so its ref is
-// stable; an effect drives `showModal`/`close` from the `open` prop, keeping
-// component state the single source of truth and avoiding native desync.
-//
-// All close paths (the close button, a backdrop click, and Escape) funnel
-// through `onClose`, so the caller only needs to handle that single event.
-
 export interface DialogProps {
   /** Whether the dialog is currently open. */
   open: boolean;

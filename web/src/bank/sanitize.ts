@@ -1,5 +1,6 @@
-import { N_LFOS, N_SLOTS, defaultLfoStates, type LfoWave, type Patch } from "../patch/types.ts";
+import { N_LFOS, N_SLOTS, clonePatch, type Patch } from "../patch/types.ts";
 
+// TODO: replace this with some kind of code generation
 /** Structural check that a deserialized patch has the expected shape, so a
  *  malformed or version-mismatched persisted bank is ignored rather than
  *  crashing the editor. `lfos` is optional: banks persisted before LFOs were
@@ -18,29 +19,6 @@ function isPatchLike(v: unknown): v is Patch {
   if (!Array.isArray(p.envParams) || p.envParams.length !== N_SLOTS) return false;
   if (p.lfos !== undefined && (!Array.isArray(p.lfos) || p.lfos.length !== N_LFOS)) return false;
   return true;
-}
-
-function cloneWave(w: LfoWave): LfoWave {
-  if ("con" in w) return { con: {} };
-  if ("sin" in w) return { sin: { freq: w.sin.freq } };
-  return { exp: { mul: w.exp.mul } };
-}
-
-/** Deep-clone a patch so sanitized entries are independent of their source. */
-function clonePatch(p: Patch): Patch {
-  return {
-    name: p.name,
-    connections: { edges: p.connections.edges.map((r) => [...r]) },
-    slotWaves: [...p.slotWaves],
-    slotParams: p.slotParams.map((s) => ({ ...s })),
-    envParams: p.envParams.map((e) => ({ ...e })),
-    lfos: p.lfos
-      ? p.lfos.map((l) => ({
-          ...l,
-          params: { ...l.params, size: { ...l.params.size }, wave: cloneWave(l.params.wave) },
-        }))
-      : defaultLfoStates(),
-  };
 }
 
 /** Validate a deserialized bank, returning only well-formed patches (and

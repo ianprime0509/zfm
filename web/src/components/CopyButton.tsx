@@ -2,14 +2,6 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { ClipboardCheck, ClipboardCopy } from "lucide-preact";
 import { Button } from "./Button.tsx";
 
-// A compact icon button that copies `text` to the clipboard and briefly
-// swaps to a check icon on success, so the user gets feedback that the copy
-// happened. Encapsulates the clipboard call, the icon swap, and the reset
-// timer (including cleanup on unmount) so call sites don't repeat it.
-//
-// Repeated clicks while the check is showing reset the timer, keeping the
-// confirmation visible for a full interval after the most recent copy.
-
 export interface CopyButtonProps {
   text: string;
   title?: string;
@@ -34,8 +26,7 @@ export function CopyButton({ text, title = "Copy to clipboard", size = 14 }: Cop
         timer.current = setTimeout(() => setCopied(false), CONFIRM_MS);
       },
       () => {
-        // Ignore clipboard failures (e.g. non-secure context); leave the
-        // copy icon in place so there's no false confirmation.
+        // Ignore clipboard failures (e.g. non-secure context).
       },
     );
   };

@@ -1,9 +1,3 @@
-// Tiny localStorage wrappers used to persist the user's in-progress work
-// (the track source and the patch bank) so it can be restored on the next
-// load. All access is guarded: storage may be unavailable (private mode,
-// SSR, etc.) or hold malformed data from an older version, so every read is
-// defensive and falls back to the provided default.
-
 const PREFIX = "zfm.";
 
 function available(): boolean {

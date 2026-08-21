@@ -64,8 +64,6 @@
   --slot-7-soft: light-dark(#fbe3ee, #3a1d2a);
   --slot-7-text: light-dark(#751f54, #e8a0c8);
 
-  /* Syntax colors reuse the slot palette so the editor matches the rest of
-     the UI. Hues repeat for token kinds that never appear near each other. */
   --color-syntax-comment: light-dark(#5c6b7c, #8a94a3);
   --color-syntax-number: var(--slot-5-accent);
   --color-syntax-string: var(--slot-3-accent);

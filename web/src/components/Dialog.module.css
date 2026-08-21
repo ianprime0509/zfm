@@ -20,8 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* Clamp to the dialog's max-height so overflow is handled by the body
-     below, instead of scrolling the entire dialog (header included). */
+  /* Clamp to the dialog's max-height so overflow is handled by the body. */
   max-height: inherit;
 }
 
@@ -42,9 +41,7 @@
 }
 
 .modalBody {
-  /* Let the caller's content drive its own layout. When it would overflow
-     the dialog, shrink (instead of the header) and scroll within the body,
-     so the header stays pinned at the top. */
+  /* Let the caller's content drive its own layout. */
   min-height: 0;
   overflow: auto;
 }

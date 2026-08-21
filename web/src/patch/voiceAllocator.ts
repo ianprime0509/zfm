@@ -1,18 +1,5 @@
 import { N_VOICES } from "./keyboard.ts";
 
-// Polyphonic voice allocator for the N_VOICES synth voices.
-//
-// Allocation precedence for a new note:
-//   1. Prefer voices that are not currently held over ones that are.
-//   2. Within the chosen group, pick the least-recently-played voice.
-// If every voice is held, the least-recently-played voice is stolen (its
-// previous note is silently cut off).
-//
-// `lastPlayed` is a monotonically increasing logical clock (updated on every
-// noteOn) so that "least recently played" is well-defined without depending
-// on wall-clock time. Voices that have never been played start at -Infinity
-// and are therefore preferred first, giving a fair round-robin on startup.
-
 export class VoiceAllocator {
   private readonly voiceForNote = new Map<number, number>();
   private readonly lastPlayed: number[] = Array.from(
@@ -21,8 +8,13 @@ export class VoiceAllocator {
   );
   private clock = 0;
 
-  /** Allocate a voice for `note` (a MIDI note number).
-   *  Returns the voice and whether it's currently held. */
+  /**
+   * Allocates a voice for a note.
+   *
+   * @param note the MIDI note number to play
+   * @returns the voice index to use and whether it was already being held for
+   * another note
+   */
   noteOn(note: number): { voice: number; held: boolean } {
     this.clock++;
 
@@ -51,8 +43,12 @@ export class VoiceAllocator {
     return { voice, held };
   }
 
-  /** Release a held note. Returns the voice that was released, or null if the
-   *  note wasn't held. */
+  /**
+   * Release a held note.
+   *
+   * @param note the MIDI note number being released
+   * @returns the voice index that was being used, if any
+   */
   noteOff(note: number): number | null {
     const voice = this.voiceForNote.get(note);
     if (voice === undefined) return null;

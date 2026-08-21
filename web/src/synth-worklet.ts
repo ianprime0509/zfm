@@ -1,5 +1,6 @@
 import * as Comlink from "comlink";
 import type { LfoParams, Patch } from "./patch/types.ts";
+import { encodeBytes, decodeBytes } from "./worklet-shims.ts";
 import { consoleLogFactory } from "./wasm-interface.ts";
 
 interface WasmExports {
@@ -51,22 +52,6 @@ export interface SetLfoParamsArgs {
   voice: number;
   index: number;
   params: LfoParams;
-}
-
-// Encode `str` as single-byte (ASCII) characters, without `TextEncoder`
-// (unavailable in an AudioWorkletGlobalScope). The transferred JSON only
-// contains ASCII (digits, brackets, commas, `null`), so each character maps
-// directly to one byte.
-function encodeBytes(str: string): Uint8Array {
-  return Uint8Array.from(str, (c) => c.charCodeAt(0));
-}
-
-// Decode a buffer of single-byte (ASCII) characters into a string, without
-// `TextDecoder` (unavailable in an AudioWorkletGlobalScope). The transferred
-// JSON only contains ASCII (digits, brackets, commas, `null`), so each byte
-// maps directly to one character.
-function decodeBytes(bytes: Uint8Array): string {
-  return Array.from(bytes, (b) => String.fromCharCode(b)).join("");
 }
 
 export class SynthProcessor extends AudioWorkletProcessor {
@@ -135,7 +120,6 @@ export class SynthProcessor extends AudioWorkletProcessor {
   }
 
   setLfoParams({ voice, index, params }: SetLfoParamsArgs) {
-    // The wasm side decodes the params as JSON from the transfer buffer.
     this.transferWrite(encodeBytes(JSON.stringify(params)));
     this.wasm.setLfoParams(voice, index);
   }
@@ -143,7 +127,7 @@ export class SynthProcessor extends AudioWorkletProcessor {
   currentCommandSpans() {
     this.wasm.transferCurrentCommandSpans();
     const buf = this.transferRead();
-    return JSON.parse(decodeBytes(buf)) as (number[] | null)[];
+    return JSON.parse(decodeBytes(buf)) as ([number, number] | null)[];
   }
 
   override process(_inputs: Float32Array[][], outputs: Float32Array[][]) {

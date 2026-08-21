@@ -4,7 +4,7 @@ import { PatchEditor } from "../patch/PatchEditor.tsx";
 import { ELECTRIC_PIANO } from "../patch/presets.ts";
 import { usePatchSynth } from "../patch/usePatchSynth.ts";
 import { useSynthKeyboard } from "../patch/useSynthKeyboard.ts";
-import { type Patch } from "../patch/types.ts";
+import { clonePatch, type Patch } from "../patch/types.ts";
 import type { Compiler } from "../compiler.ts";
 import type { Synth } from "../synth.ts";
 import { Dialog } from "../components/Dialog.tsx";
@@ -15,32 +15,8 @@ import { formatBank } from "../patch/format.ts";
 import classes from "./BankEditor.module.css";
 import INITIAL_BANK from "virtual:zfm/initial-bank";
 
-// A BankEditor manages a collection of patches (a "bank"). It shows a
-// selectable list of patches; the selected patch is playable via the
-// physical keyboard (the same mechanism used by PatchEditor). Each row has
-// an "edit" button that opens PatchEditor in a native <dialog> modal;
-// closing the modal writes the edited patch back into the bank. The header
-// offers add/remove controls. Adding a new patch appends an
-// electric-piano-prefilled patch named "new-patch".
-
 export type Bank = Patch[];
 
-/** Deep-clone a patch so bank entries are independent of their source. */
-function clonePatch(p: Patch): Patch {
-  return {
-    name: p.name,
-    connections: { edges: p.connections.edges.map((r) => [...r]) },
-    slotWaves: [...p.slotWaves],
-    slotParams: p.slotParams.map((s) => ({ ...s })),
-    envParams: p.envParams.map((e) => ({ ...e })),
-    lfos: p.lfos.map((l) => ({
-      ...l,
-      params: { ...l.params, size: { ...l.params.size }, wave: { ...l.params.wave } },
-    })),
-  };
-}
-
-/** Build a fresh "new-patch": electric-piano parameters, renamed. */
 function newPatch(): Patch {
   return { ...clonePatch(ELECTRIC_PIANO), name: "new-patch" };
 }
@@ -123,9 +99,6 @@ export function BankEditor({
     setEditingIndex(i);
   };
 
-  // Load bank: prompt for a .zfm file, compile it, and (on success) replace
-  // the bank with the module's patches. Compilation errors are surfaced in a
-  // modal instead of clobbering the bank.
   const loadBank = async (file: File) => {
     const src = await file.text();
     const ok = await compiler.compile(src);
